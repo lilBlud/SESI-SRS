@@ -42,8 +42,8 @@ var glossary = new[]
     new GlossaryItem("SDG", "Sustainable Development Goals", "17 global goals set by the United Nations for sustainable development by 2030.", "ESG")
 };
 
-// ─── Quiz Data ───
-var quizQuestions = new[]
+// ─── Quiz Data by Category ───
+var ibrQuestions = new[]
 {
     new QuizQuestion(1, "What does IBR stand for?",
         new[] { "Incentive-Based Regulation", "International Business Report", "Internal Budget Review", "Integrated Balance Ratio" },
@@ -77,21 +77,75 @@ var quizQuestions = new[]
         new[] { "1 year", "2 years", "3 years", "5 years" },
         2, "Under IBR, a Regulatory Period typically spans 3 years, during which tariffs and revenue caps remain fixed."),
 
-    new QuizQuestion(9, "What does ESG stand for?",
+    new QuizQuestion(9, "What is the 'Return ON Capital' in the BBM?",
+        new[] { "RAB × WACC", "OPEX ÷ Revenue", "CAPEX − Depreciation", "Tax × Asset Life" },
+        0, "Return ON Capital is calculated as RAB × WACC, representing the profit the utility is allowed to earn on its asset base."),
+
+    new QuizQuestion(10, "What does SAIFI measure in network reliability?",
+        new[] { "Average duration of outages", "Number of sustained interruptions per customer per year", "Cost of system failures", "Frequency of maintenance activities" },
+        1, "SAIFI measures the System Average Interruption Frequency Index — the average number of sustained interruptions per customer per year.")
+};
+
+var esgQuestions = new[]
+{
+    new QuizQuestion(1, "What does ESG stand for?",
         new[] { "Energy Supply Governance", "Environmental, Social, Governance", "Economic Stability Growth", "Efficiency Standards Guide" },
         1, "ESG stands for Environmental, Social, and Governance — a framework for assessing sustainability and ethical impact."),
 
-    new QuizQuestion(10, "What is the goal of 'Net Zero'?",
+    new QuizQuestion(2, "What is the goal of 'Net Zero'?",
         new[] { "Zero profit margin", "Zero customer complaints", "Balancing emitted greenhouse gases with offsets", "Zero network downtime" },
-        2, "Net Zero means balancing the amount of emitted greenhouse gases with equivalent emissions offsets to achieve carbon neutrality.")
+        2, "Net Zero means balancing the amount of emitted greenhouse gases with equivalent emissions offsets to achieve carbon neutrality."),
+
+    new QuizQuestion(3, "Which of these is a renewable energy source?",
+        new[] { "Natural gas", "Coal", "Solar power", "Diesel" },
+        2, "Solar power is a renewable energy source generated from naturally replenishing sunlight, unlike fossil fuels which are finite."),
+
+    new QuizQuestion(4, "What does TCFD stand for?",
+        new[] { "Total Carbon Footprint Directive", "Task Force on Climate-related Financial Disclosures", "Transnational Clean Fuel Development", "Technical Committee for Future Design" },
+        1, "TCFD is the Task Force on Climate-related Financial Disclosures — a framework for companies to disclose climate-related financial risks."),
+
+    new QuizQuestion(5, "What are GHG emissions?",
+        new[] { "Global Health Guidelines", "Greenhouse Gas emissions", "Government Housing Grants", "General Hazard Governance" },
+        1, "GHG stands for Greenhouse Gas — gases like CO₂ and methane that trap heat in the atmosphere, contributing to global warming."),
+
+    new QuizQuestion(6, "How many Sustainable Development Goals (SDGs) are there?",
+        new[] { "10", "15", "17", "20" },
+        2, "There are 17 Sustainable Development Goals set by the United Nations, targeting global challenges by 2030."),
+
+    new QuizQuestion(7, "Which SDG focuses on affordable and clean energy?",
+        new[] { "SDG 5", "SDG 7", "SDG 13", "SDG 15" },
+        1, "SDG 7 aims to ensure access to affordable, reliable, sustainable, and modern energy for all."),
+
+    new QuizQuestion(8, "What is carbon neutrality?",
+        new[] { "Using only nuclear power", "Having zero energy consumption", "Offsetting all carbon emissions produced", "Banning all fossil fuels" },
+        2, "Carbon neutrality means achieving net-zero carbon dioxide emissions by balancing emissions with carbon removal or offsets."),
+
+    new QuizQuestion(9, "Which pillar of ESG covers employee welfare and community impact?",
+        new[] { "Environmental", "Social", "Governance", "Economic" },
+        1, "The Social pillar of ESG covers topics like employee welfare, diversity, community impact, and human rights."),
+
+    new QuizQuestion(10, "What does the 'Governance' pillar in ESG primarily address?",
+        new[] { "Carbon emissions reporting", "Board structure, ethics, and transparency", "Renewable energy targets", "Water conservation" },
+        1, "Governance addresses how a company is led and managed — including board structure, executive pay, ethics, and anti-corruption practices.")
 };
 
 // ─── API Endpoints ───
 app.MapGet("/api/glossary", () => Results.Ok(glossary))
    .WithName("GetGlossary");
 
-app.MapGet("/api/quiz", () => Results.Ok(quizQuestions))
-   .WithName("GetQuiz");
+app.MapGet("/api/quiz/{category}", (string category) =>
+{
+    return category.ToLower() switch
+    {
+        "ibr" => Results.Ok(ibrQuestions),
+        "esg" => Results.Ok(esgQuestions),
+        _ => Results.NotFound(new { message = "Category not found. Use 'ibr' or 'esg'." })
+    };
+})
+.WithName("GetQuizByCategory");
+
+app.MapGet("/api/quiz", () => Results.Ok(ibrQuestions.Concat(esgQuestions)))
+   .WithName("GetAllQuiz");
 
 app.Run();
 

@@ -1,5 +1,255 @@
 import React, { useState, useEffect } from 'react';
 
+// ─── Quiz Tab (Sleek Category Design) ───
+const API_BASE = 'http://localhost:5225';
+
+function QuizTab() {
+  const [state, setState] = useState('idle'); // idle | loading | active | review
+  const [category, setCategory] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [currentQ, setCurrentQ] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [answered, setAnswered] = useState(false);
+  const [answers, setAnswers] = useState([]);
+  const [score, setScore] = useState(0);
+
+  const pickCategory = async (cat) => {
+    setCategory(cat);
+    setState('loading');
+    try {
+      const res = await fetch(`${API_BASE}/api/quiz/${cat}`);
+      const data = await res.json();
+      setQuestions(data);
+      setState('active');
+      setCurrentQ(0);
+      setSelected(null);
+      setAnswered(false);
+      setAnswers([]);
+      setScore(0);
+    } catch (e) {
+      console.error('Quiz fetch error:', e);
+      setState('idle');
+    }
+  };
+
+  const selectAnswer = (idx) => {
+    if (answered) return;
+    setSelected(idx);
+    setAnswered(true);
+    const q = questions[currentQ];
+    const isCorrect = idx === q.correctIndex;
+    if (isCorrect) setScore(s => s + 1);
+    setAnswers(prev => [...prev, { questionId: q.id, selected: idx, correct: q.correctIndex, isCorrect }]);
+  };
+
+  const nextQuestion = () => {
+    if (currentQ < questions.length - 1) {
+      setCurrentQ(c => c + 1);
+      setSelected(null);
+      setAnswered(false);
+    } else {
+      setState('review');
+    }
+  };
+
+  if (state === 'loading') {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 animate-slideUp">
+        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-500 text-sm">Loading quiz questions...</p>
+      </div>
+    );
+  }
+
+  // ─ Idle Screen ─
+  if (state === 'idle') {
+    return (
+      <div className="animate-slideUp space-y-6 max-w-lg mx-auto">
+        <div className="text-center pt-6">
+          <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/25">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-5">Knowledge Quiz</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 max-w-xs mx-auto">Choose a category to test your knowledge.</p>
+        </div>
+
+        <div className="space-y-4 pt-2">
+          <button
+            onClick={() => pickCategory('ibr')}
+            className="w-full bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm text-left active:scale-[0.98] transition-all hover:border-emerald-500/50 hover:shadow-md group"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">IBR & Regulatory</span>
+                <p className="text-sm text-slate-500 mt-1">10 Questions • Incentive-Based Regulation</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl shrink-0 group-hover:bg-emerald-50 transition-colors">📊</div>
+            </div>
+          </button>
+          
+          <button
+            onClick={() => pickCategory('esg')}
+            className="w-full bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm text-left active:scale-[0.98] transition-all hover:border-emerald-500/50 hover:shadow-md group"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">Sustainability & ESG</span>
+                <p className="text-sm text-slate-500 mt-1">10 Questions • Environment, Social, Gov</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl shrink-0 group-hover:bg-emerald-50 transition-colors">🌱</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─ Active Quiz ─
+  if (state === 'active') {
+    const q = questions[currentQ];
+    const progress = ((currentQ + 1) / questions.length) * 100;
+
+    return (
+      <div className="animate-fadeIn space-y-6 max-w-2xl mx-auto">
+        {/* Header with Back Button */}
+        <div className="flex items-center">
+          <button
+            onClick={() => setState('idle')}
+            className="flex items-center text-sm font-bold text-slate-400 hover:text-emerald-500 transition-colors active:scale-95"
+          >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Categories
+          </button>
+        </div>
+
+        {/* Progress */}
+        <div>
+          <div className="flex justify-between text-sm font-bold text-slate-500 mb-2">
+            <span>Question {currentQ + 1} of {questions.length}</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+          </div>
+        </div>
+
+        {/* Question */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-snug">{q.question}</h3>
+        </div>
+
+        {/* Options */}
+        <div className="space-y-4">
+          {q.options.map((opt, idx) => {
+            let styles = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:border-emerald-500/50';
+            if (answered) {
+              if (idx === q.correctIndex) {
+                styles = 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-800 dark:text-emerald-300 scale-[1.01]';
+              } else if (idx === selected && idx !== q.correctIndex) {
+                styles = 'bg-red-50 dark:bg-red-950/30 border-red-500 text-red-800 dark:text-red-300';
+              } else {
+                styles = 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-400 opacity-60';
+              }
+            }
+
+            return (
+              <button
+                key={idx}
+                onClick={() => selectAnswer(idx)}
+                disabled={answered}
+                className={`w-full text-left p-5 rounded-2xl border-2 text-base font-medium transition-all active:scale-[0.98] ${styles}`}
+              >
+                <div className="flex items-center">
+                  <span className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold mr-4 shrink-0 transition-colors ${
+                    answered && idx === q.correctIndex ? 'bg-emerald-500 text-white' :
+                    answered && idx === selected ? 'bg-red-500 text-white' :
+                    'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                  }`}>
+                    {answered && idx === q.correctIndex ? '✓' : answered && idx === selected ? '✗' : String.fromCharCode(65 + idx)}
+                  </span>
+                  {opt}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Explanation */}
+        {answered && (
+          <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5 animate-scaleIn">
+            <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Explanation</p>
+            <p className="text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">{q.explanation}</p>
+          </div>
+        )}
+
+        {/* Next Button */}
+        {answered && (
+          <button
+            onClick={nextQuestion}
+            className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-lg font-bold rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-transform animate-scaleIn"
+          >
+            {currentQ < questions.length - 1 ? 'Next Question →' : 'View Results'}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // ─ Review Screen ─
+  if (state === 'review') {
+    const pct = Math.round((score / questions.length) * 100);
+    const grade = pct >= 80 ? 'Excellent!' : pct >= 60 ? 'Good Job!' : pct >= 40 ? 'Keep Learning!' : 'Study More!';
+    const gradeColor = pct >= 80 ? 'text-emerald-600' : pct >= 60 ? 'text-teal-600' : pct >= 40 ? 'text-amber-600' : 'text-red-600';
+
+    return (
+      <div className="animate-slideUp space-y-6 max-w-2xl mx-auto">
+        <div className="text-center pt-4">
+          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/25">
+            <span className="text-4xl font-black text-white">{pct}%</span>
+          </div>
+          <h2 className={`text-3xl font-black mt-6 ${gradeColor}`}>{grade}</h2>
+          <p className="text-slate-500 text-base mt-2">You scored {score} out of {questions.length}</p>
+        </div>
+
+        {/* Score Bar */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+          <div className="flex justify-between text-sm mb-3">
+            <span className="text-slate-500">Score</span>
+            <span className="font-bold text-slate-900 dark:text-white">{score}/{questions.length}</span>
+          </div>
+          <div className="w-full h-4 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }}></div>
+          </div>
+        </div>
+
+        {/* Answer Summary */}
+        <div className="space-y-3">
+          {answers.map((a, i) => (
+            <div key={i} className={`flex items-center p-4 rounded-2xl border text-sm font-medium ${a.isCorrect ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'}`}>
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-4 shrink-0 ${a.isCorrect ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+                {a.isCorrect ? '✓' : '✗'}
+              </span>
+              <span className="truncate">Q{i + 1}: {questions[i].question}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Retry */}
+        <button
+          onClick={() => setState('idle')}
+          className="w-full py-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-lg font-bold rounded-3xl shadow-xl shadow-emerald-500/25 active:scale-[0.98] transition-transform"
+        >
+          Back to Categories
+        </button>
+      </div>
+    );
+  }
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('ibr');
   const [isDark, setIsDark] = useState(false);
@@ -302,12 +552,8 @@ function App() {
         )}
 
         {activeTab === 'quiz' && (
-          <section className="space-y-6 animate-fadeIn">
-            <div className="text-center py-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl">
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Knowledge Quiz Arena</h2>
-              <p className="text-slate-500 mb-6">Test your IBR and Sustainability Knowledge!</p>
-              <button className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all" onClick={() => alert('Quiz Module starting in full version!')}>Start Assessment</button>
-            </div>
+          <section className="animate-fadeIn py-4">
+            <QuizTab />
           </section>
         )}
 

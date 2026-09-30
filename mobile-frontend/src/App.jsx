@@ -209,22 +209,34 @@ function GlossaryTab({ glossary }) {
   );
 }
 
-// ─── Quiz Tab (Fully Functional) ───
-function QuizTab({ questions }) {
-  const [state, setState] = useState('idle'); // idle | active | review
+// ─── Quiz Tab (Sleek Category Design) ───
+function QuizTab() {
+  const [state, setState] = useState('idle'); // idle | loading | active | review
+  const [category, setCategory] = useState(null);
+  const [questions, setQuestions] = useState([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
   const [answers, setAnswers] = useState([]);
   const [score, setScore] = useState(0);
 
-  const startQuiz = () => {
-    setState('active');
-    setCurrentQ(0);
-    setSelected(null);
-    setAnswered(false);
-    setAnswers([]);
-    setScore(0);
+  const pickCategory = async (cat) => {
+    setCategory(cat);
+    setState('loading');
+    try {
+      const res = await fetch(`${API_BASE}/api/quiz/${cat}`);
+      const data = await res.json();
+      setQuestions(data);
+      setState('active');
+      setCurrentQ(0);
+      setSelected(null);
+      setAnswered(false);
+      setAnswers([]);
+      setScore(0);
+    } catch (e) {
+      console.error('Quiz fetch error:', e);
+      setState('idle');
+    }
   };
 
   const selectAnswer = (idx) => {
@@ -247,7 +259,7 @@ function QuizTab({ questions }) {
     }
   };
 
-  if (questions.length === 0) {
+  if (state === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-slideUp">
         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
@@ -267,37 +279,41 @@ function QuizTab({ questions }) {
             </svg>
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-5">Knowledge Quiz</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-[14px] mt-2 max-w-xs mx-auto">Test your IBR and Sustainability knowledge with {questions.length} curated questions.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-[14px] mt-2 max-w-xs mx-auto">Choose a category to test your knowledge.</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] text-slate-500">Questions</span>
-            <span className="text-[15px] font-bold text-slate-900 dark:text-white">{questions.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] text-slate-500">Categories</span>
-            <span className="text-[15px] font-bold text-slate-900 dark:text-white">IBR & ESG</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] text-slate-500">Difficulty</span>
-            <div className="flex gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+        <div className="space-y-3 pt-2">
+          <button
+            onClick={() => pickCategory('ibr')}
+            className="w-full bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm text-left active:scale-[0.98] transition-all hover:border-emerald-500/50"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[16px] font-bold text-slate-900 dark:text-white">IBR & Regulatory</span>
+                <p className="text-[13px] text-slate-500 mt-1">10 Questions • Incentive-Based Regulation</p>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl shrink-0">📊</div>
             </div>
-          </div>
+          </button>
+          
+          <button
+            onClick={() => pickCategory('esg')}
+            className="w-full bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm text-left active:scale-[0.98] transition-all hover:border-emerald-500/50"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[16px] font-bold text-slate-900 dark:text-white">Sustainability & ESG</span>
+                <p className="text-[13px] text-slate-500 mt-1">10 Questions • Environment, Social, Gov</p>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl shrink-0">🌱</div>
+            </div>
+          </button>
         </div>
-
-        <button
-          onClick={startQuiz}
-          className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[16px] font-bold rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-transform"
-        >
-          Start Assessment
-        </button>
       </div>
     );
   }
+
+
 
   // ─ Active Quiz ─
   if (state === 'active') {
@@ -306,6 +322,19 @@ function QuizTab({ questions }) {
 
     return (
       <div className="animate-fadeIn space-y-5">
+        {/* Header with Back Button */}
+        <div className="flex items-center">
+          <button
+            onClick={() => setState('idle')}
+            className="flex items-center text-sm font-bold text-slate-400 hover:text-emerald-500 transition-colors active:scale-95"
+          >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Categories
+          </button>
+        </div>
+
         {/* Progress */}
         <div>
           <div className="flex justify-between text-[12px] font-bold text-slate-500 mb-2">
@@ -420,10 +449,10 @@ function QuizTab({ questions }) {
 
         {/* Retry */}
         <button
-          onClick={startQuiz}
+          onClick={() => setState('idle')}
           className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[15px] font-bold rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-transform"
         >
-          Retake Quiz
+          Back to Categories
         </button>
       </div>
     );
@@ -517,11 +546,6 @@ function App() {
       .then(r => r.json())
       .then(d => setGlossary(d))
       .catch(e => console.error('Glossary fetch error:', e));
-
-    fetch(`${API_BASE}/api/quiz`)
-      .then(r => r.json())
-      .then(d => setQuestions(d))
-      .catch(e => console.error('Quiz fetch error:', e));
   }, []);
 
   const tabs = [
@@ -563,7 +587,7 @@ function App() {
       <main className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-28">
         {activeTab === 'home' && <HomeTab setActiveTab={setActiveTab} />}
         {activeTab === 'glossary' && <GlossaryTab glossary={glossary} />}
-        {activeTab === 'quiz' && <QuizTab questions={questions} />}
+        {activeTab === 'quiz' && <QuizTab />}
         {activeTab === 'cheatsheet' && <CheatSheetTab />}
       </main>
 
