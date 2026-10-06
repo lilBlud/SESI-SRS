@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
@@ -16,7 +17,7 @@
   body {
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     margin: 0;
     padding: 0;
   }
@@ -79,4 +80,120 @@
     -webkit-user-select: none;
     user-select: none;
   }
+
+  /* Category scroll area */
+  .category-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(16, 185, 129, 0.3) transparent;
+  }
+  .category-scroll::-webkit-scrollbar {
+    height: 4px;
+    display: block;
+  }
+  .category-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .category-scroll::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.3);
+    border-radius: 4px;
+  }
+
+  /* Flashcard flip */
+  .flashcard {
+    perspective: 1200px;
+  }
+  .flashcard-inner {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+  .flashcard.flipped .flashcard-inner {
+    transform: rotateY(180deg);
+  }
+  .flashcard-front, .flashcard-back {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .flashcard-back {
+    transform: rotateY(180deg);
+  }
+}
+
+/* ── Electric Grid Animation ── */
+@keyframes grid-flow {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 24px; }
+}
+
+.animate-grid-flow {
+  animation: grid-flow 2s linear infinite;
+}
+
+/* ── Floating Particles ── */
+@keyframes float-up {
+  0% {
+    transform: translateY(100%) scale(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+    transform: translateY(60%) scale(1);
+  }
+  80% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-20%) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.floating-particle {
+  position: absolute;
+  bottom: 0;
+  animation: float-up 4s ease-in-out infinite;
+}
+
+/* ── Gentle Float Animation ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ── Slow Bounce ── */
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* ── Slow Pulse ── */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+/* ── Tabular numbers for scores ── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Zoom Background ── */
+@keyframes zoom-bg {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.animate-zoom-bg {
+  animation: zoom-bg 30s ease-in-out infinite;
 }

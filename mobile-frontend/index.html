@@ -10,7 +10,15 @@
     <meta name="description" content="IBR Literacy Hub - Incentive-Based Regulation & Sustainability Knowledge Portal" />
     <title>IBR Literacy Hub - Mobile</title>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <link rel="manifest" href="/manifest.json" />
+    <style>
+      .flashcard { perspective: 1000px; }
+      .flashcard-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+      .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+      .flashcard-front, .flashcard-back { backface-visibility: hidden; }
+      .flashcard-back { transform: rotateY(180deg); }
+    </style>
   </head>
   <body>
     <div id="root"></div>

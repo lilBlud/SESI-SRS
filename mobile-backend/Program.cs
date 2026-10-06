@@ -1,4 +1,13 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using mobile_backend.Data;
+using mobile_backend.Models;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// ─── Database Configuration ───
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddCors(options =>
 {
@@ -15,140 +24,546 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    // Force rebuild
+
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
-// ─── Glossary Data ───
-var glossary = new[]
+// Serve uploaded images from /uploads
+app.UseStaticFiles();
+
+// ─── Ensure DB is created + seed glossary data ───
+using (var scope = app.Services.CreateScope())
 {
-    new GlossaryItem("IBR", "Incentive-Based Regulation", "Sets 3-year allowable revenue while rewarding cost efficiency & reliability.", "IBR"),
-    new GlossaryItem("RAB", "Regulated Asset Base", "Total approved physical asset infrastructure used to calculate return on capital.", "IBR"),
-    new GlossaryItem("WACC", "Weighted Average Cost of Capital", "Allowed return rate balancing cost of debt and expected shareholder return.", "IBR"),
-    new GlossaryItem("ICPT", "Imbalance Cost Pass-Through", "6-month adjustment reconciling uncontrollable global fuel price swings.", "IBR"),
-    new GlossaryItem("OPEX", "Operating Expenditure", "The day-to-day costs incurred by the utility to maintain and operate the network.", "IBR"),
-    new GlossaryItem("CAPEX", "Capital Expenditure", "Investment in new assets or upgrades to existing infrastructure within the regulated network.", "IBR"),
-    new GlossaryItem("SAIDI", "System Avg Interruption Duration", "Average power outage duration in minutes per customer per year.", "IBR"),
-    new GlossaryItem("SAIFI", "System Avg Interruption Frequency", "Average number of sustained interruptions per customer per year.", "IBR"),
-    new GlossaryItem("RP", "Regulatory Period", "The fixed time frame (usually 3 years) for which tariffs and revenue caps are set under IBR.", "IBR"),
-    new GlossaryItem("BBM", "Building Block Model", "The methodology used to calculate the total allowed revenue from individual cost components.", "IBR"),
-    new GlossaryItem("ESG", "Environmental, Social, Governance", "Framework for assessing sustainability and ethical impact of a company.", "ESG"),
-    new GlossaryItem("Net Zero", "Net Zero Carbon Emissions", "Balancing the amount of emitted greenhouse gases with equivalent emissions offset.", "ESG"),
-    new GlossaryItem("RE", "Renewable Energy", "Energy generated from naturally replenishing sources like solar, wind, hydro, and biomass.", "ESG"),
-    new GlossaryItem("TCFD", "Task Force on Climate-related Financial Disclosures", "Framework for companies to disclose climate-related financial risks and opportunities.", "ESG"),
-    new GlossaryItem("GHG", "Greenhouse Gas", "Gases that trap heat in the atmosphere, contributing to global warming (CO₂, methane, etc.).", "ESG"),
-    new GlossaryItem("SDG", "Sustainable Development Goals", "17 global goals set by the United Nations for sustainable development by 2030.", "ESG")
-};
-
-// ─── Quiz Data by Category ───
-var ibrQuestions = new[]
-{
-    new QuizQuestion(1, "What does IBR stand for?",
-        new[] { "Incentive-Based Regulation", "International Business Report", "Internal Budget Review", "Integrated Balance Ratio" },
-        0, "IBR stands for Incentive-Based Regulation — a framework that sets allowable revenue over a regulatory period while rewarding efficiency."),
-
-    new QuizQuestion(2, "What is the Building Block Model used for?",
-        new[] { "Constructing physical buildings", "Calculating total allowed revenue", "Managing employee schedules", "Designing software architecture" },
-        1, "The Building Block Model calculates total allowed revenue by summing OPEX, Depreciation, Return on RAB, and Taxes."),
-
-    new QuizQuestion(3, "The formula for Revenue Requirement is:",
-        new[] { "Revenue = RAB × WACC", "Revenue = OPEX + Depreciation + (RAB × WACC) + Taxes", "Revenue = CAPEX + OPEX", "Revenue = SAIDI × SAIFI" },
-        1, "The complete Revenue Requirement formula includes all four building blocks: OPEX, Depreciation, Return on Capital (RAB × WACC), and Taxes."),
-
-    new QuizQuestion(4, "What does WACC represent?",
-        new[] { "World Average Carbon Credit", "Weighted Average Cost of Capital", "Weekly Asset Compliance Check", "Wholesale Actual Cost Calculator" },
-        1, "WACC is the Weighted Average Cost of Capital — the allowed return rate that balances the cost of debt and expected shareholder return."),
-
-    new QuizQuestion(5, "How often is ICPT typically adjusted?",
-        new[] { "Every month", "Every 6 months", "Every year", "Every 3 years" },
-        1, "ICPT (Imbalance Cost Pass-Through) is adjusted every 6 months to reconcile uncontrollable global fuel price swings."),
-
-    new QuizQuestion(6, "What does RAB stand for?",
-        new[] { "Revenue Allocation Board", "Regulated Asset Base", "Risk Assessment Benchmark", "Regional Authority Budget" },
-        1, "RAB is the Regulated Asset Base — the total approved physical asset infrastructure used to calculate return on capital."),
-
-    new QuizQuestion(7, "What does SAIDI measure?",
-        new[] { "System average interruption duration", "Standard annual investment depreciation", "Sustainable asset impact disclosure", "System automated incident detection" },
-        0, "SAIDI measures the System Average Interruption Duration — the average power outage duration in minutes per customer per year."),
-
-    new QuizQuestion(8, "What is the typical duration of a Regulatory Period (RP) under IBR?",
-        new[] { "1 year", "2 years", "3 years", "5 years" },
-        2, "Under IBR, a Regulatory Period typically spans 3 years, during which tariffs and revenue caps remain fixed."),
-
-    new QuizQuestion(9, "What is the 'Return ON Capital' in the BBM?",
-        new[] { "RAB × WACC", "OPEX ÷ Revenue", "CAPEX − Depreciation", "Tax × Asset Life" },
-        0, "Return ON Capital is calculated as RAB × WACC, representing the profit the utility is allowed to earn on its asset base."),
-
-    new QuizQuestion(10, "What does SAIFI measure in network reliability?",
-        new[] { "Average duration of outages", "Number of sustained interruptions per customer per year", "Cost of system failures", "Frequency of maintenance activities" },
-        1, "SAIFI measures the System Average Interruption Frequency Index — the average number of sustained interruptions per customer per year.")
-};
-
-var esgQuestions = new[]
-{
-    new QuizQuestion(1, "What does ESG stand for?",
-        new[] { "Energy Supply Governance", "Environmental, Social, Governance", "Economic Stability Growth", "Efficiency Standards Guide" },
-        1, "ESG stands for Environmental, Social, and Governance — a framework for assessing sustainability and ethical impact."),
-
-    new QuizQuestion(2, "What is the goal of 'Net Zero'?",
-        new[] { "Zero profit margin", "Zero customer complaints", "Balancing emitted greenhouse gases with offsets", "Zero network downtime" },
-        2, "Net Zero means balancing the amount of emitted greenhouse gases with equivalent emissions offsets to achieve carbon neutrality."),
-
-    new QuizQuestion(3, "Which of these is a renewable energy source?",
-        new[] { "Natural gas", "Coal", "Solar power", "Diesel" },
-        2, "Solar power is a renewable energy source generated from naturally replenishing sunlight, unlike fossil fuels which are finite."),
-
-    new QuizQuestion(4, "What does TCFD stand for?",
-        new[] { "Total Carbon Footprint Directive", "Task Force on Climate-related Financial Disclosures", "Transnational Clean Fuel Development", "Technical Committee for Future Design" },
-        1, "TCFD is the Task Force on Climate-related Financial Disclosures — a framework for companies to disclose climate-related financial risks."),
-
-    new QuizQuestion(5, "What are GHG emissions?",
-        new[] { "Global Health Guidelines", "Greenhouse Gas emissions", "Government Housing Grants", "General Hazard Governance" },
-        1, "GHG stands for Greenhouse Gas — gases like CO₂ and methane that trap heat in the atmosphere, contributing to global warming."),
-
-    new QuizQuestion(6, "How many Sustainable Development Goals (SDGs) are there?",
-        new[] { "10", "15", "17", "20" },
-        2, "There are 17 Sustainable Development Goals set by the United Nations, targeting global challenges by 2030."),
-
-    new QuizQuestion(7, "Which SDG focuses on affordable and clean energy?",
-        new[] { "SDG 5", "SDG 7", "SDG 13", "SDG 15" },
-        1, "SDG 7 aims to ensure access to affordable, reliable, sustainable, and modern energy for all."),
-
-    new QuizQuestion(8, "What is carbon neutrality?",
-        new[] { "Using only nuclear power", "Having zero energy consumption", "Offsetting all carbon emissions produced", "Banning all fossil fuels" },
-        2, "Carbon neutrality means achieving net-zero carbon dioxide emissions by balancing emissions with carbon removal or offsets."),
-
-    new QuizQuestion(9, "Which pillar of ESG covers employee welfare and community impact?",
-        new[] { "Environmental", "Social", "Governance", "Economic" },
-        1, "The Social pillar of ESG covers topics like employee welfare, diversity, community impact, and human rights."),
-
-    new QuizQuestion(10, "What does the 'Governance' pillar in ESG primarily address?",
-        new[] { "Carbon emissions reporting", "Board structure, ethics, and transparency", "Renewable energy targets", "Water conservation" },
-        1, "Governance addresses how a company is led and managed — including board structure, executive pay, ethics, and anti-corruption practices.")
-};
-
-// ─── API Endpoints ───
-app.MapGet("/api/glossary", () => Results.Ok(glossary))
-   .WithName("GetGlossary");
-
-app.MapGet("/api/quiz/{category}", (string category) =>
-{
-    return category.ToLower() switch
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    // db.Database.EnsureDeleted(); // Removed so data is never wiped
+    try 
     {
-        "ibr" => Results.Ok(ibrQuestions),
-        "esg" => Results.Ok(esgQuestions),
-        _ => Results.NotFound(new { message = "Category not found. Use 'ibr' or 'esg'." })
-    };
-})
-.WithName("GetQuizByCategory");
+        var dbCreator = db.Database.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>();
+        dbCreator.CreateTables();
+    }
+    catch 
+    {
+        // Tables already exist or EnsureCreated handles it
+    }
 
-app.MapGet("/api/quiz", () => Results.Ok(ibrQuestions.Concat(esgQuestions)))
-   .WithName("GetAllQuiz");
+    // Seed glossary terms if empty
+    if (!db.GlossaryTerms.Any())
+    {
+        db.GlossaryTerms.AddRange(
+            // ── IBR Framework ──
+            new GlossaryTerm { Term = "IBR",      FullName = "Incentive-Based Regulation",                      Description = "A regulatory framework that sets a ceiling on revenues while offering financial rewards for cost savings and penalizing poor service quality.", Formula = "Revenue = Operating Expenditure + Depreciation + (Regulated Asset Base × Weighted Average Cost of Capital) + Tax", FormulaNotations = "Revenue\nOPEX\nDepreciation\nRAB\nWACC\nTax", FormulaTermMeanings = "Revenue: The total allowed revenue.\nOPEX: Operating Expenditure.\nDepreciation: Allowance for asset depreciation.\nRAB: Regulated Asset Base.\nWACC: Weighted Average Cost of Capital.\nTax: Tax allowance.", Category = "IBR Framework" },
+            new GlossaryTerm { Term = "RAB",      FullName = "Regulated Asset Base",                            Description = "The total value of assets used by the utility to provide regulated services, upon which a return is allowed.", Formula = "Regulated Asset Base = Opening Regulated Asset Base + Capital Expenditure − Depreciation − Disposals", FormulaNotations = "RAB\nOpening RAB\nCAPEX\nDepreciation\nDisposals", FormulaTermMeanings = "RAB: Regulated Asset Base at year end.\nOpening RAB: Regulated Asset Base at year start.\nCAPEX: Capital Expenditure.\nDepreciation: Asset depreciation.\nDisposals: Value of disposed assets.", Category = "IBR Framework" },
+            new GlossaryTerm { Term = "WACC",     FullName = "Weighted Average Cost of Capital",                 Description = "The benchmark return on capital allowed by the regulator, reflecting the blended cost of debt and equity.", Formula = "Weighted Average Cost of Capital = (Equity Proportion × Cost of Equity) + (Debt Proportion × Cost of Debt × (1 − Corporate Tax Rate))", FormulaNotations = "WACC\nE/V\nRe\nD/V\nRd\nTc", FormulaTermMeanings = "WACC: Weighted Average Cost of Capital.\nE/V: Proportion of equity in the capital structure.\nRe: Cost of equity.\nD/V: Proportion of debt in the capital structure.\nRd: Cost of debt.\nTc: Corporate tax rate.", Category = "IBR Framework" },
+            new GlossaryTerm { Term = "OPEX",     FullName = "Operating Expenditure",                           Description = "Day-to-day operational expenses like maintenance, salaries, and administration.", Formula = "", Category = "IBR Framework" },
+            new GlossaryTerm { Term = "CAPEX",    FullName = "Capital Expenditure",                             Description = "Investment in new assets or upgrades to existing infrastructure within the regulated network.", Formula = "", Category = "IBR Framework" },
+            new GlossaryTerm { Term = "ICPT",     FullName = "Imbalance Cost Pass-Through",                     Description = "A mechanism that reviews and passes through uncontrollable fuel and generation cost variances to consumers every 6 months.", Formula = "Imbalance Cost Pass-Through = Actual Fuel Cost − Forecasted Fuel Cost", FormulaNotations = "ICPT\nActual Fuel Cost\nForecasted Fuel Cost", FormulaTermMeanings = "ICPT: Imbalance Cost Pass-Through.\nActual Fuel Cost: The real cost incurred for fuel.\nForecasted Fuel Cost: The predicted cost of fuel.", Category = "IBR Framework" },
+            new GlossaryTerm { Term = "RP",       FullName = "Regulatory Period",                               Description = "The fixed time frame (usually 3 years) for which tariffs and revenue caps are set under IBR.", Formula = "", Category = "IBR Framework" },
+            new GlossaryTerm { Term = "BBM",      FullName = "Building Block Model",                            Description = "The methodology used to calculate the total allowed revenue from individual cost components.", Formula = "Allowed Revenue = Operating Expenditure + Return on Regulated Asset Base + Depreciation + Tax", FormulaNotations = "AR\nOPEX\nReturn on RAB\nDepreciation\nTax", FormulaTermMeanings = "AR: Allowed Revenue.\nOPEX: Operating Expenditure.\nReturn on RAB: Return allowed on the Regulated Asset Base.\nDepreciation: Asset depreciation allowance.\nTax: Tax allowance.", Category = "IBR Framework" },
+            new GlossaryTerm { Term = "MAR",      FullName = "Maximum Allowable Revenue",                       Description = "The maximum revenue a regulated utility is allowed to earn during a regulatory period.", Formula = "Maximum Allowable Revenue = Sum of (Operating Expenditure + Depreciation + Return on Capital + Corporate Tax Allowance) over the Regulatory Period", FormulaNotations = "MAR\nOPEX\nDep\nReturn\nTax\nRP", FormulaTermMeanings = "MAR: Maximum Allowable Revenue.\nOPEX: Operating Expenditure.\nDep: Depreciation.\nReturn: Return on capital.\nTax: Corporate tax allowance.\nRP: Regulatory Period.", Category = "IBR Framework" },
+
+            // ── Strategy and Sustainability ──
+            new GlossaryTerm { Term = "NGER",     FullName = "National Green Energy Roadmap",                   Description = "Malaysia's strategic plan to transition towards green energy, targeting 70% renewable energy capacity by 2050.", Formula = "", Category = "Strategy and Sustainability" },
+            new GlossaryTerm { Term = "SDG",      FullName = "Sustainable Development Goals",                   Description = "17 global goals set by the United Nations for sustainable development by 2030.", Formula = "", Category = "Strategy and Sustainability" },
+            new GlossaryTerm { Term = "Net Zero", FullName = "Net Zero Carbon Emissions",                       Description = "The balance between the amount of greenhouse gas produced and the amount removed from the atmosphere.", Formula = "Net Zero = Total Emissions − Carbon Offsets = 0", FormulaNotations = "Net Zero\nTotal Emissions\nCarbon Offsets", FormulaTermMeanings = "Net Zero: A state of zero net emissions.\nTotal Emissions: Overall greenhouse gases emitted.\nCarbon Offsets: Reductions or removals of emissions.", Category = "Strategy and Sustainability" },
+            new GlossaryTerm { Term = "RE",       FullName = "Renewable Energy",                                Description = "Energy generated from naturally replenishing sources like solar, wind, hydro, and biomass.", Formula = "Renewable Energy Percentage = (Renewable Energy Generation / Total Generation) × 100", FormulaNotations = "RE%\nRE Generation\nTotal Generation", FormulaTermMeanings = "RE%: Renewable Energy percentage.\nRE Generation: Amount of energy produced from renewable sources.\nTotal Generation: Total electricity produced.", Category = "Strategy and Sustainability" },
+            new GlossaryTerm { Term = "CSR",      FullName = "Corporate Social Responsibility",                 Description = "Business practices that integrate social and environmental concerns into company operations and stakeholder interactions.", Formula = "", Category = "Strategy and Sustainability" },
+
+            // ── Energy Market and Industry ──
+            new GlossaryTerm { Term = "LSS",      FullName = "Large Scale Solar",                               Description = "Utility-scale solar photovoltaic installations typically above 1 MW connected to the transmission grid.", Formula = "Capacity Factor = (Actual Output / Maximum Possible Output) × 100%", FormulaNotations = "Capacity Factor\nActual Output\nMax Possible Output", FormulaTermMeanings = "Capacity Factor: The ratio of actual energy produced to theoretical maximum.\nActual Output: Real energy generated.\nMax Possible Output: Maximum energy that could be produced running constantly.", Category = "Energy Market and Industry" },
+            new GlossaryTerm { Term = "BESS",     FullName = "Battery Energy Storage System",                   Description = "Systems that capture energy and store it for use at a later time, critical for solar integration and grid stability.", Formula = "Storage Efficiency = (Energy Output / Energy Input) × 100%", FormulaNotations = "Storage Efficiency\nEnergy Output\nEnergy Input", FormulaTermMeanings = "Storage Efficiency: How well the system retains energy.\nEnergy Output: Energy discharged from the battery.\nEnergy Input: Energy charged into the battery.", Category = "Energy Market and Industry" },
+            new GlossaryTerm { Term = "FiT",      FullName = "Feed-in Tariff",                                  Description = "A policy mechanism that guarantees renewable energy producers a fixed price for electricity fed into the grid.", Formula = "", Category = "Energy Market and Industry" },
+            new GlossaryTerm { Term = "PPA",      FullName = "Power Purchase Agreement",                        Description = "A long-term contract between an electricity generator and a power purchaser to buy energy at pre-agreed prices.", Formula = "", Category = "Energy Market and Industry" },
+            new GlossaryTerm { Term = "IPP",      FullName = "Independent Power Producer",                      Description = "A private entity that generates electricity for sale to utilities and end users, not owned by the utility.", Formula = "", Category = "Energy Market and Industry" },
+            new GlossaryTerm { Term = "T&D",      FullName = "Transmission & Distribution",                     Description = "The network infrastructure for transporting electricity from generation plants to end consumers.", Formula = "Transmission and Distribution Losses = ((Energy In − Energy Delivered) / Energy In) × 100%", FormulaNotations = "T&D Losses\nEnergy In\nEnergy Delivered", FormulaTermMeanings = "T&D Losses: Transmission & Distribution energy losses.\nEnergy In: Total electricity entering the grid.\nEnergy Delivered: Total electricity reaching consumers.", Category = "Energy Market and Industry" },
+
+            // ── ESG ──
+            new GlossaryTerm { Term = "ESG",      FullName = "Environmental, Social, and Governance",           Description = "A framework used to assess a company's business practices and performance on sustainability and ethical issues.", Formula = "", Category = "ESG" },
+            new GlossaryTerm { Term = "TCFD",     FullName = "Task Force on Climate-related Financial Disclosures", Description = "Framework for companies to disclose climate-related financial risks and opportunities.", Formula = "", Category = "ESG" },
+            new GlossaryTerm { Term = "GHG",      FullName = "Greenhouse Gas",                                  Description = "Gases that trap heat in the atmosphere, contributing to global warming (CO₂, methane, etc.).", Formula = "Carbon Dioxide Equivalent = Sum of (Amount of specific Greenhouse Gas × Global Warming Potential of the gas)", FormulaNotations = "CO₂e\nGas\nGWP", FormulaTermMeanings = "CO₂e: Carbon dioxide equivalent.\nGas: Amount of a specific greenhouse gas.\nGWP: Global Warming Potential of the gas.", Category = "ESG" },
+            new GlossaryTerm { Term = "Scope 1",  FullName = "Direct GHG Emissions",                           Description = "Greenhouse gas emissions directly from sources owned or controlled by the company (e.g. company vehicles, generators).", Formula = "", Category = "ESG" },
+            new GlossaryTerm { Term = "Scope 2",  FullName = "Indirect GHG Emissions (Energy)",                 Description = "Emissions from purchased electricity, steam, heating, and cooling consumed by the company.", Formula = "Indirect Greenhouse Gas Emissions = Electricity Consumed (kWh) × Emission Factor", FormulaNotations = "Scope 2\nElectricity Consumed\nEmission Factor", FormulaTermMeanings = "Scope 2: Indirect emissions from purchased energy.\nElectricity Consumed: Amount of electricity used in kWh.\nEmission Factor: Rate of emissions per unit of electricity.", Category = "ESG" },
+            new GlossaryTerm { Term = "GRI",      FullName = "Global Reporting Initiative",                     Description = "An international framework for sustainability reporting, helping organizations communicate their ESG impact.", Formula = "", Category = "ESG" },
+
+            // ── EPSB ──
+            new GlossaryTerm { Term = "EPSB",     FullName = "Electrical Power Supply Board",                   Description = "The body responsible for overseeing the reliable generation, transmission, and distribution of electrical power in Sabah.", Formula = "", Category = "EPSB" },
+            new GlossaryTerm { Term = "SAIDI",    FullName = "System Average Interruption Duration Index",       Description = "A key reliability indicator measuring the average duration of power outages per customer over a year.", Formula = "System Average Interruption Duration Index = Sum of Customer Interruption Durations / Total Customers Served", FormulaNotations = "SAIDI\nCustomer Interruption Durations\nTotal Customers Served", FormulaTermMeanings = "SAIDI: System Average Interruption Duration Index.\nCustomer Interruption Durations: Sum of all outage times.\nTotal Customers Served: Total number of connected customers.", Category = "EPSB" },
+            new GlossaryTerm { Term = "SAIFI",    FullName = "System Average Interruption Frequency Index",      Description = "Average number of sustained interruptions per customer per year.", Formula = "System Average Interruption Frequency Index = Total Interruptions / Total Customers Served", FormulaNotations = "SAIFI\nTotal Interruptions\nTotal Customers Served", FormulaTermMeanings = "SAIFI: System Average Interruption Frequency Index.\nTotal Interruptions: Number of sustained outages.\nTotal Customers Served: Total number of connected customers.", Category = "EPSB" },
+            new GlossaryTerm { Term = "CAIDI",    FullName = "Customer Average Interruption Duration Index",      Description = "The average time to restore service once an outage occurs.", Formula = "Customer Average Interruption Duration Index = System Average Interruption Duration Index / System Average Interruption Frequency Index", FormulaNotations = "CAIDI\nSAIDI\nSAIFI", FormulaTermMeanings = "CAIDI: Customer Average Interruption Duration Index.\nSAIDI: System Average Interruption Duration Index.\nSAIFI: System Average Interruption Frequency Index.", Category = "EPSB" },
+            new GlossaryTerm { Term = "SESB",     FullName = "Sabah Electricity Sdn. Bhd.",                     Description = "The main utility company responsible for generation, transmission, and distribution of electricity in Sabah.", Formula = "", Category = "EPSB" },
+
+            // ── BDV ──
+            new GlossaryTerm { Term = "BDV",      FullName = "Breakdown Voltage",                               Description = "The minimum voltage at which an insulating material (e.g. transformer oil) fails and conducts electricity.", Formula = "Breakdown Voltage Test: Breakdown Voltage measured in kilovolts (IEC 60156)", FormulaNotations = "V_breakdown", FormulaTermMeanings = "V_breakdown: Breakdown voltage value in kilovolts.", Category = "BDV" },
+            new GlossaryTerm { Term = "DGA",      FullName = "Dissolved Gas Analysis",                          Description = "A diagnostic technique analyzing gases dissolved in transformer oil to detect developing faults.", Formula = "", Category = "BDV" },
+            new GlossaryTerm { Term = "PPM",      FullName = "Parts Per Million",                               Description = "A unit of measurement used to describe the concentration of substances (e.g., moisture in transformer oil).", Formula = "Parts Per Million = (Mass of solute / Mass of solution) × 1,000,000", FormulaNotations = "PPM\nMass of solute\nMass of solution", FormulaTermMeanings = "PPM: Parts per million concentration.\nMass of solute: Mass of the dissolved substance.\nMass of solution: Total mass of the mixture.", Category = "BDV" },
+            new GlossaryTerm { Term = "TAN",      FullName = "Total Acid Number",                               Description = "Measures acidity of transformer oil, indicating oil degradation over time.", Formula = "Total Acid Number measured in milligrams of potassium hydroxide per gram of sample", FormulaNotations = "TAN\nmg KOH/g", FormulaTermMeanings = "TAN: Total Acid Number.\nmg KOH/g: Milligrams of potassium hydroxide per gram of sample.", Category = "BDV" },
+
+            // ── Governance ──
+            new GlossaryTerm { Term = "BOD",      FullName = "Board of Directors",                              Description = "The governing body responsible for the strategic direction and oversight of the organization.", Formula = "", Category = "Governance" },
+            new GlossaryTerm { Term = "KPI",      FullName = "Key Performance Indicator",                       Description = "Measurable values that demonstrate how effectively the company is achieving key business objectives.", Formula = "Key Performance Indicator Achievement = (Actual Performance / Target Performance) × 100%", FormulaNotations = "KPI Achievement\nActual\nTarget", FormulaTermMeanings = "KPI Achievement: Percentage of goal met.\nActual: Realized performance value.\nTarget: Goal performance value.", Category = "Governance" },
+            new GlossaryTerm { Term = "SOX",      FullName = "Sarbanes-Oxley Act",                              Description = "Regulations for corporate financial transparency and accountability to protect shareholders.", Formula = "", Category = "Governance" },
+            new GlossaryTerm { Term = "MCCG",     FullName = "Malaysian Code on Corporate Governance",          Description = "A set of principles and best practices to strengthen corporate governance standards in Malaysia.", Formula = "", Category = "Governance" },
+
+            // ── Corporate Performance ──
+            new GlossaryTerm { Term = "ROI",      FullName = "Return on Investment",                            Description = "A financial metric measuring the profitability of an investment relative to its cost.", Formula = "Return on Investment = ((Net Profit − Investment Cost) / Investment Cost) × 100%", FormulaNotations = "ROI\nNet Profit\nInvestment Cost", FormulaTermMeanings = "ROI: Return on Investment.\nNet Profit: Total profit after costs.\nInvestment Cost: Initial cost of the investment.", Category = "Corporate Performance" },
+            new GlossaryTerm { Term = "EBITDA",   FullName = "Earnings Before Interest, Taxes, Depreciation & Amortization", Description = "A measure of a company's overall financial performance as an alternative to net income.", Formula = "Earnings Before Interest, Taxes, Depreciation & Amortization = Revenue − Operating Expenses (excluding Depreciation and Amortization)", FormulaNotations = "EBITDA\nRevenue\nOPEX (excl. D&A)", FormulaTermMeanings = "EBITDA: Earnings Before Interest, Taxes, Depreciation & Amortization.\nRevenue: Total income.\nOPEX (excl. D&A): Operating expenses excluding depreciation and amortization.", Category = "Corporate Performance" },
+            new GlossaryTerm { Term = "ROA",      FullName = "Return on Assets",                                Description = "Indicates how profitable a company is relative to its total assets.", Formula = "Return on Assets = (Net Income / Total Assets) × 100%", FormulaNotations = "ROA\nNet Income\nTotal Assets", FormulaTermMeanings = "ROA: Return on Assets.\nNet Income: Total profit.\nTotal Assets: Value of all owned assets.", Category = "Corporate Performance" },
+            new GlossaryTerm { Term = "ROE",      FullName = "Return on Equity",                                Description = "Measures the return generated on shareholders' equity.", Formula = "Return on Equity = (Net Income / Shareholders' Equity) × 100%", FormulaNotations = "ROE\nNet Income\nShareholders' Equity", FormulaTermMeanings = "ROE: Return on Equity.\nNet Income: Total profit.\nShareholders' Equity: Net worth of the company.", Category = "Corporate Performance" },
+            new GlossaryTerm { Term = "PAT",      FullName = "Profit After Tax",                                Description = "The net profit of a company after all taxes have been deducted.", Formula = "Profit After Tax = Profit Before Tax − Income Tax", FormulaNotations = "PAT\nPBT\nIncome Tax", FormulaTermMeanings = "PAT: Profit After Tax.\nPBT: Profit Before Tax.\nIncome Tax: Total corporate taxes paid.", Category = "Corporate Performance" },
+
+            // ── ISO Management ──
+            new GlossaryTerm { Term = "ISO 9001",   FullName = "Quality Management System",                    Description = "International standard for quality management systems, ensuring consistent quality in products and services.", Formula = "", Category = "ISO Management" },
+            new GlossaryTerm { Term = "ISO 14001",  FullName = "Environmental Management System",               Description = "International standard for effective environmental management systems to reduce environmental footprint.", Formula = "", Category = "ISO Management" },
+            new GlossaryTerm { Term = "ISO 45001",  FullName = "Occupational Health & Safety Management",       Description = "International standard for occupational health and safety management systems to prevent work-related injuries.", Formula = "", Category = "ISO Management" },
+            new GlossaryTerm { Term = "ISO 27001",  FullName = "Information Security Management System",        Description = "International standard for managing information security, including cyber security and data protection.", Formula = "", Category = "ISO Management" },
+            new GlossaryTerm { Term = "PDCA",       FullName = "Plan-Do-Check-Act",                             Description = "A four-step iterative management method used for continuous improvement of processes and products.", Formula = "Cycle: Plan → Do → Check → Act → Repeat", FormulaNotations = "Plan\nDo\nCheck\nAct", FormulaTermMeanings = "Plan: Establish objectives and processes.\nDo: Implement the plan.\nCheck: Evaluate the results.\nAct: Adjust and improve the process.", Category = "ISO Management" },
+
+            // ── SE Risk ──
+            new GlossaryTerm { Term = "ERM",      FullName = "Enterprise Risk Management",                      Description = "A comprehensive approach to identifying, assessing, and managing risks across the entire organization.", Formula = "Risk Score = Likelihood of Risk Occurring × Impact of Consequence", FormulaNotations = "Risk Score\nLikelihood\nImpact", FormulaTermMeanings = "Risk Score: Overall risk severity.\nLikelihood: Probability of the risk occurring.\nImpact: Severity of the consequences.", Category = "SE Risk" },
+            new GlossaryTerm { Term = "HIRARC",   FullName = "Hazard Identification, Risk Assessment & Risk Control", Description = "A systematic process to identify hazards, assess risks, and determine appropriate control measures.", Formula = "Risk Level = Extent of Severity × Likelihood of Occurrence", FormulaNotations = "Risk Level\nSeverity\nProbability", FormulaTermMeanings = "Risk Level: Calculated risk rating.\nSeverity: Extent of harm or damage.\nProbability: Likelihood of occurrence.", Category = "SE Risk" },
+            new GlossaryTerm { Term = "BCP",      FullName = "Business Continuity Plan",                        Description = "A plan outlining procedures and instructions an organization must follow in the face of disasters or disruptions.", Formula = "", Category = "SE Risk" },
+            new GlossaryTerm { Term = "RTO",      FullName = "Recovery Time Objective",                         Description = "The maximum acceptable length of time a business process can be offline after a failure or disaster.", Formula = "", Category = "SE Risk" },
+            new GlossaryTerm { Term = "RPO",      FullName = "Recovery Point Objective",                        Description = "The maximum acceptable amount of data loss measured in time before the disaster.", Formula = "", Category = "SE Risk" }
+        );
+        await db.SaveChangesAsync();
+    }
+
+    var ibrTerms = new List<GlossaryTerm> {
+        new GlossaryTerm { Term = "Bundled", FullName = "", Description = "The tariff regime in effect during the period when the Minister approves an average tariff for SESB as a whole.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Unbundled", FullName = "", Description = "The tariff regime in effect during the period when the Minister approves an average tariff for each individual RBE.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Actual Average Tariff", FullName = "AAT", Description = "The actual revenue divided by actual units sold.", Formula = "Actual Average Tariff = Actual Revenue / Actual Units Sold", FormulaNotations = "Actual Revenue\nActual Units Sold", FormulaTermMeanings = "Actual Revenue: The total collected revenue in RM.\nActual Units Sold: The total energy consumption in kWh.", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "bREAT_t", FullName = "Bundled Required Average Tariff", Description = "The calculation of the Bundled Required Average Tariff.", Formula = "Bundled Required Average Tariff = Sum of Bundled Required Tariff + Bundled Revenue-Cap Adjustment + Price-Cap Adjustment", FormulaNotations = "P\nt\nbREAT_t\nbREQT_P\nbRCAP_t\nPCAP_t", FormulaTermMeanings = "P: Regulatory Period\nt: single year in Regulatory Period P\nbREAT_t: Bundled Required Average Tariff for year t (sen/kWh)\nbREQT_P: sum of Bundled Base Average Tariff, Tariff Support Subsidy, Fuel Subsidy and LSS Subsidy for Period P\nbRCAP_t: Bundled Revenue-Cap Adjustment in year t\nPCAP_t: Price-Cap Adjustment in year t", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Actual Cost", FullName = "", Description = "The actual generation cost which comprises of fuel cost, LSS cost and other generation cost.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Allowance for Doubtful Debts", FullName = "", Description = "The provision for uncollectable account receivable when debtors are unable to pay their outstanding debt.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Allowed Revenue", FullName = "", Description = "The average revenues in a Regulatory Period required to recover the efficient costs of a RBE including a reasonable return on its investments.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Annual Regulatory Adjustment", FullName = "", Description = "The adjustments in any one year that comprises Revenue-Cap and Price-Cap Adjustment.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Annual Revenue Requirement", FullName = "ARR", Description = "The revenues in any one year required to recover the efficient costs of a RBE including applicable subsidies and a reasonable return.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Auditor's Regulatory Report", FullName = "", Description = "Auditors' opinion as to whether the input data and underlying calculations and assumptions are consistent with the Guidelines.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Average Generation Cost", FullName = "", Description = "The approved forecast average cost of power purchases during a Regulatory Period.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Base Average Tariff", FullName = "BASE", Description = "Bundled predetermined tariff by the Commission charged to electricity consumers.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Base Tariff Table", FullName = "", Description = "The list of individual tariffs for Regulated Services as published by the Licensee.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Commission", FullName = "Energy Commission", Description = "The Energy Commission established under Act 610.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Consumer Services", FullName = "CS", Description = "The RBE responsible for supplying and selling electricity to, and managing the interface with, final consumers.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Contracted-Out Services", FullName = "", Description = "A contract entered into by SESB with a third party to perform the Regulated Services.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Distribution Network", FullName = "", Description = "The RBE responsible for planning, investing in, maintaining, and undertaking the real-time operation and control of the electricity distribution system (below 66kV).", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Excluded Services", FullName = "", Description = "Expenditures and revenues for services provided by a RBE other than services provided under Regulated Services.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Fuel Subsidy", FullName = "", Description = "Subsidy claimable by SESB on the difference in fuel payment between subsidised and unsubsidised diesel and medium fuel oil.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Generation Base Tariff", FullName = "", Description = "Tariff that recovers the generation costs coming from PPAs, SLAs, non-SLAs and PEAs.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Government", FullName = "", Description = "Federal Government of Malaysia.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Grid System Operator", FullName = "GSO", Description = "The RBE responsible for system security, operational planning, dispatch of generating units, real-time operation and control.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "IBR", FullName = "Incentive Based Regulation", Description = "A form of regulation where regulated entities are able to earn additional profits if they out-perform relative to expected costs.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "ICPT Adjustment", FullName = "Imbalance Cost Pass-Through", Description = "Adjustment calculated at six-month intervals to pass through differences between actual fuel and other generation-specific costs.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Interim Review Adjustment", FullName = "", Description = "Any adjustments which are considered during the Regulatory Period.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "IPP", FullName = "Independent Power Producers", Description = "Private entities that own and operate power plants to generate electricity for sale.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Licensee", FullName = "", Description = "A person licensed under Section 9 of the Act 447.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "LSS", FullName = "Large Scale Solar", Description = "Large scale solar power generation facilities.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "LSS Subsidy", FullName = "", Description = "Large scale solar subsidy claimable by SESB on displaced cost and spinning reserve.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Other Income", FullName = "", Description = "Income not directly related to electricity supply but which derives from the use of assets and/or staff.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "PEA", FullName = "Power Exchange Agreement", Description = "Agreement governing the exchange of power between utility entities.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "PPA", FullName = "Power Purchase Agreement", Description = "Contract between a generator and a buyer for the sale and purchase of electricity.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Price-Cap", FullName = "", Description = "A form of regulation where the average revenue earned by SESB under a bundled tariff regime is capped.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Price-Cap Adjustment", FullName = "", Description = "An annual adjustment to ensure that SESB complies with its Price-Cap.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Regulated Asset Base", FullName = "RAB", Description = "The value of fixed assets invested in by a RBE and on which it is permitted to earn a return.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Regulated Business Entity", FullName = "RBE", Description = "An entity whose revenues, Subsidies and tariffs are regulated under these Guidelines.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Regulated Services", FullName = "", Description = "The services related to electricity sales which are provided by a RBE under the Base Average Tariff.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Regulatory Period", FullName = "RP", Description = "The period for which a Base Average Tariff and Required Average Tariff is determined.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Regulatory Proposal", FullName = "", Description = "SESB's proposed Required Average Tariff, Base Average Tariff and Allowed Revenue.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Regulatory Review", FullName = "", Description = "A means to determine the Required Average Tariff, Base Average Tariff and Allowed Revenue for the next Regulatory Period.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Required Average Tariff", FullName = "REAT", Description = "The maximum average revenue that a RBE may earn from tariffs charged for Regulated Services.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Required Revenue", FullName = "", Description = "The Annual Revenue Requirement used to calculate the Required Tariff.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Required Tariff", FullName = "REQT", Description = "The calculated average revenue that a RBE may earn from tariffs charged for Regulated Services, before adjustments.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Revenue-Cap", FullName = "", Description = "A form of regulation where a RBE earns its Required Revenue in each year.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Revenue-Cap Adjustment", FullName = "", Description = "An annual adjustment to ensure that a Revenue-Cap RBE complies with its Revenue-Cap.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Revenue-Cap RBE", FullName = "", Description = "An RBE regulated under a Revenue-Cap.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Revenue Requirement Model", FullName = "", Description = "The approved calculation model to calculate the required revenue for the RBEs.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "SESB", FullName = "Sabah Electricity Sdn. Bhd.", Description = "The primary electricity utility company in Sabah.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "SESB Generation", FullName = "", Description = "SESB's wholly owned generation plants in which Single Buyer enters into SLAs or non-SLAs.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Single Buyer", FullName = "SBO", Description = "The RBE responsible for managing the procurement of electricity and related services.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Single Buyer Generation", FullName = "", Description = "The costs of the Single Buyer related to power purchases.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "SLA", FullName = "Service Level Agreement", Description = "Contract specifying the level of service expected from a service provider.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Subsidies", FullName = "", Description = "The sum of the Tariff Support Subsidy, Fuel Subsidy and LSS Subsidy.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "Transmission", FullName = "", Description = "The RBE responsible for planning, investing in, operating, and maintaining the electricity transmission network (66kV and above).", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "TSS", FullName = "Tariff Support Subsidy", Description = "Subsidy claimable by SESB that compensates any shortfall between Base Average Tariff and Required Average Tariff.", Formula = "", Category = "IBR Framework" },
+        new GlossaryTerm { Term = "WACC", FullName = "Weighted Average Cost of Capital", Description = "The estimated efficient cost of financing of the Licensee, which represents its allowed reasonable return.", Formula = "", Category = "IBR Framework" }
+    };
+
+    foreach (var t in ibrTerms) {
+        if (!db.GlossaryTerms.Any(x => x.Term == t.Term)) {
+            db.GlossaryTerms.Add(t);
+        }
+    }
+    await db.SaveChangesAsync();
+
+    // Seed test quiz questions for current month
+    var seedMonth = DateTime.UtcNow.ToString("yyyy-MM");
+    if (!db.QuizQuestions.Any(q => q.Month == seedMonth))
+    {
+        db.QuizQuestions.AddRange(
+            new QuizQuestion { Month = seedMonth, QuestionText = "What does IBR stand for?", OptionA = "Incentive-Based Regulation", OptionB = "International Business Report", OptionC = "Internal Budget Review", OptionD = "Integrated Balance Ratio", CorrectOption = "A" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "What is the Building Block Model (BBM) used for?", OptionA = "Managing employee schedules", OptionB = "Designing software architecture", OptionC = "Calculating total allowed revenue", OptionD = "Setting fuel prices", CorrectOption = "C" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "The Revenue Requirement formula is:", OptionA = "Revenue = RAB × WACC", OptionB = "Revenue = OPEX + Depreciation + (RAB × WACC) + Taxes", OptionC = "Revenue = CAPEX + OPEX", OptionD = "Revenue = SAIDI × SAIFI", CorrectOption = "B" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "What does WACC stand for?", OptionA = "World Average Carbon Credit", OptionB = "Weekly Asset Compliance Check", OptionC = "Wholesale Actual Cost Calculator", OptionD = "Weighted Average Cost of Capital", CorrectOption = "D" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "How often is ICPT typically adjusted?", OptionA = "Every month", OptionB = "Every 6 months", OptionC = "Every year", OptionD = "Every 3 years", CorrectOption = "B" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "What does RAB stand for?", OptionA = "Revenue Allocation Board", OptionB = "Regulated Asset Base", OptionC = "Risk Assessment Benchmark", OptionD = "Regional Authority Budget", CorrectOption = "B" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "What does SAIDI measure?", OptionA = "System average interruption duration", OptionB = "Standard annual investment depreciation", OptionC = "Sustainable asset impact disclosure", OptionD = "System automated incident detection", CorrectOption = "A" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "How long is a typical Regulatory Period (RP) under IBR?", OptionA = "1 year", OptionB = "2 years", OptionC = "3 years", OptionD = "5 years", CorrectOption = "C" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "What does ESG stand for?", OptionA = "Energy Supply Governance", OptionB = "Environmental, Social, Governance", OptionC = "Economic Stability Growth", OptionD = "Efficiency Standards Guide", CorrectOption = "B" },
+            new QuizQuestion { Month = seedMonth, QuestionText = "How many UN Sustainable Development Goals (SDGs) are there?", OptionA = "10", OptionB = "15", OptionC = "17", OptionD = "20", CorrectOption = "C" }
+        );
+        await db.SaveChangesAsync();
+    }
+
+    // Seed mock leaderboard for podium
+    if (!db.UserAnswers.Any(a => a.Username == "Cameron" && a.Month == seedMonth))
+    {
+        var usernames = new[] { "Cameron", "Ka", "Evelien", "QuizWiz", "CoolCat" };
+        var scores = new[] { 4201, 3912, 2926, 2800, 2500 };
+        for (int i = 0; i < usernames.Length; i++)
+        {
+            db.UserAnswers.Add(new UserAnswer 
+            { 
+                Username = usernames[i], 
+                Division = "Sales Division", 
+                Month = seedMonth, 
+                QuestionId = 1, 
+                QuestionText = "Mock Question", 
+                SelectedOption = "A", 
+                IsCorrect = true, 
+                TimeTakenSeconds = 10, 
+                PointsAwarded = scores[i], 
+                DateAnswered = DateTime.UtcNow.AddMinutes(-i) 
+            });
+        }
+        await db.SaveChangesAsync();
+    }
+}
+
+app.MapGet("/api/seed", async (AppDbContext db) =>
+{
+    var seedMonth = DateTime.UtcNow.ToString("yyyy-MM");
+    if (!db.UserAnswers.Any(a => a.Username == "Cameron" && a.Month == seedMonth))
+    {
+        var usernames = new[] { "Cameron", "Ka", "Evelien", "QuizWiz", "CoolCat" };
+        var scores = new[] { 4201, 3912, 2926, 2800, 2500 };
+        for (int i = 0; i < usernames.Length; i++)
+        {
+            db.UserAnswers.Add(new UserAnswer 
+            { 
+                Username = usernames[i], 
+                Division = "Sales Division", 
+                Month = seedMonth, 
+                QuestionId = 1, 
+                QuestionText = "Mock Question", 
+                SelectedOption = "A", 
+                IsCorrect = true, 
+                TimeTakenSeconds = 10, 
+                PointsAwarded = scores[i], 
+                DateAnswered = DateTime.UtcNow.AddMinutes(-i) 
+            });
+        }
+        await db.SaveChangesAsync();
+    }
+    return Results.Ok("Seeded");
+});
+
+app.MapGet("/api/force-seed", async (AppDbContext db) =>
+{
+    var aat = await db.GlossaryTerms.FirstOrDefaultAsync(t => t.Term == "Actual Average Tariff");
+    if (aat != null)
+    {
+        aat.FormulaNotations = "Actual Revenue\nActual Units Sold";
+        aat.FormulaTermMeanings = "Actual Revenue: The total collected revenue in RM.\nActual Units Sold: The total energy consumption in kWh.";
+    }
+
+    if (!await db.GlossaryTerms.AnyAsync(t => t.Term == "bREAT_t"))
+    {
+        db.GlossaryTerms.Add(new GlossaryTerm { Term = "bREAT_t", FullName = "Bundled Required Average Tariff", Description = "The calculation of the Bundled Required Average Tariff.", Formula = "bREAT_t = bREQT_P + bRCAP_t + PCAP_t", FormulaNotations = "P\nt\nbREAT_t\nbREQT_P\nbRCAP_t\nPCAP_t", FormulaTermMeanings = "P: Regulatory Period\nt: single year in Regulatory Period P\nbREAT_t: Bundled Required Average Tariff for year t (sen/kWh)\nbREQT_P: sum of Bundled Base Average Tariff, Tariff Support Subsidy, Fuel Subsidy and LSS Subsidy for Period P\nbRCAP_t: Bundled Revenue-Cap Adjustment in year t\nPCAP_t: Price-Cap Adjustment in year t", Category = "IBR Framework" });
+    }
+    
+    await db.SaveChangesAsync();
+    return Results.Ok("Forced Seed Done");
+});
+
+// ═══════════════════════════════════════════
+//  PUBLIC API ENDPOINTS
+// ═══════════════════════════════════════════
+
+// ─── Glossary: Get all terms (from database) ───
+app.MapGet("/api/glossary", async (AppDbContext db) =>
+{
+    var terms = await db.GlossaryTerms.OrderBy(g => g.Term).ToListAsync();
+    // Return in a format the frontend expects
+    var formatted = terms.Select(g => new {
+        id = g.Id,
+        term = g.Term,
+        full = g.FullName,
+        desc = g.Description,
+        formula = g.Formula,
+        formulaNotations = g.FormulaNotations,
+        formulaTermMeanings = g.FormulaTermMeanings,
+        cat = g.Category
+    });
+    return Results.Ok(formatted);
+}).WithName("GetGlossary");
+
+// ─── Streak: Record a dictionary reading (user tapped a term) ───
+app.MapPost("/api/streak/record", async (ReadActivityRequest req, AppDbContext db) =>
+{
+    var today = DateTime.UtcNow.Date;
+    var alreadyRecorded = await db.UserActivities
+        .AnyAsync(a => a.Username == req.Username && a.ActivityDate == today);
+    if (!alreadyRecorded)
+    {
+        db.UserActivities.Add(new UserActivity
+        {
+            Username = req.Username,
+            ActivityDate = today
+        });
+        await db.SaveChangesAsync();
+    }
+    // Return updated streak
+    var streak = await CalculateStreak(req.Username, db);
+    return Results.Ok(new { streak, recorded = !alreadyRecorded });
+}).WithName("RecordReadActivity");
+
+// ─── Streak: Get current consecutive daily streak ───
+app.MapGet("/api/streak/{username}", async (string username, AppDbContext db) =>
+{
+    var streak = await CalculateStreak(username, db);
+    return Results.Ok(new { streak });
+}).WithName("GetStreak");
+
+// ─── Quiz: Get Questions for Month ───
+app.MapGet("/api/quiz/{month}", async (string month, AppDbContext db) =>
+{
+    var questions = await db.QuizQuestions.Where(q => q.Month == month).ToListAsync();
+    var formatted = questions.Select(q => new {
+        Id = q.Id,
+        Question = q.QuestionText,
+        Options = new[] { q.OptionA, q.OptionB, q.OptionC, q.OptionD },
+        CorrectIndex = q.CorrectOption switch { "A" => 0, "B" => 1, "C" => 2, "D" => 3, _ => 0 },
+    });
+    return Results.Ok(formatted);
+}).WithName("GetMonthlyQuiz");
+
+// ─── Quiz: Submit Answer ───
+app.MapPost("/api/submit-answer", async (UserAnswer answer, AppDbContext db) =>
+{
+    answer.DateAnswered = DateTime.UtcNow;
+    db.UserAnswers.Add(answer);
+    await db.SaveChangesAsync();
+    return Results.Ok(answer);
+}).WithName("SubmitAnswer");
+
+// ─── Leaderboard: Total score per user for the month, sorted highest first ───
+app.MapGet("/api/leaderboard/{month}", async (string month, AppDbContext db) =>
+{
+    var allAnswers = await db.UserAnswers
+        .Where(a => a.Month == month)
+        .ToListAsync();
+
+    var top = allAnswers
+        .GroupBy(a => a.Username)
+        .Select(g => new
+        {
+            Username = g.Key,
+            Division = string.IsNullOrWhiteSpace(g.FirstOrDefault()?.Division) ? "Strategic Planning Division" : g.FirstOrDefault()?.Division,
+            Score = g.Sum(a => a.PointsAwarded),
+            TotalQuestions = g.Count(), // how many they answered
+            DateTaken = g.Max(a => a.DateAnswered)
+        })
+        .OrderByDescending(x => x.Score)
+        .ThenBy(x => x.DateTaken)
+        .Take(10)
+        .ToList();
+
+    return Results.Ok(top);
+}).WithName("GetLeaderboard");
+
+// ─── Profile: Recent Answers ───
+app.MapGet("/api/profile/{username}/recent-answers", async (string username, string? month, AppDbContext db) =>
+{
+    var query = db.UserAnswers.Where(a => a.Username == username);
+    if (!string.IsNullOrEmpty(month)) {
+        query = query.Where(a => a.Month == month);
+    }
+    
+    var history = await query
+        .OrderByDescending(a => a.DateAnswered)
+        .Take(50)
+        .ToListAsync();
+    return Results.Ok(history);
+}).WithName("GetUserRecentAnswers");
+
+// ─── Profile: Active Months ───
+app.MapGet("/api/profile/{username}/active-months", async (string username, AppDbContext db) =>
+{
+    var months = await db.UserAnswers
+        .Where(a => a.Username == username)
+        .Select(a => a.Month)
+        .Distinct()
+        .OrderByDescending(m => m)
+        .ToListAsync();
+    return Results.Ok(months);
+}).WithName("GetUserActiveMonths");
+
+// ─── Infographics: Get all (public) ───
+app.MapGet("/api/infographics", async (AppDbContext db) =>
+{
+    var items = await db.Infographics.OrderByDescending(i => i.PostedAt).ToListAsync();
+    return Results.Ok(items);
+}).WithName("GetInfographics");
+
+// ─── Monthly Awards ───
+app.MapGet("/api/awards/{month}", async (string month, AppDbContext db) =>
+{
+    var awards = await db.EmployeeAwards.Where(a => a.Month == month).ToListAsync();
+    return Results.Ok(awards);
+}).WithName("GetAwards");
+
+// ═══════════════════════════════════════════
+//  ADMIN API ENDPOINTS
+// ═══════════════════════════════════════════
+
+// ─── Admin: Login ───
+app.MapPost("/api/admin/login", (AdminLoginRequest req) =>
+{
+    if (req.Password == "admin123")
+        return Results.Ok(new { token = "fake-jwt-token-for-admin" });
+    return Results.Unauthorized();
+}).WithName("AdminLogin");
+
+// ──────── QUIZ QUESTIONS ────────
+
+app.MapGet("/api/admin/questions/{month}", async (string month, AppDbContext db) =>
+{
+    var questions = await db.QuizQuestions.Where(q => q.Month == month).ToListAsync();
+    return Results.Ok(new { questions, count = questions.Count });
+}).WithName("AdminGetQuestions");
+
+app.MapPost("/api/admin/questions", async (QuizQuestion q, AppDbContext db) =>
+{
+    db.QuizQuestions.Add(q);
+    await db.SaveChangesAsync();
+    return Results.Ok(q);
+}).WithName("AdminAddQuestion");
+
+app.MapDelete("/api/admin/questions/{id}", async (int id, AppDbContext db) =>
+{
+    var q = await db.QuizQuestions.FindAsync(id);
+    if (q != null) { db.QuizQuestions.Remove(q); await db.SaveChangesAsync(); }
+    return Results.Ok();
+}).WithName("AdminDeleteQuestion");
+
+// ──────── GLOSSARY / DICTIONARY ────────
+
+app.MapGet("/api/admin/glossary", async (AppDbContext db) =>
+{
+    var terms = await db.GlossaryTerms.OrderBy(g => g.Term).ToListAsync();
+    return Results.Ok(terms);
+}).WithName("AdminGetGlossary");
+
+app.MapPost("/api/admin/glossary", async (GlossaryTerm term, AppDbContext db) =>
+{
+    term.CreatedAt = DateTime.UtcNow;
+    db.GlossaryTerms.Add(term);
+    await db.SaveChangesAsync();
+    return Results.Ok(term);
+}).WithName("AdminAddGlossaryTerm");
+
+app.MapPut("/api/admin/glossary/{id}", async (int id, GlossaryTerm updated, AppDbContext db) =>
+{
+    var existing = await db.GlossaryTerms.FindAsync(id);
+    if (existing == null) return Results.NotFound();
+    existing.Term = updated.Term;
+    existing.FullName = updated.FullName;
+    existing.Description = updated.Description;
+    existing.Formula = updated.Formula;
+    existing.FormulaNotations = updated.FormulaNotations;
+    existing.FormulaTermMeanings = updated.FormulaTermMeanings;
+    existing.Category = updated.Category;
+    await db.SaveChangesAsync();
+    return Results.Ok(existing);
+}).WithName("AdminUpdateGlossaryTerm");
+
+app.MapDelete("/api/admin/glossary/{id}", async (int id, AppDbContext db) =>
+{
+    var t = await db.GlossaryTerms.FindAsync(id);
+    if (t != null) { db.GlossaryTerms.Remove(t); await db.SaveChangesAsync(); }
+    return Results.Ok();
+}).WithName("AdminDeleteGlossaryTerm");
+
+// ──────── INFOGRAPHICS / POSTERS ────────
+
+app.MapGet("/api/admin/infographics", async (AppDbContext db) =>
+{
+    var items = await db.Infographics.OrderByDescending(i => i.PostedAt).ToListAsync();
+    return Results.Ok(items);
+}).WithName("AdminGetInfographics");
+
+app.MapPost("/api/admin/infographics", async (Infographic info, AppDbContext db) =>
+{
+    info.PostedAt = DateTime.UtcNow;
+    db.Infographics.Add(info);
+    await db.SaveChangesAsync();
+    return Results.Ok(info);
+}).WithName("AdminAddInfographic");
+
+app.MapDelete("/api/admin/infographics/{id}", async (int id, AppDbContext db) =>
+{
+    var i = await db.Infographics.FindAsync(id);
+    if (i != null) { db.Infographics.Remove(i); await db.SaveChangesAsync(); }
+    return Results.Ok();
+}).WithName("AdminDeleteInfographic");
+
+// ──────── AWARDS ────────
+
+app.MapPost("/api/admin/awards", async (EmployeeAward award, AppDbContext db) =>
+{
+    db.EmployeeAwards.Add(award);
+    await db.SaveChangesAsync();
+    return Results.Ok(award);
+}).WithName("AdminAddAward");
+
+app.MapDelete("/api/admin/awards/{id}", async (int id, AppDbContext db) =>
+{
+    var a = await db.EmployeeAwards.FindAsync(id);
+    if (a != null) { db.EmployeeAwards.Remove(a); await db.SaveChangesAsync(); }
+    return Results.Ok();
+}).WithName("AdminDeleteAward");
 
 app.Run();
 
-// ─── Records ───
-record GlossaryItem(string Term, string Full, string Desc, string Cat);
-record QuizQuestion(int Id, string Question, string[] Options, int CorrectIndex, string Explanation);
+// ─── Helper: Calculate streak ───
+async Task<int> CalculateStreak(string username, AppDbContext db)
+{
+    var dates = await db.UserActivities
+        .Where(a => a.Username == username)
+        .OrderByDescending(a => a.ActivityDate)
+        .Select(a => a.ActivityDate)
+        .ToListAsync();
+
+    if (dates.Count == 0) return 0;
+
+    var today = DateTime.UtcNow.Date;
+    if (dates[0] < today.AddDays(-1)) return 0;
+
+    int streak = 0;
+    var expected = dates[0];
+    foreach (var date in dates)
+    {
+        if (date == expected)
+        {
+            streak++;
+            expected = expected.AddDays(-1);
+        }
+        else break;
+    }
+    return streak;
+}
+
+// ─── Request Records ───
+record ReadActivityRequest(string Username);
