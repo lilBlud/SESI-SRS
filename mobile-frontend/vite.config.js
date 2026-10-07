@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vite.dev/config/
 export default defineConfig({
   server: {
+    port: 5196,
+    strictPort: true,
     fs: {
       allow: ['..', 'C:/Users/User/.gemini']
     }
@@ -15,8 +17,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'SESI SRS Mobile',
-        short_name: 'SESI Mobile',
+        name: 'SESI',
+        short_name: 'SESI',
         description: 'SESI SRS Mobile Application',
         theme_color: '#ffffff',
         icons: [

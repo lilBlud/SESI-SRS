@@ -2,6 +2,17 @@ using System;
 
 namespace mobile_backend.Models
 {
+    public class StaffUser
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty; // Store plain text for MVP or hashed
+        public string Division { get; set; } = string.Empty;
+        public string StaffId { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
     public class UserAnswer
     {
         public int Id { get; set; }
@@ -71,7 +82,8 @@ namespace mobile_backend.Models
         public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;    // URL or base64 data URI
+        public string ImageUrl { get; set; } = string.Empty;    // URL or base64 data URI (primary image)
+        public string AdditionalImages { get; set; } = string.Empty; // JSON array of additional image URLs/base64
         public string Category { get; set; } = string.Empty;    // e.g. "IBR", "ESG", "General"
         public DateTime PostedAt { get; set; } = DateTime.UtcNow;
     }

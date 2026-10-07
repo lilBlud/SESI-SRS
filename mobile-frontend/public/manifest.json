@@ -1,7 +1,7 @@
 {
-  "name": "IBR Literacy Hub",
-  "short_name": "IBR Hub",
-  "description": "Incentive-Based Regulation & Sustainability Knowledge Portal",
+  "name": "SESI",
+  "short_name": "SESI",
+  "description": "SESI SRS Mobile Application",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

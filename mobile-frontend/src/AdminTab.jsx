@@ -22,8 +22,9 @@ export default function AdminTab({ onGlossaryChange }) {
 
   // ─── Infographics State ───
   const [infographics, setInfographics] = useState([]);
-  const [iTitle, setITitle] = useState(''); const [iDesc, setIDesc] = useState(''); const [iUrl, setIUrl] = useState(''); const [iCat, setICat] = useState('General');
+  const [iTitle, setITitle] = useState(''); const [iDesc, setIDesc] = useState(''); const [iImages, setIImages] = useState([]); const [iCat, setICat] = useState('General');
   const [iMsg, setIMsg] = useState('');
+  const [iEditId, setIEditId] = useState(null);
 
   useEffect(() => { if (token) loadAll(); }, [token, selectedMonth]);
 
@@ -84,20 +85,63 @@ export default function AdminTab({ onGlossaryChange }) {
 
   // ─── Infographic Actions ───
   const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setIUrl(reader.result);
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files);
+    if (iImages.length + files.length > 10) {
+      alert(`You can upload a maximum of 10 images. You already have ${iImages.length}.`);
+      return;
     }
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => setIImages(prev => [...prev, reader.result].slice(0, 10));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (idx) => {
+    setIImages(prev => prev.filter((_, i) => i !== idx));
   };
 
   const addInfographic = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_BASE}/api/admin/infographics`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: iTitle, description: iDesc, imageUrl: iUrl, category: iCat }) });
-    if (res.ok) { setIMsg('✅ Posted!'); fetchInfographics(); setITitle(''); setIDesc(''); setIUrl(''); setICat('General'); }
-    else setIMsg('❌ Failed to post');
+    const primaryImage = iImages[0] || '';
+    const additional = iImages.length > 1 ? JSON.stringify(iImages.slice(1)) : '';
+    
+    let res;
+    if (iEditId) {
+      res = await fetch(`${API_BASE}/api/admin/infographics/${iEditId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: iTitle, description: iDesc, imageUrl: primaryImage, additionalImages: additional, category: iCat }) });
+    } else {
+      res = await fetch(`${API_BASE}/api/admin/infographics`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: iTitle, description: iDesc, imageUrl: primaryImage, additionalImages: additional, category: iCat }) });
+    }
+
+    if (res.ok) { 
+      setIMsg(iEditId ? '✅ Updated!' : '✅ Posted!'); 
+      fetchInfographics(); 
+      cancelEditInfographic();
+    }
+    else setIMsg(iEditId ? '❌ Failed to update' : '❌ Failed to post');
     setTimeout(() => setIMsg(''), 3000);
+  };
+
+  const cancelEditInfographic = () => {
+    setIEditId(null);
+    setITitle(''); setIDesc(''); setIImages([]); setICat('General');
+  };
+
+  const editInfographic = (item) => {
+    setIEditId(item.id);
+    setITitle(item.title);
+    setIDesc(item.description || '');
+    setICat(item.category || 'General');
+    
+    const allImages = [];
+    if (item.imageUrl) allImages.push(item.imageUrl);
+    if (item.additionalImages) {
+      try {
+        const parsed = typeof item.additionalImages === 'string' ? JSON.parse(item.additionalImages) : item.additionalImages;
+        if (Array.isArray(parsed)) allImages.push(...parsed);
+      } catch(e) {}
+    }
+    setIImages(allImages);
   };
 
   const deleteInfographic = async (id) => {
@@ -309,34 +353,37 @@ export default function AdminTab({ onGlossaryChange }) {
               </div>
               <textarea placeholder="Description (optional)" rows={2} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" value={iDesc} onChange={e => setIDesc(e.target.value)} />
               
+              {/* Multi-image upload zone */}
               <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-4 text-center">
-                <input type="file" id="image-upload" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                <input type="file" id="image-upload" accept="image/*,video/*" multiple onChange={handleImageUpload} className="hidden" />
                 <label htmlFor="image-upload" className="cursor-pointer text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                  Click to upload image (or drag & drop)
+                  📸 Click to upload images (max 10)
                 </label>
-                {iUrl && (
-                  <div className="mt-3 relative">
-                    <img src={iUrl} className="h-32 object-contain mx-auto rounded-lg shadow-sm bg-slate-100" alt="Preview" />
-                    <button type="button" onClick={() => setIUrl('')} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs px-2 shadow-lg">✕</button>
+                <p className="text-[11px] text-slate-400 mt-1">{iImages.length}/10 images selected</p>
+                {iImages.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2 justify-center">
+                    {iImages.map((img, idx) => (
+                      <div key={idx} className="relative">
+                        <img src={img} className="h-20 w-20 object-cover rounded-lg shadow-sm bg-slate-100" alt={`Upload ${idx+1}`} />
+                        <button type="button" onClick={() => removeImage(idx)} className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-lg">✕</button>
+                        {idx === 0 && <span className="absolute bottom-0.5 left-0.5 bg-emerald-500 text-white text-[8px] font-bold px-1 rounded">Main</span>}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              <select value={iCat} onChange={e => setICat(e.target.value)} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="General">General</option>
-                <option value="IBR Framework">IBR Framework</option>
-                <option value="Strategy and Sustainability">Strategy & Sustainability</option>
-                <option value="Energy Market and Industry">Energy Market & Industry</option>
-                <option value="ESG">ESG</option>
-                <option value="EPSB">EPSB</option>
-                <option value="BDV">BDV</option>
-                <option value="Governance">Governance</option>
-                <option value="Corporate Performance">Corporate Performance</option>
-                <option value="ISO Management">ISO Management</option>
-                <option value="SE Risk">Sabah Electricity Risk</option>
-              </select>
               {iMsg && <div className={`text-sm font-semibold px-3 py-2 rounded-xl ${iMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{iMsg}</div>}
-              <button type="submit" className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">Post</button>
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
+                  {iEditId ? 'Update Poster' : 'Post Poster'}
+                </button>
+                {iEditId && (
+                  <button type="button" onClick={cancelEditInfographic} className="px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white font-bold rounded-xl active:scale-95 transition-all shadow-sm">
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -360,9 +407,14 @@ export default function AdminTab({ onGlossaryChange }) {
                           <span className="text-[10px] text-slate-400">{new Date(item.postedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <button onClick={() => deleteInfographic(item.id)} className="text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded-xl shrink-0">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => editInfographic(item)} className="text-blue-500 bg-blue-50 dark:bg-blue-950/20 p-2 rounded-xl shrink-0">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        </button>
+                        <button onClick={() => deleteInfographic(item.id)} className="text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded-xl shrink-0">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

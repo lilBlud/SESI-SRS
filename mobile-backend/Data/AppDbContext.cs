@@ -14,5 +14,6 @@ namespace mobile_backend.Data
         public DbSet<SearchHistory> SearchHistories { get; set; }
         public DbSet<GlossaryTerm> GlossaryTerms { get; set; }
         public DbSet<Infographic> Infographics { get; set; }
+        public DbSet<StaffUser> StaffUsers { get; set; }
     }
 }

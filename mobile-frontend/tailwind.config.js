@@ -38,6 +38,21 @@ export default {
           800: '#204f85',
           900: '#14355e', 
           950: '#122c4f',
+        },
+        // Grid Governance Corporate Palette
+        governance: {
+          surface: '#f8f9ff',
+          'surface-dim': '#cbdbf5',
+          'surface-bright': '#f8f9ff',
+          'inverse-surface': '#213145',
+          'inverse-on-surface': '#eaf1ff',
+          primary: '#006c49',
+          'primary-container': '#10b981',
+          'inverse-primary': '#4edea3',
+          secondary: '#006398',
+          'secondary-container': '#5bb8fe',
+          tertiary: '#565e74',
+          'tertiary-container': '#9ba2bb',
         }
       },
       animation: {
@@ -46,6 +61,10 @@ export default {
         scaleIn: 'scaleIn 0.2s ease-out',
         'bounce-slow': 'bounce-slow 2.5s infinite ease-in-out',
         'scanline': 'scanline 4s linear infinite',
+        'arrow-hit': 'arrow-hit 3s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+        'target-shake': 'target-shake 3s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+        'trophy-bounce': 'trophy-bounce 3s cubic-bezier(0.34, 1.56, 0.64, 1) infinite',
+        'confetti-pop': 'confetti-pop 3s ease-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -67,6 +86,31 @@ export default {
         'scanline': {
           '0%': { transform: 'translate3d(-100%, -100%, 0)' },
           '100%': { transform: 'translate3d(100%, 100%, 0)' },
+        },
+        'arrow-hit': {
+          '0%, 100%': { transform: 'translate(30px, -30px) scale(1.2)', opacity: '0' },
+          '8%': { transform: 'translate(0, 0) scale(1)', opacity: '1' },
+          '85%': { transform: 'translate(0, 0) scale(1)', opacity: '1' },
+          '95%': { opacity: '0' }
+        },
+        'target-shake': {
+          '0%, 6%, 100%': { transform: 'rotate(0) scale(1)' },
+          '8%': { transform: 'rotate(-8deg) scale(0.92) translate(-1px, 1px)' },
+          '12%': { transform: 'rotate(5deg) scale(1.08) translate(1px, -1px)' },
+          '16%': { transform: 'rotate(-2deg) scale(0.98)' },
+          '22%': { transform: 'rotate(0) scale(1) translate(0, 0)' },
+        },
+        'trophy-bounce': {
+          '0%, 100%': { transform: 'translateY(0) scale(1)' },
+          '5%': { transform: 'translateY(-12px) scale(1.15)' },
+          '10%': { transform: 'translateY(0) scale(0.9)' },
+          '15%': { transform: 'translateY(-4px) scale(1.05)' },
+          '22%': { transform: 'translateY(0) scale(1)' },
+        },
+        'confetti-pop': {
+          '0%, 100%': { transform: 'translate(0, 0) scale(0)', opacity: '0' },
+          '6%': { transform: 'translate(var(--tx), calc(var(--ty) - 5px)) scale(1) rotate(var(--rot))', opacity: '1' },
+          '25%': { transform: 'translate(calc(var(--tx) * 1.5), calc(var(--ty) * 1.5 + 20px)) scale(0) rotate(calc(var(--rot) * 3))', opacity: '0' },
         }
       }
     },
