@@ -7,7 +7,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ─── Database Configuration ───
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptionsAction: sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorCodesToAdd: null);
+        }));
 
 builder.Services.AddCors(options =>
 {
@@ -28,7 +35,8 @@ if (app.Environment.IsDevelopment())
     // Force rebuild
 
     app.MapOpenApi();
-}
+} 
+
 
 // app.UseHttpsRedirection();
 app.UseCors("AllowAll");
@@ -39,6 +47,15 @@ app.UseStaticFiles();
 // ─── Ensure DB is created + seed glossary data ───
 using (var scope = app.Services.CreateScope())
 {
+    // Fix DB column directly using Npgsql to bypass EF Core crashes
+    try {
+        var config = app.Services.GetRequiredService<IConfiguration>();
+        using var conn = new Npgsql.NpgsqlConnection(config.GetConnectionString("DefaultConnection"));
+        conn.Open();
+        using var cmd = new Npgsql.NpgsqlCommand("ALTER TABLE \"GlossaryTerms\" ADD COLUMN IF NOT EXISTS \"ChartData\" text NOT NULL DEFAULT '';", conn);
+        cmd.ExecuteNonQuery();
+    } catch {}
+
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     // db.Database.EnsureDeleted(); // Removed so data is never wiped
     try 
@@ -88,6 +105,71 @@ using (var scope = app.Services.CreateScope())
         db.SaveChanges();
     }
     catch {}
+
+    try 
+    {
+        var dummyData = new Dictionary<string, string> {
+            { "TOTAL REVENUE", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":1.85},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.90},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1.91},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":1.93}]" },
+            { "PAT", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":55.2},{\"month\":\"May\",\"year\":\"2026\",\"value\":57.8},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":58.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":58.9}]" },
+            { "EBIT", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":240.5},{\"month\":\"May\",\"year\":\"2026\",\"value\":250.1},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":255.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":259.2}]" },
+            { "SAIDI", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":125.4},{\"month\":\"May\",\"year\":\"2026\",\"value\":122.1},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":118.5},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":112.20}]" },
+            { "SYSTEM LOSS", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":15.8},{\"month\":\"May\",\"year\":\"2026\",\"value\":15.2},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":14.8},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":14.41}]" },
+            { "CAPEX", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":200.1},{\"month\":\"May\",\"year\":\"2026\",\"value\":205.3},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":206.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":206.7}]" },
+            { "OPEX", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":402.1},{\"month\":\"May\",\"year\":\"2026\",\"value\":404.3},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":405.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":406.5}]" },
+            { "ASSET CAPITALISATION", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":34},{\"month\":\"May\",\"year\":\"2026\",\"value\":35},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":36},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":37}]" },
+            { "SYSTEM UNIT", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":2},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.5},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":0}]" },
+            { "AUDIT ISSUE", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":40},{\"month\":\"May\",\"year\":\"2026\",\"value\":40.5},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":41},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":42}]" },
+            { "SAFETY", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":1.30},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.25},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1.20},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":1.15}]" }
+        };
+
+        var definitions = new Dictionary<string, string> {
+            { "TOTAL REVENUE", "Total income generated from the sale of electricity and related services before any expenses are deducted." },
+            { "PAT", "Profit After Tax. The net profit earned by the company after deducting all expenses, interest, and taxes." },
+            { "EBIT", "Earnings Before Interest and Taxes. A measure of the company's profitability from core operations." },
+            { "SAIDI", "System Average Interruption Duration Index. Measures the average duration of power outages per customer." },
+            { "SYSTEM LOSS", "The percentage of electricity lost during transmission and distribution before reaching the end consumers." },
+            { "CAPEX", "Capital Expenditure. Investment in new assets, network upgrades, or infrastructure expansions." },
+            { "OPEX", "Operating Expenditure. Day-to-day operational expenses, including maintenance, salaries, and administration." },
+            { "ASSET CAPITALISATION", "The percentage of capital expenditures that have been officially capitalized as assets on the balance sheet." },
+            { "SYSTEM UNIT", "Measures the operational efficiency and total outage minutes at the generation level." },
+            { "AUDIT ISSUE", "The closure rate of identified internal and external audit issues and compliance findings." },
+            { "SAFETY", "Lost Time Injury Frequency Rate (LTIFR). The number of lost time injuries occurring per 1 million hours worked." }
+        };
+
+        // Move required metrics into Corporate Performance and inject dummy data
+        var allTerms = db.GlossaryTerms.ToList();
+        
+        foreach (var kvp in dummyData) {
+            var upperKey = kvp.Key;
+            
+            // Check if it exists in memory to avoid EF Core translation issues
+            var count = allTerms.Count(t => !string.IsNullOrEmpty(t.Term) && t.Term.Trim().ToUpper() == upperKey);
+            var desc = definitions.ContainsKey(upperKey) ? definitions[upperKey] : "";
+            
+            if (count == 0) {
+                // Insert it if it doesn't exist
+                db.GlossaryTerms.Add(new GlossaryTerm { 
+                    Term = kvp.Key, 
+                    Description = desc, 
+                    Category = "Corporate Performance", 
+                    ChartData = kvp.Value 
+                });
+            } else {
+                // It exists, forcefully update ALL matching rows using raw SQL to bypass any tracking issues
+                db.Database.ExecuteSqlRaw(@"
+                    UPDATE ""GlossaryTerms""
+                    SET ""Category"" = 'Corporate Performance', 
+                        ""ChartData"" = {0},
+                        ""Description"" = {1}
+                    WHERE UPPER(TRIM(""Term"")) = {2};
+                ", kvp.Value, desc, upperKey);
+            }
+        }
+
+        db.SaveChanges();
+    } catch (Exception ex) {
+        Console.WriteLine("DB SEED ERROR: " + ex.ToString());
+    }
 
     try 
     {
@@ -251,52 +333,7 @@ using (var scope = app.Services.CreateScope())
         // Fix for missing AdditionalImages column to prevent crashes
         await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"Infographics\" ADD COLUMN IF NOT EXISTS \"AdditionalImages\" text DEFAULT '';");
 
-        // 1. Delete terms in Corporate Performance that are not in the image
-        var allowedTerms = new[] { "TOTAL REVENUE", "PAT", "EBIT", "CAPEX", "OPEX", "ASSET CAPITALISATION", "SAIDI", "SYSTEM LOSS", "SYSTEM UNIT", "AUDIT ISSUE", "SAFETY", "LTIFR", "Total Revenue", "Asset Capitalisation", "System Loss", "System Unit", "Audit Issue" };
-        var toDelete = db.GlossaryTerms
-            .Where(t => t.Category == "Corporate Performance" && !allowedTerms.Contains(t.Term))
-            .ToList();
-        db.GlossaryTerms.RemoveRange(toDelete);
-
-        // 2. Exact text for the ones in the image. No definition, no formula. Just the metrics.
-        var exactData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-            {"Total Revenue", "RM 1.93 bil\nJUL 2025: RM 1.97 bil\n2026 F: RM 3.482 bil"},
-            {"PAT", "RM 58.9 mil\nJUL 2025: RM 69.6 mil\n2026 F: RM 63 mil"},
-            {"EBIT", "RM 259.2 mil\nJUL 2025: RM 251.2 mil\n2026 F: RM 483.5 mil"},
-            {"CAPEX", "49% | RM206.7 mil\nJUL 2025: 42.33% | RM156.7 mil\n2026 F: 100% | RM421.78 mil"},
-            {"OPEX", "67% | RM406.5 mil\nJUL 2025: 69% | RM406.28 mil\n2026 Target: <5% | RM576.34 mil"},
-            {"Asset Capitalisation", "SEPT 2026: 37%\n(Legacy, NOVA 1, NOVA 2, Land & Services)"},
-            {"SAIDI", "112.20 mins\nJUL 2025: 120.12 mins\n2026 F: 170 mins"},
-            {"System Loss", "14.41%\nJUL 2025: 15.18%\n2026 F: 14.50%"},
-            {"System Unit", "0 mins\nJUL 2025: 9.932 mins\n2026 F: 1 min"},
-            {"Audit Issue", "Total CA: 457 | Closed: 187\nPending: 270\nClosure Rate: 42%"},
-            {"LTIFR", "Zero Fatality | LTIFR 1.15\nJUL 2025: Zero Fatality | LTIFR 1.30\n2026 F: Zero Fatality | LTIFR <1.0"},
-            {"SAFETY", "Zero Fatality | LTIFR 1.15\nJUL 2025: Zero Fatality | LTIFR 1.30\n2026 F: Zero Fatality | LTIFR <1.0"}
-        };
-
-        // 3. Move items to Corporate Performance if they exist, or create them.
-        foreach (var kvp in exactData) {
-            var term = db.GlossaryTerms.FirstOrDefault(t => t.Term.ToLower() == kvp.Key.ToLower());
-            if (term == null) {
-                term = new GlossaryTerm { Term = kvp.Key, FullName = kvp.Key, Category = "Corporate Performance" };
-                db.GlossaryTerms.Add(term);
-            }
-            term.Category = "Corporate Performance";
-            term.Description = kvp.Value;
-            term.Formula = "";
-            term.FormulaNotations = "";
-            term.FormulaTermMeanings = "";
-        }
-
-        // 4. Remove duplicate LTIFR vs SAFETY
-        var safetyDelete = db.GlossaryTerms.FirstOrDefault(t => t.Term == "LTIFR");
-        if (safetyDelete != null) {
-            db.GlossaryTerms.Remove(safetyDelete);
-        }
-        var realSafety = db.GlossaryTerms.FirstOrDefault(t => t.Term == "SAFETY");
-        if (realSafety != null) { realSafety.FullName = "SAFETY"; }
-
-        await db.SaveChangesAsync();
+        // Legacy Corporate Performance patch removed.
     }
     catch (Exception e) {
         Console.WriteLine("Patch failed: " + e.Message);
@@ -559,7 +596,8 @@ app.MapGet("/api/glossary", async (AppDbContext db) =>
         formula = g.Formula,
         formulaNotations = g.FormulaNotations,
         formulaTermMeanings = g.FormulaTermMeanings,
-        cat = g.Category
+        cat = g.Category,
+        chartData = g.ChartData
     });
     return Results.Ok(formatted);
 }).WithName("GetGlossary");
@@ -567,7 +605,7 @@ app.MapGet("/api/glossary", async (AppDbContext db) =>
 // ─── Streak: Record a dictionary reading (user tapped a term) ───
 app.MapPost("/api/streak/record", async (ReadActivityRequest req, AppDbContext db) =>
 {
-    var today = DateTime.UtcNow.Date;
+    var today = DateTime.UtcNow.AddHours(8).Date;
     var alreadyRecorded = await db.UserActivities
         .AnyAsync(a => a.Username == req.Username && a.ActivityDate == today);
     if (!alreadyRecorded)
@@ -684,6 +722,12 @@ app.MapGet("/api/awards/{month}", async (string month, AppDbContext db) =>
 // ═══════════════════════════════════════════
 
 // ─── Admin: Login ───
+// Add ChartData column directly to bypass EF Migration issues
+app.MapGet("/fixdb", async (AppDbContext db) => {
+    await Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.ExecuteSqlRawAsync(db.Database, "ALTER TABLE \"GlossaryTerms\" ADD COLUMN IF NOT EXISTS \"ChartData\" text NOT NULL DEFAULT '';");
+    return Results.Ok("Database fixed successfully! You can go back to the app.");
+});
+
 app.MapPost("/api/admin/login", (AdminLoginRequest req) =>
 {
     if (req.Password == "admin123")
@@ -740,6 +784,7 @@ app.MapPut("/api/admin/glossary/{id}", async (int id, GlossaryTerm updated, AppD
     existing.FormulaNotations = updated.FormulaNotations;
     existing.FormulaTermMeanings = updated.FormulaTermMeanings;
     existing.Category = updated.Category;
+    existing.ChartData = updated.ChartData;
     await db.SaveChangesAsync();
     return Results.Ok(existing);
 }).WithName("AdminUpdateGlossaryTerm");
@@ -816,7 +861,7 @@ async Task<int> CalculateStreak(string username, AppDbContext db)
 
     if (dates.Count == 0) return 0;
 
-    var today = DateTime.UtcNow.Date;
+    var today = DateTime.UtcNow.AddHours(8).Date;
     if (dates[0] < today.AddDays(-1)) return 0;
 
     int streak = 0;

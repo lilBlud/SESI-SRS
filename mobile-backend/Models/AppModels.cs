@@ -73,6 +73,7 @@ namespace mobile_backend.Models
         public string FormulaNotations { get; set; } = string.Empty;
         public string FormulaTermMeanings { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;    // e.g. "IBR Framework", "ESG", "EPSB", "BDV", etc.
+        public string ChartData { get; set; } = string.Empty;   // JSON array for line charts
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 

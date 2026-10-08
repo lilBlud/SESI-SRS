@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { CorporatePerformanceChart } from './App';
 
-const API_BASE = `http://${window.location.hostname}:5195`;
+const API_BASE = "";
 const currentMonth = new Date().toISOString().slice(0, 7);
 
 export default function AdminTab({ onGlossaryChange }) {
@@ -18,7 +19,14 @@ export default function AdminTab({ onGlossaryChange }) {
   // ─── Glossary State ───
   const [glossaryTerms, setGlossaryTerms] = useState([]);
   const [gTerm, setGTerm] = useState(''); const [gFull, setGFull] = useState(''); const [gDesc, setGDesc] = useState(''); const [gFormula, setGFormula] = useState(''); const [gNotations, setGNotations] = useState(''); const [gMeanings, setGMeanings] = useState(''); const [gCat, setGCat] = useState('IBR Framework');
+  const [gChartData, setGChartData] = useState([]); // Array of {month, year, value}
+  const [cMonth, setCMonth] = useState('Jan');
+  const [cYear, setCYear] = useState(new Date().getFullYear().toString());
+  const [cValue, setCValue] = useState('');
   const [gMsg, setGMsg] = useState('');
+  const [gEditId, setGEditId] = useState(null);
+  const [gFilter, setGFilter] = useState('');
+  const [gCategoryFilter, setGCategoryFilter] = useState('All');
 
   // ─── Infographics State ───
   const [infographics, setInfographics] = useState([]);
@@ -43,7 +51,7 @@ export default function AdminTab({ onGlossaryChange }) {
   };
 
   const fetchGlossary = async () => {
-    const res = await fetch(`${API_BASE}/api/admin/glossary`);
+    const res = await fetch(`${API_BASE}/api/admin/glossary?t=${Date.now()}`);
     if (res.ok) setGlossaryTerms(await res.json());
   };
 
@@ -68,12 +76,56 @@ export default function AdminTab({ onGlossaryChange }) {
   };
 
   // ─── Glossary Actions ───
+
   const addGlossaryTerm = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_BASE}/api/admin/glossary`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ term: gTerm, fullName: gFull, description: gDesc, formula: gFormula, formulaNotations: gNotations, formulaTermMeanings: gMeanings, category: gCat }) });
-    if (res.ok) { setGMsg('✅ Term added!'); fetchGlossary(); if (onGlossaryChange) onGlossaryChange(); setGTerm(''); setGFull(''); setGDesc(''); setGFormula(''); setGNotations(''); setGMeanings(''); setGCat('IBR Framework'); }
-    else setGMsg('❌ Failed to add term');
+    
+    let finalChartData = [...gChartData];
+    if (gCat === 'Corporate Performance' && cValue !== '') {
+      const existingIdx = finalChartData.findIndex(d => d.month === cMonth && d.year === cYear);
+      if (existingIdx >= 0) {
+        finalChartData[existingIdx].value = parseFloat(cValue);
+      } else {
+        finalChartData.push({ month: cMonth, year: cYear, value: parseFloat(cValue) });
+      }
+    }
+
+    const payload = { 
+      term: gTerm, 
+      fullName: gCat === 'Corporate Performance' ? '' : gFull, 
+      description: gDesc, 
+      formula: gCat === 'Corporate Performance' ? '' : gFormula, 
+      formulaNotations: gCat === 'Corporate Performance' ? '' : gNotations, 
+      formulaTermMeanings: gCat === 'Corporate Performance' ? '' : gMeanings, 
+      category: gCat, 
+      chartData: finalChartData.length > 0 ? JSON.stringify(finalChartData) : '' 
+    };
+    let res;
+    if (gEditId) {
+      res = await fetch(`${API_BASE}/api/admin/glossary/${gEditId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    } else {
+      res = await fetch(`${API_BASE}/api/admin/glossary`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    }
+
+    if (res.ok) { 
+      setGMsg(gEditId ? '✅ Term updated!' : '✅ Term added!'); 
+      fetchGlossary(); 
+      if (onGlossaryChange) onGlossaryChange(); 
+      cancelEditGlossaryTerm();
+    }
+    else setGMsg(gEditId ? '❌ Failed to update term' : '❌ Failed to add term');
     setTimeout(() => setGMsg(''), 3000);
+  };
+
+  const editGlossaryTerm = (t) => {
+    setGEditId(t.id);
+    setGTerm(t.term); setGFull(t.fullName); setGDesc(t.description || ''); setGFormula(t.formula || ''); setGNotations(t.formulaNotations || ''); setGMeanings(t.formulaTermMeanings || ''); setGCat(t.category || 'IBR Framework');
+    try { setGChartData(t.chartData ? JSON.parse(t.chartData) : []); } catch(e) { setGChartData([]); }
+  };
+
+  const cancelEditGlossaryTerm = () => {
+    setGEditId(null);
+    setGTerm(''); setGFull(''); setGDesc(''); setGFormula(''); setGNotations(''); setGMeanings(''); setGCat('IBR Framework'); setGChartData([]);
   };
 
   const deleteGlossaryTerm = async (id) => {
@@ -274,9 +326,50 @@ export default function AdminTab({ onGlossaryChange }) {
           <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
             <h2 className="text-[16px] font-bold mb-4">Add New Dictionary Term</h2>
             <form onSubmit={addGlossaryTerm} className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <input required placeholder="Acronym (e.g. IBR)" className="p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" value={gTerm} onChange={e => setGTerm(e.target.value)} />
-                <select value={gCat} onChange={e => setGCat(e.target.value)} className="p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <div className="space-y-3">
+                {gCat === 'Corporate Performance' ? (
+                  <select required value={gTerm} onChange={e => {
+                    const val = e.target.value;
+                    setGTerm(val);
+                    if (val) {
+                      const existing = glossaryTerms.find(t => t.term === val && t.category === 'Corporate Performance');
+                      if (existing) {
+                        setGEditId(existing.id);
+                        setGFull(existing.fullName || '');
+                        setGDesc(existing.description || '');
+                        setGFormula(existing.formula || '');
+                        setGNotations(existing.formulaNotations || '');
+                        setGMeanings(existing.formulaTermMeanings || '');
+                        try { setGChartData(existing.chartData ? JSON.parse(existing.chartData) : []); } catch { setGChartData([]); }
+                      } else {
+                        // If somehow not found, reset edit state
+                        setGEditId(null);
+                        setGChartData([]);
+                      }
+                    }
+                  }} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50 dark:bg-emerald-950/20">
+                    <option value="" disabled>-- Select a Corporate Metric --</option>
+                    <option value="TOTAL REVENUE">TOTAL REVENUE</option>
+                    <option value="PAT">PAT</option>
+                    <option value="EBIT">EBIT</option>
+                    <option value="CAPEX">CAPEX</option>
+                    <option value="OPEX">OPEX</option>
+                    <option value="ASSET CAPITALISATION">ASSET CAPITALISATION</option>
+                    <option value="SAIDI">SAIDI</option>
+                    <option value="SYSTEM LOSS">SYSTEM LOSS</option>
+                    <option value="SYSTEM UNIT">SYSTEM UNIT</option>
+                    <option value="AUDIT ISSUE">AUDIT ISSUE</option>
+                    <option value="SAFETY">SAFETY</option>
+                  </select>
+                ) : (
+                  <input required placeholder="Acronym (e.g. IBR)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" value={gTerm} onChange={e => setGTerm(e.target.value)} />
+                )}
+                <select value={gCat} onChange={e => {
+                  setGCat(e.target.value);
+                  if (e.target.value === 'Corporate Performance') {
+                    setGTerm(''); // Clear term to force selection
+                  }
+                }} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                   <option value="IBR Framework">IBR Framework</option>
                   <option value="Strategy and Sustainability">Strategy & Sustainability</option>
                   <option value="Energy Market and Industry">Energy Market & Industry</option>
@@ -290,40 +383,139 @@ export default function AdminTab({ onGlossaryChange }) {
                   <option value="ReSET2030">ReSET2030</option>
                 </select>
               </div>
-              <input required placeholder="Full name (e.g. Incentive-Based Regulation)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" value={gFull} onChange={e => setGFull(e.target.value)} />
-              <textarea required placeholder="Description / explanation..." rows={3} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" value={gDesc} onChange={e => setGDesc(e.target.value)} />
-              <input placeholder="Formula (optional, e.g. ROI = Net Profit / Cost × 100%)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" value={gFormula} onChange={e => setGFormula(e.target.value)} />
-              <input placeholder="Formula Notations (e.g. AAT, REQT, BASE)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" value={gNotations} onChange={e => setGNotations(e.target.value)} />
-              <textarea placeholder="Meaning of terms (e.g. AAT: Actual Average Tariff...)" rows={3} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" value={gMeanings} onChange={e => setGMeanings(e.target.value)} />
-              {gMsg && <div className={`text-sm font-semibold px-3 py-2 rounded-xl ${gMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{gMsg}</div>}
-              <button type="submit" className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">+ Add Term</button>
+              {gCat !== 'Corporate Performance' && (
+                <input required placeholder="Full name (e.g. Incentive-Based Regulation)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" value={gFull} onChange={e => setGFull(e.target.value)} />
+              )}
+              <textarea required placeholder={gCat === 'Corporate Performance' ? "Metric subtitle or text..." : "Description / explanation..."} rows={3} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" value={gDesc} onChange={e => setGDesc(e.target.value)} />
+              
+              {gCat !== 'Corporate Performance' && (
+                <>
+                  <input placeholder="Formula (e.g. ROI = Net Profit / Cost)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" value={gFormula} onChange={e => setGFormula(e.target.value)} />
+                  <input placeholder="Formula Notations (e.g. AAT, REQT)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" value={gNotations} onChange={e => setGNotations(e.target.value)} />
+                  <textarea placeholder="Meaning of terms (e.g. AAT: Actual Tariff...)" rows={3} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" value={gMeanings} onChange={e => setGMeanings(e.target.value)} />
+                </>
+              )}
+              
+              {/* Chart Data Builder */}
+              {gCat === 'Corporate Performance' && (
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                  <h3 className="text-[13px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <span>📈</span> Performance Chart Data
+                  </h3>
+                  <div className="flex gap-2">
+                    <select value={cMonth} onChange={e => {
+                      setCMonth(e.target.value);
+                      const existing = gChartData.find(d => d.month === e.target.value && d.year === cYear);
+                      setCValue(existing ? existing.value : '');
+                    }} className="min-w-0 flex-[1.2] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600">
+                      {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                    <select value={cYear} onChange={e => {
+                      setCYear(e.target.value);
+                      const existing = gChartData.find(d => d.month === cMonth && d.year === e.target.value);
+                      setCValue(existing ? existing.value : '');
+                    }} className="min-w-0 flex-[1.2] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600">
+                      {['2023','2024','2025','2026'].map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                    <input type="number" step="any" placeholder="Value" value={cValue} onChange={e => setCValue(e.target.value)} className="min-w-0 flex-[1.5] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600" />
+                  </div>
+                </div>
+              )}
+
+              {gMsg && (
+                <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-2xl font-bold animate-fadeIn text-[14px] flex items-center gap-2 border ${gMsg.startsWith('✅') ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-500/30' : 'bg-red-600 text-white border-red-500 shadow-red-500/30'}`}>
+                  {gMsg}
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                {gEditId && (
+                  <button type="button" onClick={cancelEditGlossaryTerm} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl active:scale-95 transition-all">Cancel</button>
+                )}
+                <button type="submit" className="flex-[2] py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
+                  {gEditId ? 'Update Term' : '+ Add Term'}
+                </button>
+              </div>
             </form>
           </div>
 
           {/* Terms list */}
-          <div className="space-y-2">
-            {glossaryTerms.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200">No terms yet.</div>
-            ) : (
-              glossaryTerms.map(t => (
-                <div key={t.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex gap-3 items-start">
-                  <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center justify-center font-black text-[13px] font-mono shrink-0">
-                    {t.term.length > 4 ? t.term.slice(0,3) : t.term}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-[14px]">{t.term}</p>
-                      <span className="text-[9px] bg-slate-100 dark:bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">{t.category}</span>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                <input 
+                  type="text" 
+                  placeholder="Search terms..." 
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+                  value={gFilter} 
+                  onChange={e => setGFilter(e.target.value)} 
+                />
+              </div>
+              <select 
+                className="w-1/3 p-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" 
+                value={gCategoryFilter} 
+                onChange={e => setGCategoryFilter(e.target.value)}
+              >
+                <option value="All">All Categories</option>
+                <option value="IBR Framework">IBR Framework</option>
+                <option value="Strategy and Sustainability">Strategy & Sustainability</option>
+                <option value="Energy Market and Industry">Energy Market & Industry</option>
+                <option value="ESG">ESG</option>
+                <option value="EPSB">EPSB</option>
+                <option value="BDV">BDV</option>
+                <option value="Governance">Governance</option>
+                <option value="Corporate Performance">Corporate Performance</option>
+                <option value="ISO Management">ISO Management</option>
+                <option value="SE Risk">Sabah Electricity Risk</option>
+                <option value="ReSET2030">ReSET2030</option>
+              </select>
+            </div>
+            
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+              {glossaryTerms.filter(t => {
+                const matchSearch = t.term.toLowerCase().includes(gFilter.toLowerCase()) || (t.fullName && t.fullName.toLowerCase().includes(gFilter.toLowerCase()));
+                const matchCategory = gCategoryFilter === 'All' || t.category === gCategoryFilter;
+                return matchSearch && matchCategory;
+              }).length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200">No matching terms found.</div>
+              ) : (
+                glossaryTerms.filter(t => {
+                  const matchSearch = t.term.toLowerCase().includes(gFilter.toLowerCase()) || (t.fullName && t.fullName.toLowerCase().includes(gFilter.toLowerCase()));
+                  const matchCategory = gCategoryFilter === 'All' || t.category === gCategoryFilter;
+                  return matchSearch && matchCategory;
+                }).map(t => (
+                  <div key={t.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col gap-3">
+                    <div className="flex gap-3 items-start">
+                      <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center justify-center font-black text-[13px] font-mono shrink-0">
+                        {t.term.length > 4 ? t.term.slice(0,3) : t.term}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-[14px]">{t.term}</p>
+                          <span className="text-[9px] bg-slate-100 dark:bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">{t.category}</span>
+                        </div>
+                        <p className="text-[12px] text-slate-600 dark:text-slate-400 mt-0.5">{t.fullName}</p>
+                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{t.description}</p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button onClick={() => editGlossaryTerm(t)} className="text-blue-500 bg-blue-50 dark:bg-blue-950/20 p-2 rounded-xl">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        </button>
+                        <button onClick={() => deleteGlossaryTerm(t.id)} className="text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded-xl">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-[12px] text-slate-600 dark:text-slate-400 mt-0.5">{t.fullName}</p>
-                    <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{t.description}</p>
+                    {t.category === 'Corporate Performance' && t.chartData && t.chartData !== '[]' && (
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
+                        <CorporatePerformanceChart chartData={t.chartData} term={t.term} description={t.description || t.desc} />
+                      </div>
+                    )}
                   </div>
-                  <button onClick={() => deleteGlossaryTerm(t.id)} className="text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded-xl shrink-0">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}

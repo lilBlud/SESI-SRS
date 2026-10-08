@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import AdminTab from './AdminTab';
 import LoginPage from './LoginPage';
 
-const API_BASE = `http://${window.location.hostname}:5195`;
+const API_BASE = "";
 const currentMonth = new Date().toISOString().slice(0, 7);
 
 // ─── Category Config (colours, emoji, labels) ───
@@ -177,6 +178,144 @@ function PostImageSlider({ images, title, onImageClick }) {
   );
 }
 
+
+// ─── Corporate Performance Chart ───
+export function CorporatePerformanceChart({ chartData, term, description }) {
+  if (!chartData) return null;
+  let parsed = [];
+  try {
+    parsed = typeof chartData === 'string' ? JSON.parse(chartData) : chartData;
+  } catch (e) {
+    return null;
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+  // Map month names to numbers for sorting
+  const monthMap = { 'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12 };
+  parsed.sort((a, b) => {
+    if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
+    return monthMap[a.month] - monthMap[b.month];
+  });
+
+  const formattedData = parsed.map(d => ({
+    name: `${d.month} '${d.year.toString().slice(-2)}`,
+    value: d.value
+  }));
+
+  const getUnitFormatter = (termName) => {
+    if (!termName) return (v) => v;
+    const name = termName.toUpperCase();
+    if (name === "TOTAL REVENUE") return (v) => `RM ${v} bil`;
+    if (["PAT", "EBIT", "CAPEX", "OPEX"].includes(name)) return (v) => `RM ${v} mil`;
+    if (["SAIDI", "SYSTEM MINUTES", "SYSTEM UNIT"].includes(name)) return (v) => `${v} mins`;
+    if (["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE"].includes(name)) return (v) => `${v}%`;
+    if (name === "SAFETY" || name === "LTIFR") return (v) => `LTIFR ${v}`;
+    return (v) => v;
+  };
+
+  const formatter = getUnitFormatter(term);
+
+  const lastData = formattedData[formattedData.length - 1];
+  const firstData = formattedData[0];
+  const growth = firstData && firstData.value !== 0 
+    ? ((lastData.value - firstData.value) / Math.abs(firstData.value)) * 100 
+    : 0;
+  const isPositive = growth >= 0;
+  const isZero = growth === 0;
+
+  // Custom dot rendering for each month
+  const CustomDot = (props) => {
+    const { cx, cy, index } = props;
+    const isLast = index === formattedData.length - 1;
+    return (
+      <circle 
+        key={`dot-${index}`}
+        cx={cx} 
+        cy={cy} 
+        r={isLast ? 4 : 3} 
+        stroke="white" 
+        strokeWidth={isLast ? 2 : 1.5} 
+        fill="#10b981" 
+      />
+    );
+  };
+
+  return (
+    <div className="mt-4 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm animate-fadeIn">
+      {/* Header section matching the aesthetic */}
+      <div className="flex items-end justify-between mb-4">
+        <div className="flex items-baseline gap-2.5">
+          <span className="text-[26px] font-black text-slate-900 dark:text-white tracking-tight">
+            {formatter(lastData?.value ?? 0)}
+          </span>
+          {!isZero && (
+            <span className={`text-[14px] font-bold flex items-center ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+              <svg className={`w-3.5 h-3.5 mr-0.5 ${!isPositive ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3.25a.75.75 0 01.53.22l5 5a.75.75 0 11-1.06 1.06L10.75 5.81v10.44a.75.75 0 01-1.5 0V5.81L5.53 9.53a.75.75 0 01-1.06-1.06l5-5a.75.75 0 01.53-.22z" clipRule="evenodd" />
+              </svg>
+              {isPositive ? '+' : ''}{growth.toFixed(2)}%
+            </span>
+          )}
+        </div>
+      </div>
+      
+      {/* Definition Section */}
+      {description && (
+        <div className="mb-4 text-[12px] text-slate-500 dark:text-slate-400 font-medium italic border-l-2 border-emerald-500 pl-3">
+          {description}
+        </div>
+      )}
+
+      <div className="h-28 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={formattedData} margin={{ top: 15, right: 20, left: 20, bottom: 15 }}>
+            <defs>
+              <linearGradient id={`colorValue-${term.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <Tooltip 
+              formatter={(val) => [formatter(val), term]}
+              labelFormatter={(label) => label}
+              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 'bold' }} 
+              itemStyle={{ color: '#10b981' }} 
+            />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0} />
+            <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
+            <YAxis hide={true} domain={[(dataMin) => dataMin - (Math.abs(dataMin) * 0.05 || 1), (dataMax) => dataMax + (Math.abs(dataMax) * 0.05 || 1)]} />
+            <Area 
+              type="monotone" 
+              dataKey="value" 
+              stroke="#10b981" 
+              strokeWidth={3}
+              fillOpacity={1} 
+              fill={`url(#colorValue-${term.replace(/\s+/g, '')})`}
+              activeDot={{ r: 6, strokeWidth: 0, fill: '#10b981' }} 
+              dot={CustomDot}
+              animationDuration={1500}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      
+      {/* Footer labels matching the aesthetic */}
+      <div className="flex justify-between items-center mt-3 px-2 pt-3 border-t border-slate-200 dark:border-slate-700 border-dashed relative">
+        <div className="flex flex-col items-start">
+          <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{formattedData[0]?.name}</span>
+          <span className="text-[10px] font-medium text-slate-400">{formatter(formattedData[0]?.value ?? 0)}</span>
+        </div>
+        
+        <div className="flex flex-col items-end">
+          <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{lastData?.name} (Latest)</span>
+          <span className="text-[10px] font-bold text-emerald-500/80">{formatter(lastData?.value ?? 0)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Home Tab ───
 function HomeTab({ user, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions }) {
@@ -495,7 +634,7 @@ function HomeTab({ user, setActiveTab, setActiveGlossaryCat, isDark, bookmarkAct
               <div key={post.id} className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 hover:shadow-lg transition-shadow">
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1">
-                    <span className={`text-[9px] ${clr.bg} ${clr.text} px-2 py-0.5 rounded font-bold uppercase mb-1.5 inline-flex items-center gap-1 border ${clr.border}`}>
+                    <span className={`text-[10px] ${clr.text} font-bold uppercase mb-1.5 inline-flex items-center gap-1`}>
                       {catMeta.emoji} {post.category || 'General'}
                     </span>
                     <h2 className="text-[19px] font-black text-slate-900 dark:text-white leading-tight tracking-tight">
@@ -802,14 +941,8 @@ function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat, setAct
                     <div className="mt-2">
                       {item.cat === 'Corporate Performance' ? (
                         <div className="space-y-2 mt-3 mb-2">
-                          {item.desc.split('\n').map((line, idx) => {
-                            if (idx === 0) return <div key={idx} className={`text-2xl font-black ${clr.text} mb-3`}>{line}</div>;
-                            return (
-                              <div key={idx} className="inline-block mr-2 mb-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                {line}
-                              </div>
-                            );
-                          })}
+                          <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
+                          <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" />
                         </div>
                       ) : (
                         <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
@@ -904,11 +1037,11 @@ function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat, setAct
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 align-top whitespace-pre-wrap">
                       {item.cat === 'Corporate Performance' ? (
-                        <div className="space-y-1 my-1">
-                          {item.desc.split('\n').map((line, idx) => {
-                            if (idx === 0) return <div key={idx} className={`text-[14px] font-black ${clr.text}`}>{line}</div>;
-                            return <div key={idx} className="text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 inline-block px-2 py-1 rounded-lg mr-1 mb-1 border border-slate-200 dark:border-slate-700">{line}</div>;
-                          })}
+                        <div className="space-y-1 my-2">
+                          <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
+                          <div className="mt-3">
+                            <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" />
+                          </div>
                         </div>
                       ) : (
                         item.desc
@@ -959,10 +1092,7 @@ function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat, setAct
                 <div className={`flashcard-back absolute w-full h-full flex flex-col items-center justify-center ${getColor(card.cat).bg} rounded-2xl p-6 text-center overflow-y-auto`}>
                   {card.cat === 'Corporate Performance' ? (
                     <div className="space-y-4 mt-2 w-full">
-                      {card.desc.split('\n').map((line, idx) => {
-                        if (idx === 0) return <div key={idx} className="text-3xl font-black text-slate-900 dark:text-white leading-tight">{line}</div>;
-                        return <div key={idx} className="text-sm font-bold text-slate-700 dark:text-slate-300 bg-black/5 dark:bg-white/10 inline-block px-4 py-2 rounded-2xl m-1 border border-black/5 dark:border-white/5">{line}</div>;
-                      })}
+                      <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{card.desc}</p>
                     </div>
                   ) : (
                     <p className="text-[13px] text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{card.desc}</p>
@@ -1259,7 +1389,7 @@ function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   }
 }
 
-function ProfileTab({ user, bookmarkActions, setActiveTab }) {
+function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstallPrompt }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };
   const [recentQuizzes, setRecentQuizzes] = useState([]);
   const [currentRank, setCurrentRank] = useState(null);
@@ -1509,6 +1639,22 @@ function ProfileTab({ user, bookmarkActions, setActiveTab }) {
         )}
       </div>
 
+      {/* Manual Install Button */}
+      <div className="pt-4 border-t border-slate-200/50 dark:border-slate-800/50">
+        <button onClick={triggerInstallPrompt} className="w-full flex items-center justify-between p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 active:scale-[0.98] transition-all">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+            </div>
+            <div className="text-left">
+              <p className="text-[14px] font-bold text-slate-900 dark:text-white leading-tight">Install App (iOS / Android)</p>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400">Add SESI to your Home Screen</p>
+            </div>
+          </div>
+          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+        </button>
+      </div>
+
       {/* Bookmarks Section */}
       <div className="pt-2 border-t border-slate-200/50 dark:border-slate-800/50">
         <div className="flex items-center justify-between gap-2 mb-4">
@@ -1658,7 +1804,7 @@ function ProfileTab({ user, bookmarkActions, setActiveTab }) {
                 return (
                   <div key={idx} onClick={() => setActiveBookmark(bm)} className="w-[180px] h-[240px] shrink-0 snap-center rounded-3xl p-4 shadow-sm ring-1 flex flex-col cursor-pointer active:scale-95 transition-all relative overflow-hidden bg-white dark:bg-slate-800 ring-black/5 dark:ring-white/10">
                     <div className="flex items-start justify-between mb-2 shrink-0 gap-2">
-                      <div className={`text-[9px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider whitespace-nowrap truncate ${clr.bg} ${clr.text} border ${clr.border}`}>
+                      <div className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap truncate ${clr.text}`}>
                         {catMeta.emoji} {bm.cat || 'Dictionary'}
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); toggleBookmark(bm, 'glossary'); }} className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center active:scale-95 ${clr.bg} ${clr.text}`}>
@@ -1680,6 +1826,8 @@ function ProfileTab({ user, bookmarkActions, setActiveTab }) {
           )}
         </div>
       </div>
+
+      {/* App Settings removed */}
 
       {/* Full Card/Poster Modal */}
       {activeBookmark && createPortal(
@@ -1765,14 +1913,8 @@ function ProfileTab({ user, bookmarkActions, setActiveTab }) {
                         <div className="mt-2">
                           {activeBookmark.cat === 'Corporate Performance' ? (
                             <div className="space-y-2 mt-3 mb-2">
-                              {activeBookmark.desc.split('\n').map((line, idx) => {
-                                if (idx === 0) return <div key={idx} className={`text-2xl font-black ${clr.text} mb-3`}>{line}</div>;
-                                return (
-                                  <div key={idx} className="inline-block mr-2 mb-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    {line}
-                                  </div>
-                                );
-                              })}
+                              <p className="text-[13px] text-slate-600 dark:text-slate-300 mb-3 leading-relaxed whitespace-pre-wrap">{activeBookmark.desc}</p>
+                              <CorporatePerformanceChart chartData={activeBookmark.chartData} term={activeBookmark.term} description="" />
                             </div>
                           ) : (
                             <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{activeBookmark.desc}</p>
@@ -1886,6 +2028,43 @@ function App() {
   const [glossary, setGlossary] = useState([]);
   const [streak, setStreak] = useState(0);
   const [streakToast, setStreakToast] = useState(null); // toast notification at root level
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      const isIos = () => {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        return /iphone|ipad|ipod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      };
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isIosStandalone = ('standalone' in window.navigator) && window.navigator.standalone === true;
+      const hasDismissed = sessionStorage.getItem('dismissedInstallPrompt');
+      
+      // Clear old localStorage to ensure it pops up for the user during testing
+      localStorage.removeItem('dismissedInstallPrompt');
+      
+      if ((!isStandalone && !isIosStandalone && !hasDismissed) || (isIos() && !isIosStandalone && !hasDismissed)) {
+        const timer = setTimeout(() => setShowInstallPrompt(true), 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user]);
+
+  const dismissInstallPrompt = () => {
+    setShowInstallPrompt(false);
+    sessionStorage.setItem('dismissedInstallPrompt', 'true');
+  };
+
   const bookmarkActions = useBookmarks();
   const USERNAME = user?.fullName || "Ahmad Azib Danish";
 
@@ -1896,7 +2075,7 @@ function App() {
 
   // Fetch glossary from DB
   const fetchGlossary = useCallback(() => {
-    fetch(`${API_BASE}/api/glossary`)
+    fetch(`${API_BASE}/api/glossary?t=${Date.now()}`)
       .then(r => r.json())
       .then(d => setGlossary(d))
       .catch(e => console.error(e));
@@ -1926,6 +2105,8 @@ function App() {
       setTimeout(() => setStreakToast(null), 3000);
     }
   };
+
+  // (Removed duplicated iOS prompt state)
 
   const tabs = [
     { id: 'home', label: 'Home', Icon: HomeIcon },
@@ -2027,7 +2208,7 @@ function App() {
         {activeTab === 'home' && <HomeTab user={user} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} />}
         {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
-        {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} />}
+        {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
         {activeTab === 'admin' && <AdminTab onGlossaryChange={fetchGlossary} />}
       </main>
 
@@ -2043,6 +2224,66 @@ function App() {
           ))}
         </div>
       </nav>
+
+      {/* Install App Popup */}
+      {showInstallPrompt && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-fadeIn text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+            
+            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            </div>
+            
+            <h3 className="text-[20px] font-black text-slate-900 dark:text-white mb-2">Install SESI App</h3>
+            
+            <p className="text-[14px] text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+              For the best experience, install this app on your device!
+              {deferredPrompt ? (
+                <>
+                  <br/><br/>
+                  <span className="text-[12px] bg-slate-100 dark:bg-slate-800 p-2 rounded-lg block text-left">
+                    <strong>Android:</strong><br/>
+                    Tap the <strong>Install App</strong> button below to add it directly to your home screen!
+                  </span>
+                </>
+              ) : (
+                <>
+                  <br/><br/>
+                  <span className="text-[12px] bg-slate-100 dark:bg-slate-800 p-2 rounded-lg block text-left">
+                    <strong>iOS / iPhone:</strong><br/>
+                    Tap <strong className="text-slate-700 dark:text-slate-200">Share</strong> <svg className="inline w-4 h-4 text-slate-700 dark:text-slate-200 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> then <strong className="text-slate-700 dark:text-slate-200">Add to Home Screen</strong> <svg className="inline w-4 h-4 text-slate-700 dark:text-slate-200 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                  </span>
+                </>
+              )}
+            </p>
+            
+            <div className="flex gap-2">
+              <button onClick={dismissInstallPrompt} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all active:scale-95">
+                Not Now
+              </button>
+              <button onClick={() => {
+                if (deferredPrompt) {
+                  deferredPrompt.prompt();
+                  deferredPrompt.userChoice.then(({ outcome }) => {
+                    if (outcome === 'accepted') {
+                      setDeferredPrompt(null);
+                      setShowInstallPrompt(false);
+                    }
+                  });
+                } else {
+                  alert("To install on iOS: Tap the 'Share' icon in Safari (at the bottom), then select 'Add to Home Screen'.");
+                  // Intentionally NOT closing the popup here so iOS users can read it while they share!
+                }
+              }} className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-500/30">
+                Install App
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,6 +9,10 @@ export default defineConfig({
     strictPort: true,
     fs: {
       allow: ['..', 'C:/Users/User/.gemini']
+    },
+    proxy: {
+      '/api': 'http://localhost:5195',
+      '/uploads': 'http://localhost:5195'
     }
   },
   plugins: [

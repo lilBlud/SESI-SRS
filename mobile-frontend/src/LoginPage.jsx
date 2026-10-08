@@ -9,21 +9,38 @@ export default function LoginPage({ onLogin }) {
   const [staffId, setStaffId] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const handleDemoLogin = () => {
+    const demoUser = {
+      id: 9999,
+      fullName: 'Demo User',
+      email: 'demo@sesb.com.my',
+      division: 'Chief Executive Officer (CEO) Office',
+      staffId: 'DEMO-001'
+    };
+    if (onLogin) {
+      onLogin(demoUser);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const endpoint = isSignUp ? '/api/auth/signup' : '/api/auth/login';
       const body = isSignUp ? { fullName, email, password, division, staffId } : { email, password };
       
-      const res = await fetch(`http://${window.location.hostname}:5195${endpoint}`, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
       
       if (!res.ok) {
-        const errText = await res.text();
-        alert(`Server Error (${res.status}): ` + errText.substring(0, 100));
+        if (res.status === 401) {
+          alert('Invalid email or password. Please try again.');
+        } else {
+          const errText = await res.text();
+          alert(`Server Error (${res.status}): ` + errText.substring(0, 100));
+        }
         return;
       }
       
@@ -32,7 +49,7 @@ export default function LoginPage({ onLogin }) {
         onLogin(user);
       }
     } catch (error) {
-      alert(`Connection Error: ${error.message} - Make sure your PC's firewall allows port 5195!`);
+      alert(`Connection Error: ${error.message} - Make sure the backend server is running.`);
     }
   };
 
@@ -247,6 +264,21 @@ export default function LoginPage({ onLogin }) {
             {isSignUp ? 'Create Account & Enter SESI' : 'Sign In'}
           </button>
         </form>
+
+        <div className="mt-4 flex items-center justify-center">
+          <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+          <span className="px-3 text-xs text-slate-400 font-medium uppercase tracking-wider">OR</span>
+          <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+        </div>
+
+        <button 
+          type="button" 
+          onClick={handleDemoLogin}
+          className="w-full py-3 mt-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm active:scale-[0.98] transition-all flex justify-center items-center gap-2 border border-slate-200 dark:border-slate-700"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+          Quick Demo Login
+        </button>
       </div>
     </div>
   );
