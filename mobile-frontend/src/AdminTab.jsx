@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CorporatePerformanceChart } from './App';
 
-const API_BASE = "";
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 const currentMonth = new Date().toISOString().slice(0, 7);
 
 export default function AdminTab({ onGlossaryChange }) {

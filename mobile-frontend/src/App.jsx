@@ -4,7 +4,7 @@ import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 import AdminTab from './AdminTab';
 import LoginPage from './LoginPage';
 
-const API_BASE = "";
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 const currentMonth = new Date().toISOString().slice(0, 7);
 
 // ─── Category Config (colours, emoji, labels) ───

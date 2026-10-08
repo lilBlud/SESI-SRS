@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_BASE || "";
+
 export default function LoginPage({ onLogin }) {
   const [isSignUp, setIsSignUp] = useState(true);
   const [fullName, setFullName] = useState('');
@@ -25,7 +27,7 @@ export default function LoginPage({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = isSignUp ? '/api/auth/signup' : '/api/auth/login';
+      const endpoint = isSignUp ? `${API_BASE}/api/auth/signup` : `${API_BASE}/api/auth/login`;
       const body = isSignUp ? { fullName, email, password, division, staffId } : { email, password };
       
       const res = await fetch(endpoint, {
