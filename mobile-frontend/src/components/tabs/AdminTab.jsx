@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CorporatePerformanceChart } from './App';
+import { CorporatePerformanceChart } from '../ui/UIComponents';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 const currentMonth = new Date().toISOString().slice(0, 7);
@@ -241,7 +241,7 @@ export default function AdminTab({ onGlossaryChange }) {
       </div>
 
       {/* Section Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {sections.map(s => (
           <button key={s.id} onClick={() => setActiveSection(s.id)} className={`px-4 py-2.5 rounded-xl text-[13px] font-bold whitespace-nowrap transition-all ${activeSection === s.id ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
             {s.label} <span className="ml-1 text-[11px] opacity-70">({s.count})</span>

@@ -28,7 +28,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
-app.Urls.Add("http://0.0.0.0:5195");
+app.Urls.Add("http://127.0.0.1:5195");
 
 if (app.Environment.IsDevelopment())
 {
@@ -397,7 +397,7 @@ app.MapPost("/api/auth/signup", async (AuthRequest req, AppDbContext db) =>
 
     var user = new StaffUser
     {
-        FullName = req.FullName,
+        FullName = req.FullName ?? "",
         Email = req.Email,
         PasswordHash = req.Password, // For MVP. Real apps should hash this!
         Division = req.Division ?? "",
@@ -407,8 +407,9 @@ app.MapPost("/api/auth/signup", async (AuthRequest req, AppDbContext db) =>
     await db.SaveChangesAsync();
     
     return Results.Ok(new { id = user.Id, fullName = user.FullName, email = user.Email, division = user.Division, staffId = user.StaffId });
-});
+}).RequireCors("AllowAll");
 
+app.MapMethods("/api/auth/login", new[] { "OPTIONS" }, () => Results.Ok()).RequireCors("AllowAll");
 app.MapPost("/api/auth/login", async (AuthRequest req, AppDbContext db) =>
 {
     var user = await db.StaffUsers.FirstOrDefaultAsync(u => u.Email == req.Email && u.PasswordHash == req.Password);
@@ -416,7 +417,7 @@ app.MapPost("/api/auth/login", async (AuthRequest req, AppDbContext db) =>
         return Results.Unauthorized();
         
     return Results.Ok(new { id = user.Id, fullName = user.FullName, email = user.Email, division = user.Division, staffId = user.StaffId });
-});
+}).RequireCors("AllowAll");
 
 app.MapGet("/api/seed", async (AppDbContext db) =>
 {
@@ -904,9 +905,9 @@ record ReadActivityRequest(string Username);
 
 public class AuthRequest
 {
-    public string FullName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string Division { get; set; } = string.Empty;
-    public string StaffId { get; set; } = string.Empty;
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
+    public string? Password { get; set; }
+    public string? Division { get; set; }
+    public string? StaffId { get; set; }
 }

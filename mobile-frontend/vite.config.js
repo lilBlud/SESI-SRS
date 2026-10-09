@@ -11,8 +11,8 @@ export default defineConfig({
       allow: ['..', 'C:/Users/User/.gemini']
     },
     proxy: {
-      '/api': 'http://localhost:5195',
-      '/uploads': 'http://localhost:5195'
+      '/api': 'http://127.0.0.1:5195',
+      '/uploads': 'http://127.0.0.1:5195'
     }
   },
   plugins: [
