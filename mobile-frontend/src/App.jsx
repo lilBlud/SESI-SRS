@@ -3,6 +3,55 @@ import { createPortal } from 'react-dom';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import AdminTab from './AdminTab';
 import LoginPage from './LoginPage';
+import { mockGlossary } from './mockData.js';
+
+// --- MOCK API INTERCEPTOR FOR OFFLINE CLOUDFLARE DEMO ---
+if (!window.__MOCK_FETCH_ADDED__) {
+  window.__MOCK_FETCH_ADDED__ = true;
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (...args) => {
+    const [url, options] = args;
+    const urlString = typeof url === 'string' ? url : (url?.url || '');
+    
+    if (urlString.includes('/api/glossary')) {
+      return new Response(JSON.stringify(mockGlossary), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    
+    if (urlString.includes('/api/leaderboard')) {
+      return new Response(JSON.stringify([
+        { staffId: 'DEMO-001', username: 'Demo User', division: 'CEO Office', score: 120 },
+        { staffId: 'EMP-892', username: 'Ahmad Faiz', division: 'Finance', score: 95 },
+        { staffId: 'EMP-301', username: 'Sarah Tan', division: 'Corporate Planning', score: 80 }
+      ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    if (urlString.includes('/api/quiz')) {
+      return new Response(JSON.stringify([
+        { id: 1, question: "What does IBR stand for?", options: "Incentive-Based Regulation,Internal Business Rules,International Banking Rates,Integrated Baseline Review", answer: "Incentive-Based Regulation" },
+        { id: 2, question: "Which is a component of Corporate Performance?", options: "EBIT,SAIFI,CAIDI,BBM", answer: "EBIT" }
+      ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    if (urlString.includes('/api/streak')) {
+      return new Response(JSON.stringify({ streakCount: 5, lastAnsweredMonth: '2026-10' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    if (urlString.includes('/api/submit-answer')) {
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    if (urlString.includes('/api/admin/infographics')) {
+      return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    
+    if (urlString.includes('/api/profile')) {
+      return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    return originalFetch(...args);
+  };
+}
+// --------------------------------------------------------
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 const currentMonth = new Date().toISOString().slice(0, 7);
