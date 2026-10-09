@@ -206,7 +206,7 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
         </div>
       )}
 
-      {term.toUpperCase().includes('AUDIT') ? (
+      {(term || '').toUpperCase().includes('AUDIT') ? (
         <div className="flex flex-col gap-4 mt-3 relative z-10 flex-1">
           <div className="flex items-stretch gap-4 w-full flex-1">
             <div className="flex-1 border-2 border-slate-200 dark:border-slate-700 rounded-[24px] p-4 flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-800/50 shadow-sm">
@@ -244,7 +244,7 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
                     animationDuration={1500}
                     animationEasing="ease-out"
                     isAnimationActive={true}
-                    barSize={32}
+                    maxBarSize={40}
                   >
                     {formattedData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={index === formattedData.length - 1 ? '#059669' : '#34d399'} />

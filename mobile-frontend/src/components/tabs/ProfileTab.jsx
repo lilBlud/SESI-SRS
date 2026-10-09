@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE, currentMonth, getColor, getCatMeta } from '../../utils/constants';
+import { CorporatePerformanceChart, PostImageSlider } from '../ui/UIComponents';
 
 export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstallPrompt }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };
@@ -526,7 +528,7 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
                           {activeBookmark.cat === 'Corporate Performance' ? (
                             <div className="space-y-2 mt-3 mb-2">
                               <p className="text-[13px] text-slate-600 dark:text-slate-300 mb-3 leading-relaxed whitespace-pre-wrap">{activeBookmark.desc}</p>
-                              <CorporatePerformanceChart chartData={activeBookmark.chartData} term={activeBookmark.term} description="" />
+                              <CorporatePerformanceChart chartData={activeBookmark.chartData} term={activeBookmark.term || activeBookmark.title || ""} description="" />
                             </div>
                           ) : (
                             <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{activeBookmark.desc}</p>
