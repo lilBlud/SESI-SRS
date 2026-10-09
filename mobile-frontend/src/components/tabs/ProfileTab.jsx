@@ -316,7 +316,7 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
                   </style>
                   </head><body>`);
 
-                pdfWin.document.write(`<div class="no-print" style="margin-bottom: 20px; display: flex; justify-content: flex-start;"><button onclick="window.close()" style="background: #0f172a; color: white; padding: 12px 20px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">← Back to App</button></div>`);
+                pdfWin.document.write(`<div class="no-print" style="margin-bottom: 24px; display: flex; justify-content: flex-start;"><button onclick="window.close()" style="background: #0f172a; color: white; padding: 16px 32px; border: none; border-radius: 16px; font-weight: 800; cursor: pointer; font-size: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">← Back to App</button></div>`);
 
                 pdfWin.document.write(`<div class="header-box">`);
                 pdfWin.document.write(`<h1 class="main-title">SESI Reference Guide</h1>`);
@@ -332,8 +332,31 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
                   dictItems.forEach(bm => {
                     pdfWin.document.write(`<div class="dict-card">`);
                     pdfWin.document.write(`<div class="dict-cat">${bm.cat || 'Dictionary'}</div>`);
-                    pdfWin.document.write(`<h3 class="dict-term">${bm.term}${bm.full && !bm.term.includes(' ') ? ` <span style="font-size:14px;color:#64748b;font-weight:600;margin-left:8px;">(${bm.full})</span>` : ''}</h3>`);
+                    const titleStr = bm.term || bm.title || '';
+                    pdfWin.document.write(`<h3 class="dict-term">${titleStr}${bm.full && !titleStr.includes(' ') ? ` <span style="font-size:14px;color:#64748b;font-weight:600;margin-left:8px;">(${bm.full})</span>` : ''}</h3>`);
                     pdfWin.document.write(`<div class="dict-desc">${bm.desc}</div>`);
+                    if (bm.cat === 'Corporate Performance' && bm.chartData) {
+                      let parsed = [];
+                      try {
+                        parsed = typeof bm.chartData === 'string' ? JSON.parse(bm.chartData) : bm.chartData;
+                      } catch(e) {}
+                      if (Array.isArray(parsed) && parsed.length > 0) {
+                        const maxVal = Math.max(...parsed.map(d => d.value));
+                        let barsHtml = `<div style="display:flex; align-items:flex-end; gap:6px; height:120px; margin-top:20px; padding-top:16px; border-top: 1px dashed #cbd5e1; page-break-inside: avoid;">`;
+                        parsed.forEach(d => {
+                           const heightPct = maxVal > 0 ? (d.value / maxVal) * 100 : 0;
+                           barsHtml += `
+                             <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; height:100%;">
+                               <div style="font-size:8px; color:#64748b; font-weight:700;">${d.value}</div>
+                               <div style="width:100%; max-width:24px; height:${Math.max(1, heightPct)}%; background:#10b981; border-radius:3px 3px 0 0; min-height:4px;"></div>
+                               <div style="font-size:8px; font-weight:800; color:#475569;">${d.month}</div>
+                             </div>
+                           `;
+                        });
+                        barsHtml += `</div>`;
+                        pdfWin.document.write(barsHtml);
+                      }
+                    }
                     if (bm.formula) {
                       pdfWin.document.write(`<div class="dict-formula">📐 ${bm.formula}</div>`);
                       if (bm.formulaTermMeanings) {
