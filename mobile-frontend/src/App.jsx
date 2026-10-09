@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import AdminTab from './AdminTab';
 import LoginPage from './LoginPage';
 import { mockGlossary } from './mockData.js';
@@ -69,7 +69,7 @@ const CATEGORIES = [
   { key: 'Corporate Performance', label: 'Corporate Performance', emoji: '📊', color: 'orange' },
   { key: 'ISO Management', label: 'ISO Management', emoji: '🏅', color: 'teal' },
   { key: 'SE Risk', label: 'Sabah Electricity Risks', emoji: '⚠️', color: 'red' },
-  { key: 'ReSET2030', label: 'ReSET2030', emoji: '🔄', iconImage: '/@fs/C:/Users/User/.gemini/antigravity-ide/brain/64e02f0e-9a34-4ae4-a35c-a08ed77461c3/.user_uploaded/media_1791251781865.png', color: 'sky' },
+  { key: 'ReSET2030', label: 'ReSET2030', emoji: '🔄', iconImage: '/assets/reset2030_icon.png', color: 'sky' },
 ];
 
 const getCatMeta = (catKey) => CATEGORIES.find(c => c.key === catKey) || CATEGORIES[0];
@@ -331,7 +331,7 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
 
   return (
     <div 
-      className="mt-4 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm animate-fadeIn relative overflow-hidden group focus:outline-none"
+      className="mt-4 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm animate-fadeIn relative overflow-hidden group focus:outline-none flex flex-col justify-between h-full w-full"
       onClick={(e) => e.stopPropagation()}
       style={{ WebkitTapHighlightColor: 'transparent' }}
     >
@@ -363,16 +363,20 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
             )}
           </div>
           <div className="flex items-baseline gap-2.5">
-            <span className="text-[28px] font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">
-              {formatter(lastData?.value ?? 0)}
-            </span>
-            {!isZero && (
-              <span className={`text-[13px] font-bold flex items-center px-1.5 py-0.5 rounded-md ${isPositive ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400' : 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'}`}>
-                <svg className={`w-3.5 h-3.5 mr-0.5 ${!isPositive ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3.25a.75.75 0 01.53.22l5 5a.75.75 0 11-1.06 1.06L10.75 5.81v10.44a.75.75 0 01-1.5 0V5.81L5.53 9.53a.75.75 0 01-1.06-1.06l5-5a.75.75 0 01.53-.22z" clipRule="evenodd" />
-                </svg>
-                {isPositive ? '+' : ''}{growth.toFixed(2)}%
-              </span>
+            {!term.toUpperCase().includes('AUDIT') && (
+              <>
+                <span className="text-[28px] font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">
+                  {formatter(lastData?.value ?? 0)}
+                </span>
+                {!isZero && (
+                  <span className={`text-[13px] font-bold flex items-center px-1.5 py-0.5 rounded-md ${isPositive ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400' : 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'}`}>
+                    <svg className={`w-3.5 h-3.5 mr-0.5 ${!isPositive ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 3.25a.75.75 0 01.53.22l5 5a.75.75 0 11-1.06 1.06L10.75 5.81v10.44a.75.75 0 01-1.5 0V5.81L5.53 9.53a.75.75 0 01-1.06-1.06l5-5a.75.75 0 01.53-.22z" clipRule="evenodd" />
+                    </svg>
+                    {isPositive ? '+' : ''}{growth.toFixed(2)}%
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -385,52 +389,99 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
         </div>
       )}
 
-      <div className="h-36 w-full -ml-2 relative z-10 [&_*]:outline-none [&_svg]:!outline-none" style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}>
-        <ResponsiveContainer width="100%" height="100%" className="!outline-none focus:!outline-none">
-          <AreaChart data={formattedData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }} style={{ outline: 'none' }}>
-            <defs>
-              <linearGradient id={`colorValue-${(term || '').replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.35}/>
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <Tooltip 
-              content={CustomTooltip}
-              cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.4 }}
-            />
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" opacity={0.3} />
-            <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
-            <YAxis hide={true} domain={[(dataMin) => dataMin - (Math.abs(dataMin) * 0.1 || 1), (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
-            <Area 
-              type="monotone" 
-              dataKey="value" 
-              stroke="#10b981" 
-              strokeWidth={3.5}
-              fillOpacity={1} 
-              fill={`url(#colorValue-${(term || '').replace(/\s+/g, '')})`}
-              activeDot={CustomActiveDot} 
-              dot={CustomDot}
-              animationDuration={1800}
-              animationEasing="ease-out"
-              isAnimationActive={true}
-              style={{ outline: 'none' }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {term.toUpperCase().includes('AUDIT') ? (
+        <div className="flex flex-col gap-4 mt-3 relative z-10 flex-1">
+          <div className="flex items-stretch gap-4 w-full flex-1">
+            <div className="flex-1 border-2 border-slate-200 dark:border-slate-700 rounded-[24px] p-5 flex flex-col justify-center bg-slate-50 dark:bg-slate-800/50 shadow-sm">
+              <div className="text-[52px] font-black text-slate-800 dark:text-slate-100 leading-none mb-1 tracking-tighter">56</div>
+              <div className="text-[16px] font-black text-slate-600 dark:text-slate-300 mb-1">open</div>
+              <div className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Jan 26</div>
+            </div>
+            <div className="flex-1 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-[24px] p-4 flex flex-col justify-center items-center bg-white dark:bg-slate-800/20">
+              <div className="text-[42px] font-black text-emerald-600 dark:text-emerald-400 leading-none mb-1 tracking-tighter">15</div>
+              <div className="text-[16px] font-black text-slate-600 dark:text-slate-300 mb-1">closed</div>
+              <div className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">APR 26</div>
+            </div>
+          </div>
+          <div className="text-[16px] font-bold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800/50 px-4 py-3.5 rounded-[16px] text-center shadow-sm w-full">
+            Pending: 41
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="h-36 w-full -ml-2 relative z-10 [&_*]:outline-none [&_svg]:!outline-none" style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}>
+            <ResponsiveContainer width="100%" height="100%" className="!outline-none focus:!outline-none">
+              {['CAPEX', 'OPEX', 'ASSET CAPITALISATION', 'ASSET CAP'].includes((term || '').toUpperCase()) ? (
+                <BarChart data={formattedData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }} style={{ outline: 'none' }}>
+                  <Tooltip 
+                    content={CustomTooltip}
+                    cursor={{ fill: '#e2e8f0', opacity: 0.4 }}
+                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" opacity={0.3} />
+                  <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
+                  <YAxis hide={true} domain={[0, (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]}
+                    animationDuration={1500}
+                    animationEasing="ease-out"
+                    isAnimationActive={true}
+                    barSize={32}
+                  >
+                    {formattedData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === formattedData.length - 1 ? '#059669' : '#34d399'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              ) : (
+                <AreaChart data={formattedData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }} style={{ outline: 'none' }}>
+                  <defs>
+                    <linearGradient id={`colorValue-${(term || '').replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.35}/>
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Tooltip 
+                    content={CustomTooltip}
+                    cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.4 }}
+                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" opacity={0.3} />
+                  <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
+                  <YAxis hide={true} domain={[(dataMin) => dataMin - (Math.abs(dataMin) * 0.1 || 1), (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#10b981" 
+                    strokeWidth={3.5}
+                    fillOpacity={1} 
+                    fill={`url(#colorValue-${(term || '').replace(/\s+/g, '')})`}
+                    activeDot={CustomActiveDot} 
+                    dot={CustomDot}
+                    animationDuration={1800}
+                    animationEasing="ease-out"
+                    isAnimationActive={true}
+                    style={{ outline: 'none' }}
+                  />
+                </AreaChart>
+              )}
+            </ResponsiveContainer>
+          </div>
 
-      {/* Footer labels matching the aesthetic */}
-      <div className="flex justify-between items-center mt-3 px-2 pt-3 border-t border-slate-200 dark:border-slate-700 border-dashed relative z-10">
-        <div className="flex flex-col items-start">
-          <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{firstData?.fullName || firstData?.name}</span>
-          <span className="text-[10px] font-medium text-slate-400">{formatter(firstData?.value ?? 0)}</span>
-        </div>
-        
-        <div className="flex flex-col items-end">
-          <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{lastData?.fullName || lastData?.name} (Latest)</span>
-          <span className="text-[10px] font-bold text-emerald-500/80">{formatter(lastData?.value ?? 0)}</span>
-        </div>
-      </div>
+          {/* Footer labels matching the aesthetic */}
+          <div className="flex justify-between items-center mt-3 px-2 pt-3 border-t border-slate-200 dark:border-slate-700 border-dashed relative z-10">
+            <div className="flex flex-col items-start">
+              <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{firstData?.fullName || firstData?.name}</span>
+              <span className="text-[10px] font-medium text-slate-400">{formatter(firstData?.value ?? 0)}</span>
+            </div>
+            
+            <div className="flex flex-col items-end">
+              <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{lastData?.fullName || lastData?.name} (Latest)</span>
+              <span className="text-[10px] font-bold text-emerald-500/80">{formatter(lastData?.value ?? 0)}</span>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -488,7 +539,7 @@ function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, b
     <div className="space-y-5 animate-slideUp">
       {/* ── Hero Banner (Sleek Glassmorphism Split) ── */}
       <div className="relative rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden mb-6 bg-cover bg-center ring-1 ring-black/5 dark:ring-white/10"
-        style={{ backgroundImage: `url('/@fs/C:/Users/User/.gemini/antigravity-ide/brain/29a0a901-89c7-44bb-b8ba-d27e704d88a7/.user_uploaded/${isDark ? 'media_1791169498492.png' : 'media_1791171890246.png'}')` }}>
+        style={{ backgroundImage: `url('/assets/${isDark ? 'pattern_dark.png' : 'pattern_light.png'}')` }}>
 
         {/* Animated Glowing Overlay */}
         <div className="absolute inset-0 bg-emerald-500/20 mix-blend-normal dark:bg-emerald-400/60 dark:mix-blend-color-dodge animate-pulse-slow pointer-events-none"></div>
@@ -521,8 +572,8 @@ function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, b
 
       {/* ── Corporate Performance Slider ── */}
       {(glossary || []).filter(item => item.cat === 'Corporate Performance').length > 0 && (
-        <div className="mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <div className="flex items-center justify-between mb-1 px-2">
+        <div className="mb-6 -mx-4 sm:mx-0">
+          <div className="flex items-center justify-between mb-1 px-6 sm:px-0">
             <h2 className="text-[15px] font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
               Corporate Performance
             </h2>
@@ -534,12 +585,12 @@ function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, b
             </button>
           </div>
           <div 
-            className="flex overflow-x-auto gap-4 pb-4 pt-1 snap-x snap-mandatory category-scroll" 
-            style={{ WebkitOverflowScrolling: 'touch' }}
+            className="flex overflow-x-auto gap-4 pb-4 pt-1 snap-x snap-mandatory category-scroll px-[6vw] md:px-[calc(50%-175px)] items-stretch" 
+            style={{ WebkitOverflowScrolling: 'touch', scrollPaddingLeft: '6vw' }}
           >
             {(glossary || []).filter(item => item.cat === 'Corporate Performance').map(item => (
-              <div key={item.id || item.term} className="snap-center shrink-0 w-[92%] sm:w-[350px] first:ml-0 last:mr-4">
-                <div className="-mt-4">
+              <div key={item.id || item.term} className="snap-center shrink-0 w-[88vw] sm:w-[350px] flex">
+                <div className="-mt-4 w-full h-full flex flex-col">
                   <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" />
                 </div>
               </div>
@@ -2272,7 +2323,7 @@ function App() {
     <div className={`h-[100vh] overflow-hidden flex flex-col text-slate-900 transition-colors duration-200 w-full max-w-[430px] xl:max-w-none mx-auto relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
       {/* Hardware Accelerated HD Background Image */}
       <img
-        src={isDark ? '/@fs/C:/Users/User/.gemini/antigravity-ide/brain/64e02f0e-9a34-4ae4-a35c-a08ed77461c3/hd_dark_topo_1791271080189.jpg' : '/@fs/C:/Users/User/.gemini/antigravity-ide/brain/64e02f0e-9a34-4ae4-a35c-a08ed77461c3/hd_light_topo_1791271068815.jpg'}
+        src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
         alt="Background"
         className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none"
       />
@@ -2298,7 +2349,7 @@ function App() {
               </button>
             )}
             <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-slate-200 dark:border-slate-800 shrink-0">
-              <img src="/@fs/C:/Users/User/.gemini/antigravity-ide/brain/64e02f0e-9a34-4ae4-a35c-a08ed77461c3/.user_uploaded/media_1791269952460.png" alt="S&S Logo" className="w-full h-full object-cover p-0.5" />
+              <img src="/assets/logo.png" alt="S&S Logo" className="w-full h-full object-cover p-0.5" />
             </div>
             <div className="flex flex-col justify-center">
               <span className="text-[20px] font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-emerald-400 dark:to-teal-400">
