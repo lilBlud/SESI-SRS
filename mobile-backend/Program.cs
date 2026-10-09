@@ -109,17 +109,17 @@ using (var scope = app.Services.CreateScope())
     try 
     {
         var dummyData = new Dictionary<string, string> {
-            { "TOTAL REVENUE", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":1.85},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.90},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1.91},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":1.93}]" },
-            { "PAT", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":55.2},{\"month\":\"May\",\"year\":\"2026\",\"value\":57.8},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":58.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":58.9}]" },
-            { "EBIT", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":240.5},{\"month\":\"May\",\"year\":\"2026\",\"value\":250.1},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":255.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":259.2}]" },
-            { "SAIDI", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":125.4},{\"month\":\"May\",\"year\":\"2026\",\"value\":122.1},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":118.5},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":112.20}]" },
-            { "SYSTEM LOSS", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":15.8},{\"month\":\"May\",\"year\":\"2026\",\"value\":15.2},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":14.8},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":14.41}]" },
-            { "CAPEX", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":200.1},{\"month\":\"May\",\"year\":\"2026\",\"value\":205.3},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":206.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":206.7}]" },
-            { "OPEX", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":402.1},{\"month\":\"May\",\"year\":\"2026\",\"value\":404.3},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":405.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":406.5}]" },
-            { "ASSET CAPITALISATION", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":34},{\"month\":\"May\",\"year\":\"2026\",\"value\":35},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":36},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":37}]" },
-            { "SYSTEM UNIT", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":2},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.5},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":0}]" },
-            { "AUDIT ISSUE", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":40},{\"month\":\"May\",\"year\":\"2026\",\"value\":40.5},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":41},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":42}]" },
-            { "SAFETY", "[{\"month\":\"Apr\",\"year\":\"2026\",\"value\":1.30},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.25},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1.20},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":1.15}]" }
+            { "TOTAL REVENUE", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":1.70},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":1.75},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":1.80},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":1.85},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.90},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1.91},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":1.93}]" },
+            { "PAT", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":50.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":51.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":53.1},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":55.2},{\"month\":\"May\",\"year\":\"2026\",\"value\":57.8},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":58.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":58.9}]" },
+            { "EBIT", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":220.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":225.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":235.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":240.5},{\"month\":\"May\",\"year\":\"2026\",\"value\":250.1},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":255.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":259.2}]" },
+            { "SAIDI", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":135.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":132.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":128.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":125.4},{\"month\":\"May\",\"year\":\"2026\",\"value\":122.1},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":118.5},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":112.20}]" },
+            { "SYSTEM LOSS", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":16.5},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":16.2},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":16.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":15.8},{\"month\":\"May\",\"year\":\"2026\",\"value\":15.2},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":14.8},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":14.41}]" },
+            { "CAPEX", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":185.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":190.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":195.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":200.1},{\"month\":\"May\",\"year\":\"2026\",\"value\":205.3},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":206.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":206.7}]" },
+            { "OPEX", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":395.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":398.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":400.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":402.1},{\"month\":\"May\",\"year\":\"2026\",\"value\":404.3},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":405.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":406.5}]" },
+            { "ASSET CAPITALISATION", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":30},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":32},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":33},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":34},{\"month\":\"May\",\"year\":\"2026\",\"value\":35},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":36},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":37}]" },
+            { "SYSTEM UNIT", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":3.5},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":3.0},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":2.5},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":2},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.5},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":0}]" },
+            { "AUDIT ISSUE", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":38},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":38.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":39},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":40},{\"month\":\"May\",\"year\":\"2026\",\"value\":40.5},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":41},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":42}]" },
+            { "SAFETY", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":1.45},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":1.40},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":1.35},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":1.30},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.25},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1.20},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":1.15}]" }
         };
 
         var definitions = new Dictionary<string, string> {
@@ -155,14 +155,13 @@ using (var scope = app.Services.CreateScope())
                     ChartData = kvp.Value 
                 });
             } else {
-                // It exists, forcefully update ALL matching rows using raw SQL to bypass any tracking issues
-                db.Database.ExecuteSqlRaw(@"
-                    UPDATE ""GlossaryTerms""
-                    SET ""Category"" = 'Corporate Performance', 
-                        ""ChartData"" = {0},
-                        ""Description"" = {1}
-                    WHERE UPPER(TRIM(""Term"")) = {2};
-                ", kvp.Value, desc, upperKey);
+                // It exists, update using EF Core tracking
+                var termsToUpdate = allTerms.Where(t => !string.IsNullOrEmpty(t.Term) && t.Term.Trim().ToUpper() == upperKey).ToList();
+                foreach (var term in termsToUpdate) {
+                    term.Category = "Corporate Performance";
+                    term.ChartData = kvp.Value;
+                    term.Description = desc;
+                }
             }
         }
 
@@ -586,6 +585,28 @@ app.MapGet("/api/fix-corporate", async (AppDbContext db) =>
 // ─── Glossary: Get all terms (from database) ───
 app.MapGet("/api/glossary", async (AppDbContext db) =>
 {
+    var dummyData = new Dictionary<string, string> {
+        { "TOTAL REVENUE", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":1.70},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":1.75},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":1.80},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":1.85},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.90},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1.91},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":1.93}]" },
+        { "PAT", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":50.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":51.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":53.1},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":55.2},{\"month\":\"May\",\"year\":\"2026\",\"value\":57.8},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":58.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":58.9}]" },
+        { "EBIT", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":220.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":225.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":235.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":240.5},{\"month\":\"May\",\"year\":\"2026\",\"value\":250.1},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":255.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":259.2}]" },
+        { "SAIDI", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":135.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":132.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":128.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":125.4},{\"month\":\"May\",\"year\":\"2026\",\"value\":122.1},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":118.5},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":112.20}]" },
+        { "SYSTEM LOSS", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":16.5},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":16.2},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":16.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":15.8},{\"month\":\"May\",\"year\":\"2026\",\"value\":15.2},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":14.8},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":14.41}]" },
+        { "CAPEX", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":185.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":190.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":195.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":200.1},{\"month\":\"May\",\"year\":\"2026\",\"value\":205.3},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":206.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":206.7}]" },
+        { "OPEX", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":395.0},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":398.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":400.0},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":402.1},{\"month\":\"May\",\"year\":\"2026\",\"value\":404.3},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":405.0},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":406.5}]" },
+        { "ASSET CAPITALISATION", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":30},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":32},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":33},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":34},{\"month\":\"May\",\"year\":\"2026\",\"value\":35},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":36},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":37}]" },
+        { "SYSTEM UNIT", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":3.5},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":3.0},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":2.5},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":2},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.5},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":0}]" },
+        { "AUDIT ISSUE", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":38},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":38.5},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":39},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":40},{\"month\":\"May\",\"year\":\"2026\",\"value\":40.5},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":41},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":42}]" },
+        { "SAFETY", "[{\"month\":\"Jan\",\"year\":\"2026\",\"value\":1.45},{\"month\":\"Feb\",\"year\":\"2026\",\"value\":1.40},{\"month\":\"Mar\",\"year\":\"2026\",\"value\":1.35},{\"month\":\"Apr\",\"year\":\"2026\",\"value\":1.30},{\"month\":\"May\",\"year\":\"2026\",\"value\":1.25},{\"month\":\"Jun\",\"year\":\"2026\",\"value\":1.20},{\"month\":\"Jul\",\"year\":\"2026\",\"value\":1.15}]" }
+    };
+    var allTermsForPatch = await db.GlossaryTerms.ToListAsync();
+    foreach(var kvp in dummyData) {
+        var term = allTermsForPatch.FirstOrDefault(t => !string.IsNullOrEmpty(t.Term) && t.Term.Trim().ToUpper() == kvp.Key);
+        if (term != null) {
+            term.ChartData = kvp.Value;
+        }
+    }
+    await db.SaveChangesAsync();
+
     var terms = await db.GlossaryTerms.OrderBy(g => g.Term).ToListAsync();
     // Return in a format the frontend expects
     var formatted = terms.Select(g => new {

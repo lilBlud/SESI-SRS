@@ -181,6 +181,8 @@ function PostImageSlider({ images, title, onImageClick }) {
 
 // ─── Corporate Performance Chart ───
 export function CorporatePerformanceChart({ chartData, term, description }) {
+  const [selectedYear, setSelectedYear] = useState(null);
+
   if (!chartData) return null;
   let parsed = [];
   try {
@@ -193,13 +195,18 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
 
   // Map month names to numbers for sorting
   const monthMap = { 'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12 };
-  parsed.sort((a, b) => {
-    if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
-    return monthMap[a.month] - monthMap[b.month];
-  });
+  
+  // Get all unique years
+  const allYears = [...new Set(parsed.map(d => parseInt(d.year)))].sort((a,b) => b-a);
+  const activeYear = selectedYear || allYears[0];
 
-  const formattedData = parsed.map(d => ({
-    name: `${d.month} '${d.year.toString().slice(-2)}`,
+  // Filter and sort for the active year
+  const dataForYear = parsed.filter(d => parseInt(d.year) === activeYear);
+  dataForYear.sort((a, b) => monthMap[a.month] - monthMap[b.month]);
+
+  const formattedData = dataForYear.map(d => ({
+    name: `${d.month}`,
+    fullName: `${d.month} '${d.year.toString().slice(-2)}`,
     value: d.value
   }));
 
@@ -228,88 +235,150 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
   const CustomDot = (props) => {
     const { cx, cy, index } = props;
     const isLast = index === formattedData.length - 1;
+    if (cx === undefined || cy === undefined) return null;
     return (
       <circle 
         key={`dot-${index}`}
         cx={cx} 
         cy={cy} 
-        r={isLast ? 4 : 3} 
-        stroke="white" 
-        strokeWidth={isLast ? 2 : 1.5} 
+        r={isLast ? 5 : 4} 
+        stroke="#ffffff" 
+        strokeWidth={isLast ? 2.5 : 2} 
         fill="#10b981" 
       />
     );
   };
 
+  // Custom active dot with a beautiful pulse effect for interaction
+  const CustomActiveDot = (props) => {
+    const { cx, cy } = props;
+    if (cx === undefined || cy === undefined) return null;
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={14} fill="#10b981" fillOpacity={0.2} className="animate-ping" />
+        <circle cx={cx} cy={cy} r={6} fill="#10b981" stroke="#ffffff" strokeWidth={2.5} />
+      </g>
+    );
+  };
+
+  // Custom stylish tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-900/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/60 shadow-lg flex flex-col z-50">
+          <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-0.5">{payload[0].payload.fullName}</p>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <p className="text-white font-black text-[13px] tracking-tight">
+              {formatter(payload[0].value)}
+            </p>
+          </div>
+          <p className="text-emerald-500 text-[8px] font-bold uppercase mt-px ml-3 tracking-wider">{term}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="mt-4 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm animate-fadeIn">
+    <div 
+      className="mt-4 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm animate-fadeIn relative overflow-hidden group focus:outline-none"
+      onClick={(e) => e.stopPropagation()}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
+    >
+      
+      {/* Decorative gradient orb for premium feel */}
+      <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
+
       {/* Header section matching the aesthetic */}
-      <div className="flex items-end justify-between mb-4">
-        <div className="flex items-baseline gap-2.5">
-          <span className="text-[26px] font-black text-slate-900 dark:text-white tracking-tight">
-            {formatter(lastData?.value ?? 0)}
-          </span>
-          {!isZero && (
-            <span className={`text-[14px] font-bold flex items-center ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
-              <svg className={`w-3.5 h-3.5 mr-0.5 ${!isPositive ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3.25a.75.75 0 01.53.22l5 5a.75.75 0 11-1.06 1.06L10.75 5.81v10.44a.75.75 0 01-1.5 0V5.81L5.53 9.53a.75.75 0 01-1.06-1.06l5-5a.75.75 0 01.53-.22z" clipRule="evenodd" />
-              </svg>
-              {isPositive ? '+' : ''}{growth.toFixed(2)}%
+      <div className="flex items-end justify-between mb-4 relative z-10">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{term}</span>
+            {/* Dropdown Year Filter */}
+            {allYears.length > 0 && (
+              <div className="relative inline-block focus:outline-none" onClick={(e) => e.stopPropagation()}>
+                <select 
+                  value={activeYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  className="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-700 dark:text-slate-200 text-[11px] font-bold rounded-full pl-2.5 pr-6 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 cursor-pointer"
+                >
+                  {allYears.map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex items-baseline gap-2.5">
+            <span className="text-[28px] font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">
+              {formatter(lastData?.value ?? 0)}
             </span>
-          )}
+            {!isZero && (
+              <span className={`text-[13px] font-bold flex items-center px-1.5 py-0.5 rounded-md ${isPositive ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400' : 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'}`}>
+                <svg className={`w-3.5 h-3.5 mr-0.5 ${!isPositive ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 3.25a.75.75 0 01.53.22l5 5a.75.75 0 11-1.06 1.06L10.75 5.81v10.44a.75.75 0 01-1.5 0V5.81L5.53 9.53a.75.75 0 01-1.06-1.06l5-5a.75.75 0 01.53-.22z" clipRule="evenodd" />
+                </svg>
+                {isPositive ? '+' : ''}{growth.toFixed(2)}%
+              </span>
+            )}
+          </div>
         </div>
       </div>
       
       {/* Definition Section */}
       {description && (
-        <div className="mb-4 text-[12px] text-slate-500 dark:text-slate-400 font-medium italic border-l-2 border-emerald-500 pl-3">
+        <div className="mb-5 text-[12px] text-slate-500 dark:text-slate-400 font-medium italic border-l-2 border-emerald-500 pl-3 leading-relaxed relative z-10">
           {description}
         </div>
       )}
 
-      <div className="h-28 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={formattedData} margin={{ top: 15, right: 20, left: 20, bottom: 15 }}>
+      <div className="h-36 w-full -ml-2 relative z-10 [&_*]:outline-none [&_svg]:!outline-none" style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}>
+        <ResponsiveContainer width="100%" height="100%" className="!outline-none focus:!outline-none">
+          <AreaChart data={formattedData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }} style={{ outline: 'none' }}>
             <defs>
-              <linearGradient id={`colorValue-${term.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              <linearGradient id={`colorValue-${(term || '').replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.35}/>
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <Tooltip 
-              formatter={(val) => [formatter(val), term]}
-              labelFormatter={(label) => label}
-              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 'bold' }} 
-              itemStyle={{ color: '#10b981' }} 
+              content={CustomTooltip}
+              cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.4 }}
             />
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" opacity={0.3} />
             <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
-            <YAxis hide={true} domain={[(dataMin) => dataMin - (Math.abs(dataMin) * 0.05 || 1), (dataMax) => dataMax + (Math.abs(dataMax) * 0.05 || 1)]} />
+            <YAxis hide={true} domain={[(dataMin) => dataMin - (Math.abs(dataMin) * 0.1 || 1), (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
             <Area 
               type="monotone" 
               dataKey="value" 
               stroke="#10b981" 
-              strokeWidth={3}
+              strokeWidth={3.5}
               fillOpacity={1} 
-              fill={`url(#colorValue-${term.replace(/\s+/g, '')})`}
-              activeDot={{ r: 6, strokeWidth: 0, fill: '#10b981' }} 
+              fill={`url(#colorValue-${(term || '').replace(/\s+/g, '')})`}
+              activeDot={CustomActiveDot} 
               dot={CustomDot}
-              animationDuration={1500}
-              isAnimationActive={false}
+              animationDuration={1800}
+              animationEasing="ease-out"
+              isAnimationActive={true}
+              style={{ outline: 'none' }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      
+
       {/* Footer labels matching the aesthetic */}
-      <div className="flex justify-between items-center mt-3 px-2 pt-3 border-t border-slate-200 dark:border-slate-700 border-dashed relative">
+      <div className="flex justify-between items-center mt-3 px-2 pt-3 border-t border-slate-200 dark:border-slate-700 border-dashed relative z-10">
         <div className="flex flex-col items-start">
-          <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{formattedData[0]?.name}</span>
-          <span className="text-[10px] font-medium text-slate-400">{formatter(formattedData[0]?.value ?? 0)}</span>
+          <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{firstData?.fullName || firstData?.name}</span>
+          <span className="text-[10px] font-medium text-slate-400">{formatter(firstData?.value ?? 0)}</span>
         </div>
         
         <div className="flex flex-col items-end">
-          <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{lastData?.name} (Latest)</span>
+          <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{lastData?.fullName || lastData?.name} (Latest)</span>
           <span className="text-[10px] font-bold text-emerald-500/80">{formatter(lastData?.value ?? 0)}</span>
         </div>
       </div>
@@ -318,7 +387,7 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
 }
 
 // ─── Home Tab ───
-function HomeTab({ user, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions }) {
+function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions;
   const [posts, setPosts] = useState([]);
   const [postCat, setPostCat] = useState('All');
@@ -401,7 +470,34 @@ function HomeTab({ user, setActiveTab, setActiveGlossaryCat, isDark, bookmarkAct
         </div>
       </div>
 
-
+      {/* ── Corporate Performance Slider ── */}
+      {(glossary || []).filter(item => item.cat === 'Corporate Performance').length > 0 && (
+        <div className="mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex items-center justify-between mb-1 px-2">
+            <h2 className="text-[15px] font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
+              Corporate Performance
+            </h2>
+            <button 
+              onClick={() => { setActiveGlossaryCat('Corporate Performance'); setActiveTab('glossary'); }}
+              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors"
+            >
+              View All
+            </button>
+          </div>
+          <div 
+            className="flex overflow-x-auto gap-4 pb-4 pt-1 snap-x snap-mandatory category-scroll" 
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {(glossary || []).filter(item => item.cat === 'Corporate Performance').map(item => (
+              <div key={item.id || item.term} className="snap-center shrink-0 w-[92%] sm:w-[350px] first:ml-0 last:mr-4">
+                <div className="-mt-4">
+                  <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Leaderboard on Home ── */}
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
@@ -2205,7 +2301,7 @@ function App() {
       </header>
 
       <main className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20">
-        {activeTab === 'home' && <HomeTab user={user} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} />}
+        {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} />}
         {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
