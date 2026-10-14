@@ -3,6 +3,7 @@ import { CorporatePerformanceChart } from '../ui/UIComponents';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 const currentMonth = new Date().toISOString().slice(0, 7);
+const defaultMonth = currentMonth < '2026-01' ? '2026-01' : currentMonth;
 
 export default function AdminTab({ onGlossaryChange }) {
   const [token, setToken] = useState(sessionStorage.getItem('adminToken'));
@@ -12,7 +13,7 @@ export default function AdminTab({ onGlossaryChange }) {
   // ─── Quiz State ───
   const [questions, setQuestions] = useState([]);
   const [qCount, setQCount] = useState(0);
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [qText, setQText] = useState(''); const [optA, setOptA] = useState(''); const [optB, setOptB] = useState(''); const [optC, setOptC] = useState(''); const [optD, setOptD] = useState(''); const [correct, setCorrect] = useState('A');
   const [qMsg, setQMsg] = useState('');
 
@@ -21,7 +22,7 @@ export default function AdminTab({ onGlossaryChange }) {
   const [gTerm, setGTerm] = useState(''); const [gFull, setGFull] = useState(''); const [gDesc, setGDesc] = useState(''); const [gFormula, setGFormula] = useState(''); const [gNotations, setGNotations] = useState(''); const [gMeanings, setGMeanings] = useState(''); const [gCat, setGCat] = useState('IBR Framework');
   const [gChartData, setGChartData] = useState([]); // Array of {month, year, value}
   const [cMonth, setCMonth] = useState('Jan');
-  const [cYear, setCYear] = useState(new Date().getFullYear().toString());
+  const [cYear, setCYear] = useState('2026');
   const [cValue, setCValue] = useState('');
   const [gMsg, setGMsg] = useState('');
   const [gEditId, setGEditId] = useState(null);
@@ -82,7 +83,7 @@ export default function AdminTab({ onGlossaryChange }) {
     
     let finalChartData = [...gChartData];
     if (gCat === 'Corporate Performance' && cValue !== '') {
-      const existingIdx = finalChartData.findIndex(d => d.month === cMonth && d.year === cYear);
+      const existingIdx = finalChartData.findIndex(d => d.month === cMonth && String(d.year) === String(cYear));
       if (existingIdx >= 0) {
         finalChartData[existingIdx].value = parseFloat(cValue);
       } else {
@@ -119,13 +120,17 @@ export default function AdminTab({ onGlossaryChange }) {
 
   const editGlossaryTerm = (t) => {
     setGEditId(t.id);
-    setGTerm(t.term); setGFull(t.fullName); setGDesc(t.description || ''); setGFormula(t.formula || ''); setGNotations(t.formulaNotations || ''); setGMeanings(t.formulaTermMeanings || ''); setGCat(t.category || 'IBR Framework');
-    try { setGChartData(t.chartData ? JSON.parse(t.chartData) : []); } catch(e) { setGChartData([]); }
+    setGTerm(t.term); setGFull(t.fullName || ''); setGDesc(t.description || ''); setGFormula(t.formula || ''); setGNotations(t.formulaNotations || ''); setGMeanings(t.formulaTermMeanings || ''); setGCat(t.category || 'IBR Framework');
+    let chart = [];
+    try { chart = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) { chart = []; }
+    setGChartData(chart);
+    const existing = chart.find(d => d.month === cMonth && String(d.year) === String(cYear));
+    setCValue(existing !== undefined && existing.value !== undefined ? String(existing.value) : '');
   };
 
   const cancelEditGlossaryTerm = () => {
     setGEditId(null);
-    setGTerm(''); setGFull(''); setGDesc(''); setGFormula(''); setGNotations(''); setGMeanings(''); setGCat('IBR Framework'); setGChartData([]);
+    setGTerm(''); setGFull(''); setGDesc(''); setGFormula(''); setGNotations(''); setGMeanings(''); setGCat('IBR Framework'); setGChartData([]); setCValue('');
   };
 
   const deleteGlossaryTerm = async (id) => {
@@ -255,7 +260,20 @@ export default function AdminTab({ onGlossaryChange }) {
           {/* Month picker */}
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
             <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Managing Month</label>
-            <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="w-full mt-2 p-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" />
+            <input 
+              type="month" 
+              min="2026-01" 
+              value={selectedMonth} 
+              onChange={e => {
+                const val = e.target.value;
+                if (val && val < '2026-01') {
+                  setSelectedMonth('2026-01');
+                  return;
+                }
+                setSelectedMonth(val);
+              }} 
+              className="w-full mt-2 p-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" 
+            />
           </div>
 
           {/* Counter */}
@@ -399,26 +417,81 @@ export default function AdminTab({ onGlossaryChange }) {
               {/* Chart Data Builder */}
               {gCat === 'Corporate Performance' && (
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-                  <h3 className="text-[13px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <span>📈</span> Performance Chart Data
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[13px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                      <span>📈</span> Performance Chart Data
+                    </h3>
+                    <span className="text-[11px] text-slate-400 font-semibold">{cYear}</span>
+                  </div>
                   <div className="flex gap-2">
-                    <select value={cMonth} onChange={e => {
-                      setCMonth(e.target.value);
-                      const existing = gChartData.find(d => d.month === e.target.value && d.year === cYear);
-                      setCValue(existing ? existing.value : '');
-                    }} className="min-w-0 flex-[1.2] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600">
+                    <select 
+                      value={cMonth} 
+                      onChange={e => {
+                        const m = e.target.value;
+                        setCMonth(m);
+                        const existing = gChartData.find(d => d.month === m && String(d.year) === String(cYear));
+                        setCValue(existing !== undefined && existing.value !== undefined ? String(existing.value) : '');
+                      }} 
+                      className="min-w-0 flex-[1.2] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600"
+                    >
                       {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
-                    <select value={cYear} onChange={e => {
-                      setCYear(e.target.value);
-                      const existing = gChartData.find(d => d.month === cMonth && d.year === e.target.value);
-                      setCValue(existing ? existing.value : '');
-                    }} className="min-w-0 flex-[1.2] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600">
-                      {['2023','2024','2025','2026'].map(y => <option key={y} value={y}>{y}</option>)}
+                    <select 
+                      value={cYear} 
+                      onChange={e => {
+                        const y = e.target.value;
+                        setCYear(y);
+                        const existing = gChartData.find(d => d.month === cMonth && String(d.year) === String(y));
+                        setCValue(existing !== undefined && existing.value !== undefined ? String(existing.value) : '');
+                      }} 
+                      className="min-w-0 flex-[1.2] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600"
+                    >
+                      {['2026','2027','2028','2029','2030'].map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
-                    <input type="number" step="any" placeholder="Value" value={cValue} onChange={e => setCValue(e.target.value)} className="min-w-0 flex-[1.5] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600" />
+                    <input 
+                      type="number" 
+                      step="any" 
+                      placeholder="Value" 
+                      value={cValue} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        setCValue(val);
+                        if (val !== '') {
+                          const num = parseFloat(val);
+                          setGChartData(prev => {
+                            const copy = [...prev];
+                            const idx = copy.findIndex(d => d.month === cMonth && String(d.year) === String(cYear));
+                            if (idx >= 0) {
+                              copy[idx] = { ...copy[idx], value: num };
+                            } else {
+                              copy.push({ month: cMonth, year: cYear, value: num });
+                            }
+                            return copy;
+                          });
+                        }
+                      }} 
+                      className="min-w-0 flex-[1.5] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 font-bold" 
+                    />
                   </div>
+
+                  {/* Quick Month Chips for Year */}
+                  {gChartData.filter(d => String(d.year) === String(cYear)).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {gChartData.filter(d => String(d.year) === String(cYear)).map(d => (
+                        <button
+                          type="button"
+                          key={d.month}
+                          onClick={() => {
+                            setCMonth(d.month);
+                            setCValue(String(d.value));
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${cMonth === d.month ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'}`}
+                        >
+                          {d.month}: <span className="opacity-90">{d.value}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

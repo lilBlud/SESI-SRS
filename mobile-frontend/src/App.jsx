@@ -21,14 +21,14 @@ if (false) {
   window.fetch = async (...args) => {
     const [url, options] = args;
     const urlString = typeof url === 'string' ? url : (url?.url || '');
-    
+
     if (urlString.includes('/api/glossary')) {
       return new Response(JSON.stringify(mockGlossary), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
-    
+
     if (urlString.includes('/api/leaderboard')) {
       return new Response(JSON.stringify([
-        { staffId: 'DEMO-001', username: 'Demo User', division: 'CEO Office', score: 120 },
+        { staffId: 'DEMO-001', username: 'Demo User', division: 'IDD', score: 120 },
         { staffId: 'EMP-892', username: 'Ahmad Faiz', division: 'Finance', score: 95 },
         { staffId: 'EMP-301', username: 'Sarah Tan', division: 'Corporate Planning', score: 80 }
       ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -36,8 +36,8 @@ if (false) {
 
     if (urlString.includes('/api/quiz')) {
       return new Response(JSON.stringify([
-        { id: 1, question: "What does IBR stand for?", options: ["Incentive-Based Regulation","Internal Business Rules","International Banking Rates","Integrated Baseline Review"], correctIndex: 0 },
-        { id: 2, question: "Which is a component of Corporate Performance?", options: ["EBIT","SAIFI","CAIDI","BBM"], correctIndex: 0 }
+        { id: 1, question: "What does IBR stand for?", options: ["Incentive-Based Regulation", "Internal Business Rules", "International Banking Rates", "Integrated Baseline Review"], correctIndex: 0 },
+        { id: 2, question: "Which is a component of Corporate Performance?", options: ["EBIT", "SAIFI", "CAIDI", "BBM"], correctIndex: 0 }
       ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
@@ -52,7 +52,7 @@ if (false) {
     if (urlString.includes('/api/admin/infographics')) {
       return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
-    
+
     if (urlString.includes('/api/profile')) {
       return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
@@ -65,7 +65,20 @@ if (false) {
 
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sesi_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.fullName === 'Demo User' || parsed.staffId === 'DEMO-001' || parsed.email === 'demo@sesb.com.my') {
+          parsed.division = 'IDD';
+          try { localStorage.setItem('sesi_user', JSON.stringify(parsed)); } catch { }
+        }
+        return parsed;
+      }
+      return null;
+    } catch { return null; }
+  });
   const [activeTab, setActiveTab] = useState('home');
   const [activeGlossaryCat, setActiveGlossaryCat] = useState('All');
   const [isDark, setIsDark] = useState(false);
@@ -93,10 +106,10 @@ function App() {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
       const isIosStandalone = ('standalone' in window.navigator) && window.navigator.standalone === true;
       const hasDismissed = sessionStorage.getItem('dismissedInstallPrompt');
-      
+
       // Clear old localStorage to ensure it pops up for the user during testing
       localStorage.removeItem('dismissedInstallPrompt');
-      
+
       if ((!isStandalone && !isIosStandalone && !hasDismissed) || (isIos() && !isIosStandalone && !hasDismissed)) {
         const timer = setTimeout(() => setShowInstallPrompt(true), 1500);
         return () => clearTimeout(timer);
@@ -160,15 +173,35 @@ function App() {
   ];
 
   const handleLogin = (userData) => {
+    try { localStorage.setItem('sesi_user', JSON.stringify(userData)); } catch { }
     setUser(userData);
   };
+
+  const handleLogout = () => {
+    try { localStorage.removeItem('sesi_user'); } catch { }
+    setUser(null);
+  };
+
+  const handleUpdateUser = (updatedData) => {
+    setUser(prev => {
+      const next = { ...prev, ...updatedData };
+      try { localStorage.setItem('sesi_user', JSON.stringify(next)); } catch { }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (user && (user.fullName === 'Demo User' || user.staffId === 'DEMO-001') && user.division !== 'IDD') {
+      handleUpdateUser({ division: 'IDD' });
+    }
+  }, [user]);
 
   if (!user) {
     return <LoginPage onLogin={handleLogin} />;
   }
 
   return (
-    <div className={`h-[100vh] overflow-hidden flex flex-col text-slate-900 transition-colors duration-200 w-full max-w-[430px] xl:max-w-none mx-auto relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
+    <div className={`h-[100vh] overflow-hidden flex flex-col text-slate-900 transition-colors duration-200 w-full max-w-[430px] mx-auto relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
       {/* Hardware Accelerated HD Background Image */}
       <img
         src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
@@ -240,7 +273,7 @@ function App() {
               </button>
 
               {/* Logout Button */}
-              <button onClick={() => setUser(null)} className="w-8 h-8 flex items-center justify-center rounded-full text-rose-500/80 dark:text-rose-400/80 hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:shadow-sm transition-all hover:text-rose-600 dark:hover:text-rose-300 ml-1">
+              <button onClick={handleLogout} className="w-8 h-8 flex items-center justify-center rounded-full text-rose-500/80 dark:text-rose-400/80 hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:shadow-sm transition-all hover:text-rose-600 dark:hover:text-rose-300 ml-1">
                 <svg className="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
               </button>
             </div>
@@ -249,14 +282,14 @@ function App() {
       </header>
 
       <main className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20">
-        {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} />}
+        {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} />}
         {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
-        {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
+        {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} triggerInstallPrompt={() => setShowInstallPrompt(true)} onUpdateUser={handleUpdateUser} />}
         {activeTab === 'admin' && <AdminTab onGlossaryChange={fetchGlossary} />}
       </main>
 
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] xl:max-w-none bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-50 pb-3">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-50 pb-3">
         <div className="flex items-center justify-around h-[68px] px-2">
           {tabs.map(({ id, label, Icon }) => (
             <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center justify-center w-[68px] h-[60px] mx-1 rounded-2xl transition-all ${activeTab === id ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'opacity-60'}`}>
@@ -274,36 +307,36 @@ function App() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-fadeIn text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
-            
+
             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
             </div>
-            
+
             <h3 className="text-[20px] font-black text-slate-900 dark:text-white mb-2">Install SESI App</h3>
-            
+
             <p className="text-[14px] text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
               For the best experience, install this app on your device!
               {deferredPrompt ? (
                 <>
-                  <br/><br/>
+                  <br /><br />
                   <span className="text-[12px] bg-slate-100 dark:bg-slate-800 p-2 rounded-lg block text-left">
-                    <strong>Android:</strong><br/>
+                    <strong>Android:</strong><br />
                     Tap the <strong>Install App</strong> button below to add it directly to your home screen!
                   </span>
                 </>
               ) : (
                 <>
-                  <br/><br/>
+                  <br /><br />
                   <span className="text-[12px] bg-slate-100 dark:bg-slate-800 p-2 rounded-lg block text-left">
-                    <strong>iOS / iPhone:</strong><br/>
+                    <strong>iOS / iPhone:</strong><br />
                     Tap <strong className="text-slate-700 dark:text-slate-200">Share</strong> <svg className="inline w-4 h-4 text-slate-700 dark:text-slate-200 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> then <strong className="text-slate-700 dark:text-slate-200">Add to Home Screen</strong> <svg className="inline w-4 h-4 text-slate-700 dark:text-slate-200 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                   </span>
                 </>
               )}
             </p>
-            
+
             <div className="flex gap-2">
               <button onClick={dismissInstallPrompt} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all active:scale-95">
                 Not Now

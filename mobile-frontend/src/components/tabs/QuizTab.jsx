@@ -66,6 +66,7 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         Username: USERNAME,
+        PreferredName: user?.preferredName || "",
         Division: DIVISION,
         Month: currentMonth,
         QuestionId: q.id,

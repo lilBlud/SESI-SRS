@@ -6,6 +6,7 @@ namespace mobile_backend.Models
     {
         public int Id { get; set; }
         public string FullName { get; set; } = string.Empty;
+        public string PreferredName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty; // Store plain text for MVP or hashed
         public string Division { get; set; } = string.Empty;
@@ -17,6 +18,7 @@ namespace mobile_backend.Models
     {
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
+        public string PreferredName { get; set; } = string.Empty;
         public string Division { get; set; } = string.Empty;
         public string Month { get; set; } = string.Empty;
         public int QuestionId { get; set; }
@@ -52,6 +54,12 @@ namespace mobile_backend.Models
     public class AdminLoginRequest
     {
         public string Password { get; set; } = string.Empty;
+    }
+
+    public class UpdatePreferredNameRequest
+    {
+        public string Username { get; set; } = string.Empty;
+        public string PreferredName { get; set; } = string.Empty;
     }
 
     // Tracks daily DICTIONARY reading activity per user for streak (like Duolingo)

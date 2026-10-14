@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { CorporatePerformanceChart, PostImageSlider } from '../ui/UIComponents';
 import { API_BASE, currentMonth, CATEGORIES, CAT_COLORS, getColor, getCatMeta } from '../../utils/constants';
 import { saveImage } from '../ui/Icons';
 
-export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions }) {
+export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions;
   const [posts, setPosts] = useState([]);
   const [postCat, setPostCat] = useState('All');
@@ -11,6 +12,9 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
   const [loadingLb, setLoadingLb] = useState(true);
   const [showFullLb, setShowFullLb] = useState(false);
   const [imgViewerPost, setImgViewerPost] = useState(null); // { images, idx }
+  const [showEditNameModal, setShowEditNameModal] = useState(false);
+  const [tempName, setTempName] = useState('');
+  const [savingName, setSavingName] = useState(false);
   const USERNAME = user?.fullName || "Ahmad Azib Danish";
 
   const postCatCounts = posts.reduce((acc, p) => {
@@ -21,26 +25,21 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
 
   const filteredPosts = postCat === 'All' ? posts : posts.filter(p => (p.category || 'General') === postCat);
 
-  useEffect(() => {
-    fetch(`${API_BASE}/api/admin/infographics`)
-      .then(res => res.json())
-      .then(data => setPosts(data))
-      .catch(console.error);
-
+  const fetchLeaderboard = React.useCallback(() => {
     fetch(`${API_BASE}/api/leaderboard/${currentMonth}`)
       .then(res => res.ok ? res.json() : [])
       .then(data => {
         // Inject mock Kahoot podium data if the DB doesn't have enough entries
         if (data.length < 3) {
           data = [
-            { username: "Cameron", score: 4201, division: "Sales Division" },
-            { username: "Ka", score: 3912, division: "HR Division" },
-            { username: "Evelien", score: 2926, division: "IT Division" },
-            { username: "QuizWiz", score: 2800, division: "Marketing" },
-            { username: "CoolCat", score: 2500, division: "Finance" },
-            { username: "Ahmad", score: 1920, division: "Strategic Planning" },
-            { username: "Sarah", score: 1850, division: "Operations" },
-            { username: "John", score: 1500, division: "HR Division" }
+            { username: "Cameron", displayName: "Cameron", score: 4201, division: "Sales Division" },
+            { username: "Ka", displayName: "Ka", score: 3912, division: "HR Division" },
+            { username: "Evelien", displayName: "Evelien", score: 2926, division: "IT Division" },
+            { username: "QuizWiz", displayName: "QuizWiz", score: 2800, division: "Marketing" },
+            { username: "CoolCat", displayName: "CoolCat", score: 2500, division: "Finance" },
+            { username: "Ahmad", displayName: "Ahmad", score: 1920, division: "Strategic Planning" },
+            { username: "Sarah", displayName: "Sarah", score: 1850, division: "Operations" },
+            { username: "John", displayName: "John", score: 1500, division: "HR Division" }
           ];
         }
         setLeaderboard(data);
@@ -48,6 +47,43 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
       })
       .catch(() => setLoadingLb(false));
   }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/admin/infographics`)
+      .then(res => res.json())
+      .then(data => setPosts(data))
+      .catch(console.error);
+
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
+
+  const handleSavePreferredName = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!tempName.trim()) return;
+    setSavingName(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/user/preferred-name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: USERNAME,
+          preferredName: tempName.trim()
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (onUpdateUser) onUpdateUser({ preferredName: data.preferredName });
+        setShowEditNameModal(false);
+        fetchLeaderboard();
+      } else {
+        alert("Failed to update preferred name");
+      }
+    } catch (err) {
+      alert("Error: " + err.message);
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   const medals = ['🥇', '🥈', '🥉'];
 
@@ -93,7 +129,7 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
             <h2 className="text-[15px] font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
               Corporate Performance
             </h2>
-            <button 
+            <button
               onClick={() => { setActiveGlossaryCat('Corporate Performance'); setActiveTab('glossary'); }}
               className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors"
             >
@@ -197,10 +233,10 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                   {leaderboard.length > 1 && (
                     <div className="flex flex-col items-center justify-end relative">
                       <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
-                        {leaderboard[1].username.split(' ')[0]}
+                        {(leaderboard[1].displayName || leaderboard[1].username).split(' ')[0]}
                       </div>
                       <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-[14px] shadow-lg relative z-10 -mb-5 border-2 border-white dark:border-slate-900 bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 shadow-slate-400/40 animate-bounce-slow [animation-delay:150ms]">
-                        {leaderboard[1].username.substring(0, 2).toUpperCase()}
+                        {(leaderboard[1].displayName || leaderboard[1].username).substring(0, 2).toUpperCase()}
                       </div>
                       <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-20 bg-gradient-to-b from-slate-200 to-slate-50 dark:from-slate-600/40 dark:to-slate-800/10 border-t-2 border-slate-300 dark:border-slate-500">
                         <div className="font-black text-[14px] text-slate-800 dark:text-white leading-none">{leaderboard[1].score}</div>
@@ -215,10 +251,10 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                     <div className="flex flex-col items-center justify-end relative">
                       <div className="absolute -top-5 text-lg animate-bounce z-20 drop-shadow-md">👑</div>
                       <div className="text-[13px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
-                        {leaderboard[0].username.split(' ')[0]}
+                        {(leaderboard[0].displayName || leaderboard[0].username).split(' ')[0]}
                       </div>
                       <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-[16px] shadow-lg relative z-10 -mb-5 border-2 border-white dark:border-slate-900 bg-gradient-to-br from-yellow-300 to-amber-500 text-white shadow-amber-500/40 animate-bounce-slow">
-                        {leaderboard[0].username.substring(0, 2).toUpperCase()}
+                        {(leaderboard[0].displayName || leaderboard[0].username).substring(0, 2).toUpperCase()}
                       </div>
                       <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-28 bg-gradient-to-b from-amber-200 to-amber-50 dark:from-amber-600/40 dark:to-amber-900/10 border-t-2 border-amber-300 dark:border-amber-500">
                         <div className="font-black text-[15px] text-slate-800 dark:text-white leading-none">{leaderboard[0].score}</div>
@@ -232,10 +268,10 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                   {leaderboard.length > 2 && (
                     <div className="flex flex-col items-center justify-end relative">
                       <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
-                        {leaderboard[2].username.split(' ')[0]}
+                        {(leaderboard[2].displayName || leaderboard[2].username).split(' ')[0]}
                       </div>
                       <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-[14px] shadow-lg relative z-10 -mb-5 border-2 border-white dark:border-slate-900 bg-gradient-to-br from-orange-300 to-orange-500 text-white shadow-orange-500/40 animate-bounce-slow [animation-delay:300ms]">
-                        {leaderboard[2].username.substring(0, 2).toUpperCase()}
+                        {(leaderboard[2].displayName || leaderboard[2].username).substring(0, 2).toUpperCase()}
                       </div>
                       <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-16 bg-gradient-to-b from-orange-200 to-orange-50 dark:from-orange-600/40 dark:to-orange-900/10 border-t-2 border-orange-300 dark:border-orange-500">
                         <div className="font-black text-[14px] text-slate-800 dark:text-white leading-none">{leaderboard[2].score}</div>
@@ -251,13 +287,18 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-1">Runners-up</div>
                   {leaderboard.slice(3, 5).map((entry, idx) => (
                     <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-800 px-3 py-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300 shadow-inner">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300 shadow-inner shrink-0">
                           {idx + 4}
                         </div>
-                        <div className="text-[12px] font-bold text-slate-800 dark:text-slate-200">{entry.username}</div>
+                        <div className="min-w-0">
+                          <div className="text-[12px] font-bold text-slate-800 dark:text-slate-200 truncate">{entry.displayName || entry.username}</div>
+                          {entry.displayName && entry.displayName !== entry.username && (
+                            <div className="text-[10px] text-slate-400 truncate">{entry.username}</div>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-[13px] font-black text-emerald-600 dark:text-emerald-400">{entry.score} <span className="text-[9px] text-slate-400 uppercase">pts</span></div>
+                      <div className="text-[13px] font-black text-emerald-600 dark:text-emerald-400 shrink-0">{entry.score} <span className="text-[9px] text-slate-400 uppercase">pts</span></div>
                     </div>
                   ))}
                 </div>
@@ -401,31 +442,128 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
             <h2 className="text-lg font-black text-white w-full text-center">Full Leaderboard</h2>
           </div>
           <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[max(env(safe-area-inset-bottom),24px)] space-y-3">
-            {leaderboard.map((entry, idx) => {
-              const isMe = entry.username === USERNAME;
-              return (
-                <div key={idx} className={`px-4 py-3 rounded-2xl flex items-center gap-4 transition-all shadow-sm ${idx === 0 ? 'bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border border-amber-200/50 dark:border-amber-800/50' :
+              {/* Preferred Name Banner */}
+              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl p-3 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between shadow-sm">
+                <div className="min-w-0 pr-2">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Your Leaderboard Name</div>
+                  <div className="text-[13px] font-black text-slate-800 dark:text-white truncate">
+                    {user?.preferredName || USERNAME}
+                  </div>
+                  {user?.preferredName && user?.preferredName !== USERNAME && (
+                    <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                      {USERNAME}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    setTempName(user?.preferredName || USERNAME);
+                    setShowEditNameModal(true);
+                  }}
+                  className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-[11px] rounded-xl shadow-sm transition-all active:scale-95 flex items-center gap-1 shrink-0"
+                >
+                  <span>✏️</span> Edit Name
+                </button>
+              </div>
+
+              {leaderboard.map((entry, idx) => {
+                const isMe = entry.username === USERNAME || (entry.displayName && entry.displayName === (user?.preferredName || USERNAME));
+                const displayName = entry.displayName || entry.username;
+                return (
+                  <div key={idx} className={`px-4 py-3 rounded-2xl flex items-center gap-4 transition-all shadow-sm ${idx === 0 ? 'bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border border-amber-200/50 dark:border-amber-800/50' :
                     idx === 1 ? 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50' :
                       idx === 2 ? 'bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/30' :
                         isMe ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-800' :
                           'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700'
-                  }`}>
-                  <div className="text-2xl font-black w-8 text-center shrink-0">
-                    {idx < 3 ? medals[idx] : <span className="text-lg text-slate-400">#{idx + 1}</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-[15px] truncate text-slate-900 dark:text-white">{entry.username}</p>
-                      {isMe && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">You</span>}
+                    }`}>
+                    <div className="text-2xl font-black w-8 text-center shrink-0">
+                      {idx < 3 ? medals[idx] : <span className="text-lg text-slate-400">#{idx + 1}</span>}
                     </div>
-                    <div className="text-[11px] font-medium text-slate-500 mt-0.5">{entry.division}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-bold text-[15px] truncate text-slate-900 dark:text-white">{displayName}</p>
+                        {isMe && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">You</span>}
+                        {isMe && (
+                          <button
+                            onClick={() => {
+                              setTempName(user?.preferredName || displayName);
+                              setShowEditNameModal(true);
+                            }}
+                            className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-bold flex items-center gap-0.5 ml-1"
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
+                      </div>
+                      {displayName !== entry.username && (
+                        <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                          {entry.username}
+                        </div>
+                      )}
+                      <div className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1.5 truncate">
+                        <span>{entry.division}</span>
+                      </div>
+                    </div>
+                    <div className="font-black text-emerald-600 dark:text-emerald-400 text-[16px] whitespace-nowrap">
+                      {entry.score} <span className="text-[10px] text-slate-400">pts</span>
+                    </div>
                   </div>
-                  <div className="font-black text-emerald-600 dark:text-emerald-400 text-[16px] whitespace-nowrap">
-                    {entry.score} <span className="text-[10px] text-slate-400">pts</span>
-                  </div>
+                );
+              })}
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Edit Preferred Name Modal */}
+      {showEditNameModal && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800 animate-scaleIn text-left relative overflow-hidden">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-xl font-black mb-4 shadow-lg shadow-emerald-500/20">
+              ✏️
+            </div>
+            <h3 className="text-[19px] font-black text-slate-900 dark:text-white">Preferred Name</h3>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+              Set a shorter nickname or preferred name to show on the leaderboard and podium.
+            </p>
+
+            <form onSubmit={handleSavePreferredName} className="mt-4 space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Leaderboard Display Name (max 10 chars)
+                </label>
+                <input
+                  type="text"
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  maxLength={10}
+                  placeholder="e.g. Azib"
+                  autoFocus
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
+                />
+                <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
+                  <span className="truncate pr-2">Real name: {USERNAME}</span>
+                  <span>{tempName.length}/10</span>
                 </div>
-              );
-            })}
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditNameModal(false)}
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[13px] rounded-xl transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingName || !tempName.trim()}
+                  className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-[13px] rounded-xl shadow-lg shadow-emerald-500/25 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {savingName ? "Saving..." : "Save Name"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>,
         document.body

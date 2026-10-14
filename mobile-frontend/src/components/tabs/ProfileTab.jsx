@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { API_BASE, currentMonth, getColor, getCatMeta } from '../../utils/constants';
 import { CorporatePerformanceChart, PostImageSlider } from '../ui/UIComponents';
 
-export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstallPrompt }) {
+export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstallPrompt, onUpdateUser }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };
   const [recentQuizzes, setRecentQuizzes] = useState([]);
   const [currentRank, setCurrentRank] = useState(null);
@@ -13,7 +13,37 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
   const [activeMonths, setActiveMonths] = useState([]);
   const [activeBookmark, setActiveBookmark] = useState(null);
   const [imgViewerIdx, setImgViewerIdx] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [saving, setSaving] = useState(false);
   const USERNAME = user?.fullName || "Ahmad Azib Danish";
+
+  const handleSavePreferredName = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!editName.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/user/preferred-name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: USERNAME,
+          preferredName: editName.trim()
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (onUpdateUser) onUpdateUser({ preferredName: data.preferredName });
+        setShowEditModal(false);
+      } else {
+        alert("Failed to update preferred name");
+      }
+    } catch (err) {
+      alert("Error: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Format month (e.g. "2026-10" to "Oct 2026")
   const formatMonth = (m) => {
@@ -45,7 +75,7 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
     ])
       .then(([answers, leaderboard]) => {
         setRecentQuizzes(answers);
-        const userEntry = leaderboard.find(entry => entry.username === USERNAME);
+        const userEntry = leaderboard.find(entry => entry.username === USERNAME || (entry.displayName && entry.displayName === (user?.preferredName || USERNAME)));
         setCurrentRank(userEntry ? leaderboard.indexOf(userEntry) + 1 : null);
         setTotalScore(userEntry ? userEntry.score : 0);
         setLoading(false);
@@ -54,7 +84,7 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
         console.error(e);
         setLoading(false);
       });
-  }, [filterMonth, USERNAME]);
+  }, [filterMonth, USERNAME, user?.preferredName]);
 
   return (
     <div className="space-y-6 animate-slideUp">
@@ -66,15 +96,32 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
       {/* User Card */}
       <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-5 text-white shadow-lg flex items-center justify-between relative overflow-hidden">
         <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-        <div className="flex items-center gap-4 relative z-10">
+        <div className="flex items-center gap-4 relative z-10 min-w-0">
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/30 shrink-0 text-2xl font-black shadow-inner">
-            {USERNAME.charAt(0).toUpperCase()}
+            {(user?.preferredName || USERNAME).charAt(0).toUpperCase()}
           </div>
-          <div>
-            <h2 className="text-xl font-bold">{USERNAME}</h2>
-            <div className="flex flex-col mt-0.5">
-              <span className="text-emerald-100 text-[12px] font-medium">{user?.division || 'Staff Member'}</span>
-              <span className="text-emerald-200/80 text-[11px]">{user?.staffId || 'Employee'}</span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold truncate">{user?.preferredName || USERNAME}</h2>
+              <button
+                onClick={() => {
+                  setEditName(user?.preferredName || USERNAME);
+                  setShowEditModal(true);
+                }}
+                className="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs transition-transform active:scale-95 shrink-0"
+                title="Edit Leaderboard Preferred Name"
+              >
+                ✏️
+              </button>
+            </div>
+            {user?.preferredName && user?.preferredName !== USERNAME && (
+              <div className="text-emerald-100/90 text-[13px] font-semibold truncate leading-tight">
+                {USERNAME}
+              </div>
+            )}
+            <div className="flex flex-col mt-1">
+              <span className="text-emerald-100 text-[12px] font-medium truncate">{user?.division || 'IDD'}</span>
+              <span className="text-emerald-200/80 text-[11px]">{user?.staffId || 'DEMO-001'}</span>
             </div>
           </div>
         </div>
@@ -658,6 +705,60 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
           </div>
         );
       })(), document.body)}
+
+      {/* Edit Preferred Name Modal */}
+      {showEditModal && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800 animate-scaleIn text-left relative overflow-hidden">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-xl font-black mb-4 shadow-lg shadow-emerald-500/20">
+              ✏️
+            </div>
+            <h3 className="text-[19px] font-black text-slate-900 dark:text-white">Leaderboard Display Name</h3>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+              Choose a shorter nickname or preferred name to show on the leaderboard and podium.
+            </p>
+
+            <form onSubmit={handleSavePreferredName} className="mt-4 space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Display Name (max 10 chars)
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  maxLength={10}
+                  placeholder="e.g. Azib"
+                  autoFocus
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
+                />
+                <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
+                  <span className="truncate pr-2">Real name: {USERNAME}</span>
+                  <span>{editName.length}/10</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[13px] rounded-xl transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || !editName.trim()}
+                  className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-[13px] rounded-xl shadow-lg shadow-emerald-500/25 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Save Name"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
 
     </div>
   );

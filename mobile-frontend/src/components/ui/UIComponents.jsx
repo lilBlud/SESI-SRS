@@ -86,15 +86,27 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
   const getUnitFormatter = (termName) => {
     if (!termName) return (v) => v;
     const name = termName.toUpperCase();
-    if (name === "TOTAL REVENUE") return (v) => `RM ${v} bil`;
-    if (["PAT", "EBIT", "CAPEX", "OPEX"].includes(name)) return (v) => `RM ${v} mil`;
+    if (name === "TOTAL REVENUE") return (v) => `RM ${v}`;
+    if (["PAT", "EBIT", "CAPEX", "OPEX"].includes(name)) return (v) => `RM ${v}`;
     if (["SAIDI", "SYSTEM MINUTES", "SYSTEM UNIT"].includes(name)) return (v) => `${v} mins`;
     if (["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE"].includes(name)) return (v) => `${v}%`;
     if (name === "SAFETY" || name === "LTIFR") return (v) => `LTIFR ${v}`;
     return (v) => v;
   };
 
+  const getUnitLabel = (termName) => {
+    if (!termName) return "";
+    const name = termName.toUpperCase();
+    if (name === "TOTAL REVENUE") return "in billion";
+    if (["PAT", "EBIT", "CAPEX", "OPEX"].includes(name)) return "in million";
+    if (["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE", "ROI", "ROA", "ROE"].includes(name)) return "in percentage (%)";
+    if (["SAIDI", "SYSTEM MINUTES", "SYSTEM UNIT"].includes(name)) return "in minutes (mins)";
+    if (name === "SAFETY" || name === "LTIFR") return "in rate (per 1M hours)";
+    return "";
+  };
+
   const formatter = getUnitFormatter(term);
+  const unitLabel = getUnitLabel(term);
 
   const lastData = formattedData[formattedData.length - 1];
   const firstData = formattedData[0];
@@ -143,7 +155,7 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             <p className="text-white font-black text-[13px] tracking-tight">
-              {formatter(payload[0].value)}
+              {payload[0].value}
             </p>
           </div>
           <p className="text-emerald-500 text-[8px] font-bold uppercase mt-px ml-3 tracking-wider">{term}</p>
@@ -186,6 +198,11 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
               </div>
             )}
           </div>
+          {unitLabel && (
+            <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 italic -mt-0.5 mb-0.5">
+              {unitLabel}
+            </span>
+          )}
           <div className="flex items-baseline gap-2.5">
             {!term.toUpperCase().includes('AUDIT') && (
               <>

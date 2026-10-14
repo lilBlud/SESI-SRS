@@ -5,6 +5,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || "";
 export default function LoginPage({ onLogin }) {
   const [isSignUp, setIsSignUp] = useState(true);
   const [fullName, setFullName] = useState('');
+  const [preferredName, setPreferredName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [division, setDivision] = useState('');
@@ -15,8 +16,9 @@ export default function LoginPage({ onLogin }) {
     const demoUser = {
       id: 9999,
       fullName: 'Demo User',
+      preferredName: 'Demo',
       email: 'demo@sesb.com.my',
-      division: 'Chief Executive Officer (CEO) Office',
+      division: 'IDD',
       staffId: 'DEMO-001'
     };
     if (onLogin) {
@@ -28,14 +30,14 @@ export default function LoginPage({ onLogin }) {
     e.preventDefault();
     try {
       const endpoint = isSignUp ? `${API_BASE}/api/auth/signup` : `${API_BASE}/api/auth/login`;
-      const body = isSignUp ? { fullName, email, password, division, staffId } : { email, password };
-      
+      const body = isSignUp ? { fullName, preferredName, email, password, division, staffId } : { email, password };
+
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      
+
       if (!res.ok) {
         if (res.status === 401) {
           alert('Invalid email or password. Please try again.');
@@ -45,7 +47,7 @@ export default function LoginPage({ onLogin }) {
         }
         return;
       }
-      
+
       const user = JSON.parse(await res.text());
       if (onLogin) {
         onLogin(user);
@@ -56,12 +58,12 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="relative w-full max-w-[430px] xl:max-w-none mx-auto h-[100dvh] overflow-hidden shadow-2xl bg-slate-900 flex flex-col font-sans">
+    <div className="relative w-full max-w-[430px] mx-auto h-[100dvh] overflow-hidden shadow-2xl bg-slate-900 flex flex-col font-sans">
       {/* Background Image Area */}
       <div className="absolute inset-0 z-0 h-[55vh]">
-        <img 
-          src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?q=80&w=1000&auto=format&fit=crop" 
-          alt="Transmission Towers" 
+        <img
+          src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?q=80&w=1000&auto=format&fit=crop"
+          alt="Transmission Towers"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900"></div>
@@ -73,7 +75,7 @@ export default function LoginPage({ onLogin }) {
           Internal Staff Portal
         </p>
         <h1 className="text-2xl font-bold text-white leading-tight">
-          Welcome to Sabah Electricity Supply Industry<br/>
+          Welcome to Sabah Electricity Supply Industry<br />
           <span className="text-[32px] font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 block mt-2">
             SESI
           </span>
@@ -102,7 +104,7 @@ export default function LoginPage({ onLogin }) {
 
         {/* Toggle Switches */}
         <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl mb-6 border border-slate-100 dark:border-slate-800">
-          <button 
+          <button
             onClick={() => setIsSignUp(false)}
             className={`flex-1 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${!isSignUp ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
@@ -111,7 +113,7 @@ export default function LoginPage({ onLogin }) {
             </svg>
             Sign In
           </button>
-          <button 
+          <button
             onClick={() => setIsSignUp(true)}
             className={`flex-1 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${isSignUp ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-700 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
@@ -134,12 +136,31 @@ export default function LoginPage({ onLogin }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
                     </svg>
                   </div>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow" 
-                    placeholder="e.g. Dayang Nurul Ain" 
+                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow"
+                    placeholder="e.g. Dayang Nurul Ain"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Preferred Leaderboard Name <span className="text-[11px] text-slate-400 font-normal">(optional, max 10 chars)</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-slate-400 text-sm">🏷️</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={preferredName}
+                    onChange={(e) => setPreferredName(e.target.value)}
+                    maxLength={10}
+                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow"
+                    placeholder="e.g. Ain"
                   />
                 </div>
               </div>
@@ -152,10 +173,10 @@ export default function LoginPage({ onLogin }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
-                  <select 
+                  <select
                     value={division}
                     onChange={(e) => setDivision(e.target.value)}
-                    className="block w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-[13px] transition-shadow appearance-none" 
+                    className="block w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-[13px] transition-shadow appearance-none"
                   >
                     <option value="" disabled>Select your division</option>
                     <option value="Chief Executive Officer (CEO) Office">Chief Executive Officer (CEO) Office</option>
@@ -189,12 +210,12 @@ export default function LoginPage({ onLogin }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v14a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 00-4.9 0h4.9zM12 9h4M12 13h4" />
                     </svg>
                   </div>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={staffId}
                     onChange={(e) => setStaffId(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow" 
-                    placeholder="e.g. EMP-1234" 
+                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow"
+                    placeholder="e.g. EMP-1234"
                   />
                 </div>
               </div>
@@ -209,13 +230,13 @@ export default function LoginPage({ onLogin }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow" 
-                placeholder="e.g. name@sesb.com.my" 
+                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow"
+                placeholder="e.g. name@sesb.com.my"
               />
             </div>
           </div>
@@ -230,17 +251,17 @@ export default function LoginPage({ onLogin }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <input 
-                type={showPassword ? "text" : "password"} 
+              <input
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow" 
-                placeholder={isSignUp ? "Minimum 4 characters" : "Enter your password"} 
+                className="block w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-[13px] transition-shadow"
+                placeholder={isSignUp ? "Minimum 4 characters" : "Enter your password"}
               />
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
@@ -259,8 +280,8 @@ export default function LoginPage({ onLogin }) {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="w-full py-3 mt-2 bg-gradient-to-r from-emerald-600 to-blue-800 hover:from-emerald-700 hover:to-blue-900 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all flex justify-center items-center gap-2"
           >
             {isSignUp ? 'Create Account & Enter SESI' : 'Sign In'}
@@ -273,8 +294,8 @@ export default function LoginPage({ onLogin }) {
           <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
         </div>
 
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={handleDemoLogin}
           className="w-full py-3 mt-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm active:scale-[0.98] transition-all flex justify-center items-center gap-2 border border-slate-200 dark:border-slate-700"
         >
