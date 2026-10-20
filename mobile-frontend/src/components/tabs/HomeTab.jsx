@@ -3,6 +3,67 @@ import { createPortal } from 'react-dom';
 import { PostImageSlider, saveImage } from '../ui';
 import { API_BASE, currentMonth, CATEGORIES, getColor, getCatMeta } from '../../utils/constants';
 
+function LeaderboardAvatar({
+  entry,
+  user,
+  sizeClass = "w-10 h-10",
+  textClass = "text-[14px]",
+  bgClass = "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800",
+  shadowClass = "shadow-slate-400/40",
+  delayClass = "",
+  isPodium = false
+}) {
+  const [imgErr, setImgErr] = useState(false);
+
+  const isMe = entry && user && (
+    (entry.username && (entry.username.toLowerCase() === (user.fullName || '').toLowerCase() || entry.username.toLowerCase() === (user.email || '').toLowerCase())) ||
+    (entry.displayName && (
+      entry.displayName.toLowerCase() === (user.preferredName || '').toLowerCase() ||
+      entry.displayName.toLowerCase() === (user.fullName || '').toLowerCase()
+    ))
+  );
+
+  const pic = !imgErr && (entry?.profilePicture || (isMe ? user?.profilePicture : null));
+  const initials = (entry?.displayName || entry?.username || '??').substring(0, 2).toUpperCase();
+
+  if (isPodium) {
+    return (
+      <div
+        className={`${sizeClass} rounded-full flex items-center justify-center font-black ${textClass} shadow-lg relative z-10 -mb-5 border-2 border-white dark:border-slate-900 ${bgClass} ${shadowClass} animate-bounce-slow ${delayClass} overflow-hidden p-0.5 shrink-0`}
+      >
+        {pic ? (
+          <img
+            src={pic}
+            alt={entry.displayName || entry.username}
+            className="w-full h-full object-cover rounded-full"
+            onError={() => setImgErr(true)}
+          />
+        ) : (
+          <span>{initials}</span>
+        )}
+      </div>
+    );
+  }
+
+  // Row / List item avatar
+  return (
+    <div
+      className={`${sizeClass} rounded-full flex items-center justify-center font-black ${textClass} shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden ${bgClass} shadow-xs p-0.5`}
+    >
+      {pic ? (
+        <img
+          src={pic}
+          alt={entry?.displayName || entry?.username}
+          className="w-full h-full object-cover rounded-full"
+          onError={() => setImgErr(true)}
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
+    </div>
+  );
+}
+
 export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser, visitorStats, triggerInstallPrompt }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions;
   const [posts, setPosts] = useState([]);
@@ -298,9 +359,16 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                       <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
                         {(leaderboard[1].displayName || leaderboard[1].username).split(' ')[0]}
                       </div>
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-[14px] shadow-lg relative z-10 -mb-5 border-2 border-white dark:border-slate-900 bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 shadow-slate-400/40 animate-bounce-slow [animation-delay:150ms]">
-                        {(leaderboard[1].displayName || leaderboard[1].username).substring(0, 2).toUpperCase()}
-                      </div>
+                      <LeaderboardAvatar
+                        entry={leaderboard[1]}
+                        user={user}
+                        sizeClass="w-10 h-10"
+                        textClass="text-[14px] text-slate-800"
+                        bgClass="bg-gradient-to-br from-slate-200 to-slate-400"
+                        shadowClass="shadow-slate-400/40"
+                        delayClass="[animation-delay:150ms]"
+                        isPodium={true}
+                      />
                       <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-20 bg-gradient-to-b from-slate-200 to-slate-50 dark:from-slate-600/40 dark:to-slate-800/10 border-t-2 border-slate-300 dark:border-slate-500">
                         <div className="font-black text-[14px] text-slate-800 dark:text-white leading-none">{leaderboard[1].score}</div>
                       </div>
@@ -316,9 +384,15 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                       <div className="text-[13px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
                         {(leaderboard[0].displayName || leaderboard[0].username).split(' ')[0]}
                       </div>
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-[16px] shadow-lg relative z-10 -mb-5 border-2 border-white dark:border-slate-900 bg-gradient-to-br from-yellow-300 to-amber-500 text-white shadow-amber-500/40 animate-bounce-slow">
-                        {(leaderboard[0].displayName || leaderboard[0].username).substring(0, 2).toUpperCase()}
-                      </div>
+                      <LeaderboardAvatar
+                        entry={leaderboard[0]}
+                        user={user}
+                        sizeClass="w-12 h-12"
+                        textClass="text-[16px] text-white"
+                        bgClass="bg-gradient-to-br from-yellow-300 to-amber-500"
+                        shadowClass="shadow-amber-500/40"
+                        isPodium={true}
+                      />
                       <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-28 bg-gradient-to-b from-amber-200 to-amber-50 dark:from-amber-600/40 dark:to-amber-900/10 border-t-2 border-amber-300 dark:border-amber-500">
                         <div className="font-black text-[15px] text-slate-800 dark:text-white leading-none">{leaderboard[0].score}</div>
                       </div>
@@ -333,9 +407,16 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                       <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
                         {(leaderboard[2].displayName || leaderboard[2].username).split(' ')[0]}
                       </div>
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-[14px] shadow-lg relative z-10 -mb-5 border-2 border-white dark:border-slate-900 bg-gradient-to-br from-orange-300 to-orange-500 text-white shadow-orange-500/40 animate-bounce-slow [animation-delay:300ms]">
-                        {(leaderboard[2].displayName || leaderboard[2].username).substring(0, 2).toUpperCase()}
-                      </div>
+                      <LeaderboardAvatar
+                        entry={leaderboard[2]}
+                        user={user}
+                        sizeClass="w-10 h-10"
+                        textClass="text-[14px] text-white"
+                        bgClass="bg-gradient-to-br from-orange-300 to-orange-500"
+                        shadowClass="shadow-orange-500/40"
+                        delayClass="[animation-delay:300ms]"
+                        isPodium={true}
+                      />
                       <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-16 bg-gradient-to-b from-orange-200 to-orange-50 dark:from-orange-600/40 dark:to-orange-900/10 border-t-2 border-orange-300 dark:border-orange-500">
                         <div className="font-black text-[14px] text-slate-800 dark:text-white leading-none">{leaderboard[2].score}</div>
                       </div>
@@ -350,10 +431,17 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-1">Runners-up</div>
                   {leaderboard.slice(3, 5).map((entry, idx) => (
                     <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-800 px-3 py-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300 shadow-inner shrink-0">
                           {idx + 4}
                         </div>
+                        <LeaderboardAvatar
+                          entry={entry}
+                          user={user}
+                          sizeClass="w-7 h-7"
+                          textClass="text-[10px] text-slate-700 dark:text-slate-200"
+                          bgClass="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600"
+                        />
                         <div className="min-w-0">
                           <div className="text-[12px] font-bold text-slate-800 dark:text-slate-200 truncate">{entry.displayName || entry.username}</div>
                           {entry.displayName && entry.displayName !== entry.username && (
@@ -532,16 +620,25 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
             <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[max(env(safe-area-inset-bottom),24px)] space-y-3 custom-scrollbar">
               {/* Preferred Name Banner */}
               <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl p-3 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between shadow-sm">
-                <div className="min-w-0 pr-2">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Your Leaderboard Name</div>
-                  <div className="text-[13px] font-black text-slate-800 dark:text-white truncate">
-                    {user?.preferredName || USERNAME}
-                  </div>
-                  {user?.preferredName && user?.preferredName !== USERNAME && (
-                    <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                      {USERNAME}
+                <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <LeaderboardAvatar
+                    entry={{ username: USERNAME, displayName: user?.preferredName || USERNAME, profilePicture: user?.profilePicture }}
+                    user={user}
+                    sizeClass="w-9 h-9"
+                    textClass="text-[12px] font-black text-white"
+                    bgClass="bg-gradient-to-br from-emerald-400 to-teal-500"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Your Leaderboard Profile</div>
+                    <div className="text-[13px] font-black text-slate-800 dark:text-white truncate">
+                      {user?.preferredName || USERNAME}
                     </div>
-                  )}
+                    {user?.preferredName && user?.preferredName !== USERNAME && (
+                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                        {USERNAME}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={() => {
@@ -555,7 +652,9 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
               </div>
 
               {leaderboard.map((entry, idx) => {
-                const isMe = entry.username === USERNAME || (entry.displayName && entry.displayName === (user?.preferredName || USERNAME));
+                const isMe = entry.username === USERNAME ||
+                  (user && (entry.username?.toLowerCase() === (user.fullName || '').toLowerCase() || entry.username?.toLowerCase() === (user.email || '').toLowerCase())) ||
+                  (entry.displayName && entry.displayName === (user?.preferredName || USERNAME));
                 const displayName = entry.displayName || entry.username;
                 return (
                   <div key={idx} className={`px-4 py-3 rounded-2xl flex items-center gap-3 transition-all shadow-sm ${
@@ -568,6 +667,18 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                     <div className="text-2xl font-black w-8 text-center shrink-0">
                       {idx < 3 ? medals[idx] : <span className="text-sm font-bold text-slate-400">#{idx + 1}</span>}
                     </div>
+                    <LeaderboardAvatar
+                      entry={entry}
+                      user={user}
+                      sizeClass="w-9 h-9"
+                      textClass="text-[11px] font-black text-slate-700 dark:text-slate-200"
+                      bgClass={
+                        idx === 0 ? "bg-gradient-to-br from-yellow-300 to-amber-500 text-white" :
+                        idx === 1 ? "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800" :
+                        idx === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500 text-white" :
+                        "bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600"
+                      }
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-bold text-[14px] truncate text-slate-900 dark:text-white">{displayName}</p>

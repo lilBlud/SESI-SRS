@@ -297,21 +297,50 @@ app.MapGet("/api/leaderboard/{month}", async (string month, AppDbContext db) =>
         .Where(a => a.Month == month)
         .ToListAsync();
 
+    var allStaff = await db.StaffUsers.ToListAsync();
+
+    var staffByName = allStaff
+        .Where(s => !string.IsNullOrWhiteSpace(s.FullName))
+        .GroupBy(s => s.FullName.Trim().ToLower())
+        .ToDictionary(g => g.Key, g => g.First());
+
+    var staffByEmail = allStaff
+        .Where(s => !string.IsNullOrWhiteSpace(s.Email))
+        .GroupBy(s => s.Email.Trim().ToLower())
+        .ToDictionary(g => g.Key, g => g.First());
+
+    var staffByPreferred = allStaff
+        .Where(s => !string.IsNullOrWhiteSpace(s.PreferredName))
+        .GroupBy(s => s.PreferredName.Trim().ToLower())
+        .ToDictionary(g => g.Key, g => g.First());
+
     var top = allAnswers
         .GroupBy(a => a.Username)
         .Select(g =>
         {
             var first = g.FirstOrDefault();
             var preferred = g.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.PreferredName))?.PreferredName;
+            
+            var key = (g.Key ?? "").Trim().ToLower();
+            StaffUser? staff = null;
+            if (staffByName.TryGetValue(key, out var s1)) staff = s1;
+            else if (staffByEmail.TryGetValue(key, out var s2)) staff = s2;
+            else if (!string.IsNullOrWhiteSpace(preferred) && staffByPreferred.TryGetValue(preferred.Trim().ToLower(), out var s3)) staff = s3;
+
             var displayName = !string.IsNullOrWhiteSpace(preferred)
                 ? preferred
-                : (!string.IsNullOrWhiteSpace(first?.PreferredName) ? first.PreferredName : g.Key);
+                : (!string.IsNullOrWhiteSpace(staff?.PreferredName) 
+                    ? staff.PreferredName 
+                    : (!string.IsNullOrWhiteSpace(first?.PreferredName) ? first.PreferredName : g.Key));
 
             return new
             {
                 Username = g.Key,
                 DisplayName = displayName,
-                Division = string.IsNullOrWhiteSpace(first?.Division) ? "Strategic Planning Division" : first.Division,
+                ProfilePicture = staff?.ProfilePicture ?? "",
+                Division = !string.IsNullOrWhiteSpace(staff?.Division) 
+                    ? staff.Division 
+                    : (string.IsNullOrWhiteSpace(first?.Division) ? "Strategic Planning Division" : first.Division),
                 Score = g.Sum(a => a.PointsAwarded),
                 TotalQuestions = g.Count(), // how many they answered
                 DateTaken = g.Max(a => a.DateAnswered)
@@ -323,7 +352,7 @@ app.MapGet("/api/leaderboard/{month}", async (string month, AppDbContext db) =>
         .ToList();
 
     return Results.Ok(top);
-}).WithName("GetLeaderboard");
+}).WithName("GetLeaderboard").RequireCors("AllowAll");
 
 // ─── Profile: Recent Answers ───
 app.MapGet("/api/profile/{username}/recent-answers", async (string username, string? month, AppDbContext db) =>
