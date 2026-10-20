@@ -3,7 +3,7 @@ import { AdminTab, HomeTab, GlossaryTab, QuizTab, ProfileTab } from './component
 import LoginPage from './components/pages/LoginPage';
 import PasscodeGate from './components/pages/PasscodeGate';
 import { API_BASE } from './utils/constants.js';
-import { getGlossaryDirect } from './utils/supabaseClient.js';
+import { getGlossaryDirect, getUserProfileDirect } from './utils/supabaseClient.js';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { useBookmarks } from './hooks/useBookmarks';
 
@@ -115,14 +115,22 @@ function App() {
   useEffect(() => {
     if (user?.email || user?.fullName) {
       const u = user.email || user.fullName;
-      fetch(`${API_BASE}/api/user/profile/${encodeURIComponent(u)}`)
-        .then(r => r.ok ? r.json() : null)
+      getUserProfileDirect(u)
         .then(data => {
           if (data && data.profilePicture !== undefined && data.profilePicture !== user.profilePicture) {
             handleUpdateUser({ profilePicture: data.profilePicture });
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          fetch(`${API_BASE}/api/user/profile/${encodeURIComponent(u)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+              if (data && data.profilePicture !== undefined && data.profilePicture !== user.profilePicture) {
+                handleUpdateUser({ profilePicture: data.profilePicture });
+              }
+            })
+            .catch(() => {});
+        });
     }
   }, [user?.email, user?.fullName]);
 

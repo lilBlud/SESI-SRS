@@ -113,3 +113,88 @@ export async function getLeaderboardDirect(month) {
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 }
+
+/**
+ * Get user profile directly from Supabase StaffUsers.
+ */
+export async function getUserProfileDirect(usernameOrEmail) {
+  if (!usernameOrEmail) return null;
+  const target = usernameOrEmail.trim().toLowerCase();
+  const { data, error } = await supabase
+    .from('StaffUsers')
+    .select('*');
+
+  if (error || !data) return null;
+
+  const user = data.find(u => 
+    (u.Email && u.Email.toLowerCase() === target) || 
+    (u.FullName && u.FullName.toLowerCase() === target)
+  );
+
+  if (!user) return null;
+
+  return {
+    id: user.Id ?? user.id,
+    fullName: user.FullName ?? user.fullName,
+    preferredName: user.PreferredName ?? user.preferredName,
+    email: user.Email ?? user.email,
+    division: user.Division ?? user.division,
+    staffId: user.StaffId ?? user.staffId,
+    profilePicture: user.ProfilePicture ?? user.profilePicture
+  };
+}
+
+/**
+ * Update user profile picture directly in Supabase StaffUsers.
+ */
+export async function updateProfilePictureDirect(usernameOrEmail, profilePicture) {
+  if (!usernameOrEmail) throw new Error("Username required");
+  const target = usernameOrEmail.trim().toLowerCase();
+  const { data: allUsers, error: fetchErr } = await supabase.from('StaffUsers').select('*');
+  if (fetchErr) throw fetchErr;
+
+  const match = (allUsers || []).find(u => 
+    (u.Email && u.Email.toLowerCase() === target) || 
+    (u.FullName && u.FullName.toLowerCase() === target)
+  );
+
+  if (!match) throw new Error("User not found");
+
+  const { error } = await supabase
+    .from('StaffUsers')
+    .update({ ProfilePicture: profilePicture || '' })
+    .eq('Id', match.Id ?? match.id);
+
+  if (error) throw error;
+  return { success: true, profilePicture };
+}
+
+/**
+ * Update preferred display name directly in Supabase StaffUsers and UserAnswers.
+ */
+export async function updatePreferredNameDirect(usernameOrEmail, preferredName) {
+  if (!usernameOrEmail) throw new Error("Username required");
+  const trimmed = (preferredName || '').trim().slice(0, 10);
+  const target = usernameOrEmail.trim().toLowerCase();
+
+  const { data: allUsers } = await supabase.from('StaffUsers').select('*');
+  const match = (allUsers || []).find(u => 
+    (u.Email && u.Email.toLowerCase() === target) || 
+    (u.FullName && u.FullName.toLowerCase() === target)
+  );
+
+  if (match) {
+    await supabase
+      .from('StaffUsers')
+      .update({ PreferredName: trimmed })
+      .eq('Id', match.Id ?? match.id);
+  }
+
+  // Update in UserAnswers
+  await supabase
+    .from('UserAnswers')
+    .update({ PreferredName: trimmed })
+    .eq('Username', usernameOrEmail);
+
+  return { success: true, preferredName: trimmed };
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { API_BASE, currentMonth, getColor, getCatMeta } from '../../utils/constants';
+import { updateProfilePictureDirect, updatePreferredNameDirect } from '../../utils/supabaseClient';
 import { CorporatePerformanceChart, PostImageSlider, InstagramPhotoCropper } from '../ui';
 
 export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }) {
@@ -41,28 +42,33 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
     setUploadingPhoto(true);
     try {
       const usernameTarget = user?.email || user?.fullName || USERNAME;
-      const res = await fetch(`${API_BASE}/api/user/profile-picture`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: usernameTarget,
-          profilePicture: croppedBase64
-        })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server responded with ${res.status}`);
+      let directSuccess = false;
+      try {
+        await updateProfilePictureDirect(usernameTarget, croppedBase64);
+        directSuccess = true;
+      } catch (err) {
+        console.warn("Direct Supabase profile picture update failed, trying API:", err);
       }
 
-      const data = await res.json();
-      if (data && data.success) {
-        if (onUpdateUser) onUpdateUser({ profilePicture: croppedBase64 });
-        setSelectedPhotoSrc(null);
-        setShowPhotoModal(false);
-      } else {
-        throw new Error("Failed to save profile picture to database.");
+      if (!directSuccess) {
+        const res = await fetch(`${API_BASE}/api/user/profile-picture`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: usernameTarget,
+            profilePicture: croppedBase64
+          })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `Server responded with ${res.status}`);
+        }
       }
+
+      if (onUpdateUser) onUpdateUser({ profilePicture: croppedBase64 });
+      setSelectedPhotoSrc(null);
+      setShowPhotoModal(false);
     } catch (err) {
       console.error("Profile picture upload error:", err);
       throw new Error("Unable to save photo: " + (err.message || "Network error. Please try again."));
@@ -77,20 +83,28 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
     setUploadingPhoto(true);
     try {
       const usernameTarget = user?.email || user?.fullName || USERNAME;
-      const res = await fetch(`${API_BASE}/api/user/profile-picture`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: usernameTarget,
-          profilePicture: ''
-        })
-      });
-      if (res.ok) {
-        if (onUpdateUser) onUpdateUser({ profilePicture: '' });
-        setShowPhotoModal(false);
-      } else {
-        alert("Failed to remove profile picture");
+      let directSuccess = false;
+      try {
+        await updateProfilePictureDirect(usernameTarget, '');
+        directSuccess = true;
+      } catch (err) {
+        console.warn("Direct Supabase remove photo failed, trying API:", err);
       }
+
+      if (!directSuccess) {
+        const res = await fetch(`${API_BASE}/api/user/profile-picture`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: usernameTarget,
+            profilePicture: ''
+          })
+        });
+        if (!res.ok) alert("Failed to remove profile picture");
+      }
+
+      if (onUpdateUser) onUpdateUser({ profilePicture: '' });
+      setShowPhotoModal(false);
     } catch (err) {
       alert("Error: " + err.message);
     } finally {
@@ -105,23 +119,31 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
     if (!editName.trim()) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/api/user/preferred-name`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: USERNAME,
-          preferredName: editName.trim()
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (onUpdateUser) onUpdateUser({ preferredName: data.preferredName });
-        setShowEditModal(false);
-      } else {
-        alert("Failed to update preferred name");
+      const trimmed = editName.trim();
+      let directSuccess = false;
+      try {
+        await updatePreferredNameDirect(USERNAME, trimmed);
+        directSuccess = true;
+      } catch (err) {
+        console.warn("Direct Supabase preferred name update failed, trying API:", err);
       }
+
+      if (!directSuccess) {
+        const res = await fetch(`${API_BASE}/api/user/preferred-name`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: USERNAME,
+            preferredName: trimmed
+          })
+        });
+        if (!res.ok) throw new Error("API failed");
+      }
+
+      if (onUpdateUser) onUpdateUser({ preferredName: trimmed });
+      setShowEditModal(false);
     } catch (err) {
-      alert("Error: " + err.message);
+      alert("Error saving name: " + err.message);
     } finally {
       setSaving(false);
     }
