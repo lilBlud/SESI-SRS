@@ -1191,42 +1191,87 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
                       </div>
                     </div>
 
-                    {/* 12 Month Grid */}
-                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-px bg-slate-200 dark:bg-slate-700">
+                    {/* Unit Context & Guidance Banner */}
+                    <div className="bg-emerald-50/80 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-200/60 dark:border-emerald-800/50 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">
+                          Active Unit:
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 font-extrabold text-[11px]">
+                          {gYAxisFormat || 'in %'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                        {gYAxisFormat?.toLowerCase().includes('%')
+                          ? 'Values represent percentages (e.g. 85.5 = 85.5%)'
+                          : gYAxisFormat?.toLowerCase().includes('mil')
+                            ? 'Values represent Millions (e.g. 240.5 = RM 240.5 Mil)'
+                            : gYAxisFormat?.toLowerCase().includes('bil')
+                              ? 'Values represent Billions (e.g. 1.25 = RM 1.25 Bil)'
+                              : `Values are formatted as ${gYAxisFormat || 'numeric units'}`}
+                      </span>
+                    </div>
+
+                    {/* 12 Month Grid - 3 cols on mobile, 4 on tablet, 6 on desktop */}
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-1">
                       {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m => {
                         const existing = gChartData.find(d => d.month === m && String(d.year) === String(cYear));
                         const val = existing !== undefined && existing.value !== undefined ? String(existing.value) : '';
+                        
+                        // Compute clean unit suffix
+                        let unitBadge = '';
+                        const fmt = (gYAxisFormat || '').toLowerCase();
+                        if (fmt.includes('%')) unitBadge = '%';
+                        else if (fmt.includes('mil')) unitBadge = 'M';
+                        else if (fmt.includes('bil')) unitBadge = 'B';
+                        else if (fmt.includes('rm')) unitBadge = 'RM';
+                        else if (fmt.includes('min')) unitBadge = 'm';
+                        else if (fmt.includes('mw')) unitBadge = 'MW';
+                        else if (fmt.includes('gwh')) unitBadge = 'GWh';
+                        else if (fmt.includes('ltifr')) unitBadge = 'LTIFR';
+
                         return (
-                          <div key={m} className="bg-white dark:bg-slate-800 p-2.5 flex flex-col items-center gap-1">
-                            <span className={`text-[10px] font-black uppercase tracking-wider ${val ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{m}</span>
-                            <input
-                              type="number"
-                              step="any"
-                              placeholder="—"
-                              value={val}
-                              onChange={e => {
-                                const v = e.target.value;
-                                setGChartData(prev => {
-                                  const copy = [...prev];
-                                  const idx = copy.findIndex(d => d.month === m && String(d.year) === String(cYear));
-                                  if (v === '' || isNaN(parseFloat(v))) {
-                                    if (idx >= 0) copy.splice(idx, 1);
-                                  } else {
-                                    if (idx >= 0) {
-                                      copy[idx] = { ...copy[idx], value: parseFloat(v) };
+                          <div key={m} className="bg-slate-50 dark:bg-slate-900/80 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-1.5 shadow-sm focus-within:border-emerald-500 transition-all">
+                            <div className="flex items-center justify-between">
+                              <span className={`text-[11px] font-black uppercase tracking-wider ${val ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
+                                {m}
+                              </span>
+                              {unitBadge && (
+                                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">
+                                  {unitBadge}
+                                </span>
+                              )}
+                            </div>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                step="any"
+                                placeholder="0.00"
+                                value={val}
+                                onChange={e => {
+                                  const v = e.target.value;
+                                  setGChartData(prev => {
+                                    const copy = [...prev];
+                                    const idx = copy.findIndex(d => d.month === m && String(d.year) === String(cYear));
+                                    if (v === '' || isNaN(parseFloat(v))) {
+                                      if (idx >= 0) copy.splice(idx, 1);
                                     } else {
-                                      copy.push({ month: m, year: cYear, value: parseFloat(v) });
+                                      if (idx >= 0) {
+                                        copy[idx] = { ...copy[idx], value: parseFloat(v) };
+                                      } else {
+                                        copy.push({ month: m, year: cYear, value: parseFloat(v) });
+                                      }
                                     }
-                                  }
-                                  return copy;
-                                });
-                              }}
-                              className={`w-full text-center p-1.5 rounded-lg border text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
-                                val 
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300' 
-                                  : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-400'
-                              }`}
-                            />
+                                    return copy;
+                                  });
+                                }}
+                                className={`w-full box-border block text-right pr-2 pl-2 py-1.5 rounded-lg border text-[12px] font-mono font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all ${
+                                  val 
+                                    ? 'bg-emerald-50/80 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200' 
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'
+                                }`}
+                              />
+                            </div>
                           </div>
                         );
                       })}
