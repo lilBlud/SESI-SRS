@@ -229,9 +229,9 @@ function App() {
         </div>
       )}
 
-      {/* ─── CRISP, SOLID TOP BAR (Prevents WebKit text blurring and backdrop bleed-through) ─── */}
-      <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 safe-area-top shadow-xs relative transition-colors duration-150">
-        <div className="flex items-center justify-between px-4 h-16 relative z-10" style={{ transform: 'translateZ(0)', WebkitFontSmoothing: 'antialiased' }}>
+      {/* ─── CRISP, SOLID TOP BAR ─── */}
+      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 safe-area-top shrink-0">
+        <div className="flex items-center justify-between px-4 h-16">
 
           {/* ─── LOGO AREA + BACK BUTTON ─── */}
           <div className="flex items-center gap-2.5">
@@ -245,16 +245,15 @@ function App() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
               </button>
             )}
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-slate-200 dark:border-slate-700 shrink-0 shadow-xs">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-slate-200 dark:border-slate-700 shrink-0 shadow-xs p-0.5">
               <img
                 src="/assets/logo.png"
                 alt="S&S Logo"
-                className="w-full h-full object-contain p-0.5"
-                style={{ imageRendering: '-webkit-optimize-contrast' }}
+                className="w-full h-full object-contain"
               />
             </div>
             <div className="flex flex-col justify-center select-none">
-              <span className="text-[20px] font-black tracking-tight leading-none text-emerald-600 dark:text-emerald-400">
+              <span className="text-[20px] font-black tracking-tight leading-none text-[#059669] dark:text-[#34d399]" style={{ textRendering: 'geometricPrecision' }}>
                 SESI
               </span>
               <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 mt-0.5 leading-none tracking-tight">
