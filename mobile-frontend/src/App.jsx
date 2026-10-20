@@ -273,7 +273,7 @@ function App() {
         {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
         {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
-        {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} triggerInstallPrompt={() => setShowInstallPrompt(true)} onUpdateUser={handleUpdateUser} />}
+        {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
         {activeTab === 'admin' && <AdminTab onGlossaryChange={fetchGlossary} visitorStats={visitorStats} onRefreshVisitorStats={() => {
           fetch(`${API_BASE}/api/visitors/stats`).then(r => r.ok ? r.json() : null).then(d => { if (d) setVisitorStats(d); });
         }} />}

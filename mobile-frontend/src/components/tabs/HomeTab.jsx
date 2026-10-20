@@ -150,8 +150,21 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
         </div>
       )}
 
-      {/* ── Visitors Today & Users Counter ── */}
+      {/* ── Visitors Today & Users Counter (Admin Only) ── */}
+      {typeof window !== 'undefined' && Boolean(sessionStorage.getItem('adminToken')) && (
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl sm:rounded-[26px] p-3.5 sm:p-4 shadow-[0_4px_24px_rgba(0,0,0,0.06)] ring-1 ring-black/5 dark:ring-white/10">
+        <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100 dark:border-slate-800">
+          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span>🔒</span> Admin Traffic View
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveTab && setActiveTab('admin')}
+            className="text-[11px] font-bold text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+          >
+            Open Admin Dashboard →
+          </button>
+        </div>
         <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800">
           
           {/* Visitors Today */}
@@ -199,6 +212,7 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
 
         </div>
       </div>
+      )}
 
       {/* ── Leaderboard on Home ── */}
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden ring-1 ring-black/5 dark:ring-white/10">

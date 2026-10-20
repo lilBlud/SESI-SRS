@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { API_BASE, currentMonth, getColor, getCatMeta } from '../../utils/constants';
 import { CorporatePerformanceChart, PostImageSlider } from '../ui';
 
-export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstallPrompt, onUpdateUser }) {
+export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };
   const [recentQuizzes, setRecentQuizzes] = useState([]);
   const [currentRank, setCurrentRank] = useState(null);
@@ -275,24 +275,6 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
         </div>
       </div>
 
-      {/* Install App Button in Profile */}
-      {typeof window !== 'undefined' && !window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone && triggerInstallPrompt && (
-        <button
-          type="button"
-          onClick={triggerInstallPrompt}
-          className="w-full py-3 px-4 bg-white dark:bg-slate-800 border border-emerald-500/30 dark:border-emerald-500/40 rounded-2xl flex items-center justify-between shadow-sm hover:border-emerald-500 transition-all active:scale-[0.99] text-left"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-xl">📲</span>
-            <div>
-              <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">Install SESI App to Home Screen</div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400">Launch directly like a native mobile app</div>
-            </div>
-          </div>
-          <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">Install →</span>
-        </button>
-      )}
-
       {/* Stats / Total Score & Standing */}
       {!loading && (
         <div className="flex gap-3">
@@ -466,21 +448,6 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
         )}
       </div>
 
-
-      <div className="pt-4 border-t border-slate-200/50 dark:border-slate-800/50 hidden">
-        <button onClick={triggerInstallPrompt} className="w-full flex items-center justify-between p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 active:scale-[0.98] transition-all">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-            </div>
-            <div className="text-left">
-              <p className="text-[14px] font-bold text-slate-900 dark:text-white leading-tight">Install App (iOS / Android)</p>
-              <p className="text-[12px] text-slate-500 dark:text-slate-400">Add SESI to your Home Screen</p>
-            </div>
-          </div>
-          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
-        </button>
-      </div>
 
       {/* Bookmarks Section */}
       <div className="pt-2 border-t border-slate-200/50 dark:border-slate-800/50">
