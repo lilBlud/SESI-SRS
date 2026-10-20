@@ -34,6 +34,7 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
   const [gFilter, setGFilter] = useState('');
   const [gCategoryFilter, setGCategoryFilter] = useState('All');
   const [syncingData, setSyncingData] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   // ─── Infographics State ───
   const [infographics, setInfographics] = useState([]);
@@ -152,7 +153,8 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
     } else {
       setDictSubTab('dictionary');
     }
-    window.scrollTo({ top: 350, behavior: 'smooth' });
+    setShowForm(true);
+    window.scrollTo({ top: 180, behavior: 'smooth' });
   };
 
   const duplicateGlossaryTerm = (t) => {
@@ -174,7 +176,8 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
     }
     setGMsg(`✅ Duplicating "${t.term}" in category "${t.category || 'Corporate Performance'}"!`);
     setTimeout(() => setGMsg(''), 4000);
-    window.scrollTo({ top: 350, behavior: 'smooth' });
+    setShowForm(true);
+    window.scrollTo({ top: 180, behavior: 'smooth' });
   };
 
   const loadPreset = (key) => {
@@ -199,6 +202,7 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
       setGMsg(`✅ Loaded preset "${tmpl.term}" with 2022–2026 historical data!`);
     }
     setTimeout(() => setGMsg(''), 4000);
+    setShowForm(true);
   };
 
   const syncDefaultHistoricalData = async () => {
@@ -264,6 +268,7 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
       setGCat('IBR Framework');
     }
     setGChartData([]); setGYAxisFormat('in %');
+    setShowForm(false);
   };
 
   const deleteGlossaryTerm = async (id) => {
@@ -473,7 +478,7 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
   }
 
   const sections = [
-    { id: 'traffic', label: 'Traffic & Visitors', count: (trafficData?.totalVisits ?? visitorStats?.totalVisits ?? 0) },
+    { id: 'traffic', label: 'Visitors', count: (trafficData?.totalVisits ?? visitorStats?.totalVisits ?? 0) },
     { id: 'questions', label: 'Quiz', count: qCount },
     { id: 'glossary', label: 'Dictionary', count: glossaryTerms.length },
     { id: 'infographics', label: 'Posts', count: infographics.length },
@@ -491,10 +496,24 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
       </div>
 
       {/* Section Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
         {sections.map(s => (
-          <button key={s.id} onClick={() => setActiveSection(s.id)} className={`px-4 py-2.5 rounded-xl text-[13px] font-bold whitespace-nowrap transition-all ${activeSection === s.id ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
-            {s.label} <span className="ml-1 text-[11px] opacity-70">({s.count})</span>
+          <button 
+            key={s.id} 
+            onClick={() => {
+              setActiveSection(s.id);
+              setShowForm(false);
+            }} 
+            className={`py-2 px-1 rounded-xl text-center transition-all ${
+              activeSection === s.id 
+                ? 'bg-emerald-600 text-white shadow-md font-black' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold'
+            }`}
+          >
+            <div className="text-[12px] sm:text-[13px] leading-tight truncate">{s.label}</div>
+            <div className={`text-[10px] mt-0.5 ${activeSection === s.id ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
+              ({s.count})
+            </div>
           </button>
         ))}
       </div>
@@ -628,22 +647,26 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
       {activeSection === 'questions' && (
         <div className="space-y-4">
           {/* Month picker */}
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
-            <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Managing Month</label>
-            <input 
-              type="month" 
-              min="2026-01" 
-              value={selectedMonth} 
-              onChange={e => {
-                const val = e.target.value;
-                if (val && val < '2026-01') {
-                  setSelectedMonth('2026-01');
-                  return;
-                }
-                setSelectedMonth(val);
-              }} 
-              className="w-full mt-2 p-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" 
-            />
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <label className="block text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Managing Month
+            </label>
+            <div className="w-full">
+              <input 
+                type="month" 
+                min="2026-01" 
+                value={selectedMonth} 
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val && val < '2026-01') {
+                    setSelectedMonth('2026-01');
+                    return;
+                  }
+                  setSelectedMonth(val);
+                }} 
+                className="w-full box-border block px-3.5 py-2.5 rounded-xl border text-sm font-mono dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm" 
+              />
+            </div>
           </div>
 
           {/* Counter */}
@@ -781,31 +804,96 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
             </button>
           </div>
 
-          {/* ──── TAB 1: CORPORATE PERFORMANCE STUDIO ──── */}
-          {dictSubTab === 'corporate' ? (
-            <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-              {/* Studio Header & 1-Click Sync */}
-              <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-700">
-                <div>
-                  <h2 className="text-[16px] font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>{gEditId ? '✏️' : '✨'}</span>
-                    <span>{gEditId ? `Edit Card: ${gTerm || `#${gEditId}`}` : 'Create New Performance Card'}</span>
-                  </h2>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Build executive KPI cards with multi-year historical trend charts for any category (EPSB, ESG, BDV, etc.).
-                  </p>
-                </div>
+          {/* ──── SUB-TAB HEADER & PRIMARY ACTIONS TOOLBAR ──── */}
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-[16px] font-black text-slate-900 dark:text-white">
+                  {dictSubTab === 'corporate' ? 'Performance KPI Cards' : 'Dictionary Terminology'}
+                </h2>
+                <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-200/50">
+                  {dictSubTab === 'corporate'
+                    ? glossaryTerms.filter(t => {
+                        let c = [];
+                        try { c = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) {}
+                        return t.category === 'Corporate Performance' || c.length > 0;
+                      }).length
+                    : glossaryTerms.filter(t => {
+                        let c = [];
+                        try { c = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) {}
+                        return t.category !== 'Corporate Performance' && c.length === 0;
+                      }).length} items
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {dictSubTab === 'corporate'
+                  ? 'Manage executive KPI cards with multi-year historical trend charts'
+                  : 'Manage definitions, formulas, and acronyms across energy frameworks'}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {dictSubTab === 'corporate' && (
                 <button
                   type="button"
                   onClick={syncDefaultHistoricalData}
                   disabled={syncingData}
-                  className="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] font-bold rounded-xl shadow-md shadow-emerald-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                  title="Populates default corporate metrics with 2022–2026 data"
+                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
                 >
                   <span>{syncingData ? '⏳' : '⚡'}</span>
-                  <span>{syncingData ? 'Syncing Historical Baseline...' : 'Sync 2022–2026 Historical Baseline'}</span>
+                  <span>Sync Baseline</span>
                 </button>
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (showForm) {
+                    cancelEditGlossaryTerm();
+                  } else {
+                    setGEditId(null);
+                    setGTerm('');
+                    setGDesc('');
+                    setGFull('');
+                    setGFormula(dictSubTab === 'corporate' ? 'area' : '');
+                    setGYAxisFormat('in %');
+                    setGCat(dictSubTab === 'corporate' ? 'Corporate Performance' : 'IBR Framework');
+                    setGChartData([]);
+                    setShowForm(true);
+                  }
+                }}
+                className={`py-2 px-3.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-sm ${
+                  showForm
+                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
+                }`}
+              >
+                <span>{showForm ? '✕ Close Form' : (dictSubTab === 'corporate' ? '+ Create New Card' : '+ Add New Term')}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ──── CONDITIONAL FORM (ONLY VISIBLE ON ADD OR EDIT) ──── */}
+          {showForm && (
+            dictSubTab === 'corporate' ? (
+              <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-emerald-500/30 dark:border-emerald-500/20 shadow-md space-y-4 animate-slideDown">
+                {/* Form Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                      {gEditId ? `Editing Card #${gEditId}` : 'New Card Creator'}
+                    </span>
+                    <h3 className="text-[16px] font-black text-slate-900 dark:text-white">
+                      {gEditId ? `Edit: ${gTerm || 'Card'}` : 'Create Performance Card'}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={cancelEditGlossaryTerm}
+                    className="py-1 px-2.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold"
+                  >
+                    ✕ Close
+                  </button>
+                </div>
 
               {/* Fast Presets Selector */}
               <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
@@ -1244,10 +1332,24 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
             </div>
           ) : (
             /* ──── TAB 2: TERMINOLOGY DICTIONARY ──── */
-            <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-              <h2 className="text-[16px] font-bold">
-                {gEditId ? `Edit Dictionary Term: ${gTerm}` : 'Add New Dictionary Term'}
-              </h2>
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-emerald-500/30 dark:border-emerald-500/20 shadow-md space-y-4 animate-slideDown">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    {gEditId ? `Editing Term #${gEditId}` : 'New Term Creator'}
+                  </span>
+                  <h3 className="text-[16px] font-black text-slate-900 dark:text-white">
+                    {gEditId ? `Edit: ${gTerm || 'Term'}` : 'Add New Dictionary Term'}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={cancelEditGlossaryTerm}
+                  className="py-1 px-2.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold"
+                >
+                  ✕ Close
+                </button>
+              </div>
               <form onSubmit={addGlossaryTerm} className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input 
@@ -1328,7 +1430,7 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
                 </div>
               </form>
             </div>
-          )}
+          ))}
 
           {/* Floating Toast Notification */}
           {gMsg && (
