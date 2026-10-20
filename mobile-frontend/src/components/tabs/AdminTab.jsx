@@ -833,17 +833,6 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
             </div>
             
             <div className="flex items-center gap-2">
-              {dictSubTab === 'corporate' && (
-                <button
-                  type="button"
-                  onClick={syncDefaultHistoricalData}
-                  disabled={syncingData}
-                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  <span>{syncingData ? '⏳' : '⚡'}</span>
-                  <span>Sync Baseline</span>
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => {
@@ -907,7 +896,6 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {Object.keys(DEFAULT_HISTORICAL_METRICS).map(k => {
                     const isSelected = (gTerm || '').trim().toUpperCase() === k.toUpperCase();
-                    const isPriority = ['EPSB REVENUE', 'TOTAL REVENUE', 'EBIT', 'FINANCIAL PERFORMANCE', 'TECHNICAL PERFORMANCE'].includes(k);
                     return (
                       <button
                         type="button"
@@ -916,9 +904,7 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
                           isSelected
                             ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                            : isPriority
-                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 font-extrabold'
-                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600'
                         }`}
                       >
                         {k}
@@ -930,17 +916,12 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
 
               {/* Card Form */}
               <form onSubmit={addGlossaryTerm} className="space-y-3.5">
-                {/* Metric Name & Target Category Row */}
+                {/* Card Name & Category Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
-                        Card Metric Name / Title <span className="text-emerald-500">*</span>
-                      </label>
-                      <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/50">
-                        Free Text (Any KPI)
-                      </span>
-                    </div>
+                    <label className="block text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
+                      Card Name <span className="text-emerald-500">*</span>
+                    </label>
                     <input
                       required
                       type="text"
@@ -952,12 +933,9 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
                   </div>
 
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
-                        Target Category <span className="text-emerald-500">*</span>
-                      </label>
-                      <span className="text-[10px] text-slate-400 font-medium">Where card appears</span>
-                    </div>
+                    <label className="block text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
+                      Category <span className="text-emerald-500">*</span>
+                    </label>
                     <select
                       value={gCat}
                       onChange={e => setGCat(e.target.value)}
