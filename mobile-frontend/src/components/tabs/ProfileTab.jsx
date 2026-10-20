@@ -16,7 +16,97 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const fileInputRef = React.useRef(null);
   const USERNAME = user?.fullName || "Ahmad Azib Danish";
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert("Please select a valid image file (JPG, PNG, WebP).");
+      return;
+    }
+    setUploadingPhoto(true);
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 400;
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+        fetch(`${API_BASE}/api/user/profile-picture`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: user?.email || USERNAME,
+            profilePicture: compressedBase64
+          })
+        })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && data.success) {
+              if (onUpdateUser) onUpdateUser({ profilePicture: compressedBase64 });
+              setShowPhotoModal(false);
+            } else {
+              alert("Failed to save profile picture to database.");
+            }
+          })
+          .catch(err => {
+            alert("Error uploading photo: " + err.message);
+          })
+          .finally(() => {
+            setUploadingPhoto(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          });
+      };
+      img.src = loadEvt.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = async () => {
+    setUploadingPhoto(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/user/profile-picture`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: user?.email || USERNAME,
+          profilePicture: ''
+        })
+      });
+      if (res.ok) {
+        if (onUpdateUser) onUpdateUser({ profilePicture: '' });
+        setShowPhotoModal(false);
+      } else {
+        alert("Failed to remove profile picture");
+      }
+    } catch (err) {
+      alert("Error: " + err.message);
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleSavePreferredName = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -97,8 +187,66 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
       <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-5 text-white shadow-lg flex items-center justify-between relative overflow-hidden">
         <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
         <div className="flex items-center gap-4 relative z-10 min-w-0">
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/30 shrink-0 text-2xl font-black shadow-inner">
-            {(user?.preferredName || USERNAME).charAt(0).toUpperCase()}
+          {/* Avatar with Camera Upload */}
+          <div className="relative shrink-0">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoSelect}
+              accept="image/*"
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (user?.profilePicture) {
+                  setShowPhotoModal(true);
+                } else {
+                  fileInputRef.current?.click();
+                }
+              }}
+              className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/40 shrink-0 text-2xl font-black shadow-inner overflow-hidden relative group hover:opacity-95 transition-all active:scale-95"
+              title="Change Profile Photo"
+            >
+              {user?.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt={USERNAME}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{(user?.preferredName || USERNAME).charAt(0).toUpperCase()}</span>
+              )}
+
+              {/* Uploading Spinner */}
+              {uploadingPhoto && (
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-10">
+                  <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                </div>
+              )}
+            </button>
+
+            {/* Camera Badge */}
+            <button
+              type="button"
+              onClick={() => {
+                if (user?.profilePicture) {
+                  setShowPhotoModal(true);
+                } else {
+                  fileInputRef.current?.click();
+                }
+              }}
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white text-emerald-700 shadow-md flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-2 border-emerald-600 z-10"
+              title="Upload photo"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -755,6 +903,67 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Profile Photo Options Modal */}
+      {showPhotoModal && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-fadeIn" onClick={() => setShowPhotoModal(false)}>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800 animate-scaleIn text-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="w-20 h-20 rounded-full mx-auto mb-4 overflow-hidden border-2 border-emerald-500 shadow-md">
+              {user?.profilePicture ? (
+                <img src={user.profilePicture} alt="Current profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-3xl font-black">
+                  {(user?.preferredName || USERNAME).charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <h3 className="text-[19px] font-black text-slate-900 dark:text-white">Profile Photo</h3>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 mb-5 leading-relaxed">
+              Upload a new photo or remove your current photo.
+            </p>
+
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  fileInputRef.current?.click();
+                }}
+                disabled={uploadingPhoto}
+                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-[13px] rounded-xl shadow-lg shadow-emerald-500/25 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                {uploadingPhoto ? "Compressing & Saving..." : "Upload New Photo"}
+              </button>
+
+              {user?.profilePicture && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  disabled={uploadingPhoto}
+                  className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-bold text-[13px] rounded-xl transition-all active:scale-95 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Remove Current Photo
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(false)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[13px] rounded-xl transition-all active:scale-95"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>,
         document.body

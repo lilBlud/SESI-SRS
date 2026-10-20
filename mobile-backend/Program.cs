@@ -79,7 +79,7 @@ app.MapPost("/api/auth/signup", async (AuthRequest req, AppDbContext db) =>
     db.StaffUsers.Add(user);
     await db.SaveChangesAsync();
     
-    return Results.Ok(new { id = user.Id, fullName = user.FullName, preferredName = user.PreferredName, email = user.Email, division = user.Division, staffId = user.StaffId });
+    return Results.Ok(new { id = user.Id, fullName = user.FullName, preferredName = user.PreferredName, email = user.Email, division = user.Division, staffId = user.StaffId, profilePicture = user.ProfilePicture });
 }).RequireCors("AllowAll");
 
 app.MapMethods("/api/auth/login", new[] { "OPTIONS" }, () => Results.Ok()).RequireCors("AllowAll");
@@ -89,7 +89,7 @@ app.MapPost("/api/auth/login", async (AuthRequest req, AppDbContext db) =>
     if (user == null)
         return Results.Unauthorized();
         
-    return Results.Ok(new { id = user.Id, fullName = user.FullName, preferredName = user.PreferredName, email = user.Email, division = user.Division, staffId = user.StaffId });
+    return Results.Ok(new { id = user.Id, fullName = user.FullName, preferredName = user.PreferredName, email = user.Email, division = user.Division, staffId = user.StaffId, profilePicture = user.ProfilePicture });
 }).RequireCors("AllowAll");
 
 // ═══════════════════════════════════════════
@@ -241,6 +241,42 @@ app.MapPost("/api/user/preferred-name", async (UpdatePreferredNameRequest req, A
     await db.SaveChangesAsync();
     return Results.Ok(new { success = true, preferredName = trimmed });
 }).WithName("UpdatePreferredName").RequireCors("AllowAll");
+
+// ─── User: Update Profile Picture (Base64 data URI or image URL) ───
+app.MapMethods("/api/user/profile-picture", new[] { "OPTIONS" }, () => Results.Ok()).RequireCors("AllowAll");
+app.MapPost("/api/user/profile-picture", async (UpdateProfilePictureRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.Username))
+        return Results.BadRequest(new { error = "Username is required" });
+
+    var staff = await db.StaffUsers.FirstOrDefaultAsync(u => u.FullName == req.Username || u.Email == req.Username);
+    if (staff == null)
+        return Results.NotFound(new { error = "User not found" });
+
+    staff.ProfilePicture = req.ProfilePicture ?? "";
+    await db.SaveChangesAsync();
+    return Results.Ok(new { success = true, profilePicture = staff.ProfilePicture });
+}).WithName("UpdateProfilePicture").RequireCors("AllowAll");
+
+// ─── User: Get User Profile ───
+app.MapGet("/api/user/profile/{username}", async (string username, AppDbContext db) =>
+{
+    var staff = await db.StaffUsers.FirstOrDefaultAsync(u => u.FullName == username || u.Email == username);
+    if (staff == null)
+        return Results.NotFound(new { error = "User not found" });
+
+    return Results.Ok(new 
+    { 
+        id = staff.Id, 
+        fullName = staff.FullName, 
+        preferredName = staff.PreferredName, 
+        email = staff.Email, 
+        division = staff.Division, 
+        staffId = staff.StaffId,
+        profilePicture = staff.ProfilePicture
+    });
+}).WithName("GetUserProfile").RequireCors("AllowAll");
+
 
 // ─── Leaderboard: Total score per user for the month, sorted highest first ───
 app.MapGet("/api/leaderboard/{month}", async (string month, AppDbContext db) =>

@@ -11,6 +11,7 @@ namespace mobile_backend.Models
         public string PasswordHash { get; set; } = string.Empty; // Store plain text for MVP or hashed
         public string Division { get; set; } = string.Empty;
         public string StaffId { get; set; } = string.Empty;
+        public string ProfilePicture { get; set; } = string.Empty; // Base64 data URI or image URL
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
@@ -60,6 +61,12 @@ namespace mobile_backend.Models
     {
         public string Username { get; set; } = string.Empty;
         public string PreferredName { get; set; } = string.Empty;
+    }
+
+    public class UpdateProfilePictureRequest
+    {
+        public string Username { get; set; } = string.Empty;
+        public string ProfilePicture { get; set; } = string.Empty;
     }
 
     // Tracks daily DICTIONARY reading activity per user for streak (like Duolingo)
