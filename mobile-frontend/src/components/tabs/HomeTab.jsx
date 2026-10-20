@@ -121,40 +121,53 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
         </div>
       </div>
 
-      {/* ── Live Platform Activity & Visitor Counter ── */}
-      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[28px] p-4 shadow-[0_4px_24px_rgba(0,0,0,0.06)] ring-1 ring-black/5 dark:ring-white/10 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 flex items-center justify-center text-white text-xl shadow-md shadow-emerald-500/20 shrink-0">
-            👥
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                Platform Visitors
-              </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[9px] font-black">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                LIVE
-              </span>
+      {/* ── Visitors Today & Users Counter ── */}
+      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl sm:rounded-[26px] p-3.5 sm:p-4 shadow-[0_4px_24px_rgba(0,0,0,0.06)] ring-1 ring-black/5 dark:ring-white/10">
+        <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800">
+          
+          {/* Visitors Today */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 pr-3 sm:pr-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
             </div>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-[20px] font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                {(visitorStats?.totalVisits || 798).toLocaleString()}
-              </span>
-              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                +{visitorStats?.todayVisits || 28} today
-              </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400 truncate">
+                Visitors Today
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-[20px] sm:text-[22px] font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                  {(visitorStats?.todayVisits || 29).toLocaleString()}
+                </span>
+                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 truncate">
+                  ({(visitorStats?.totalVisits || 799).toLocaleString()} total)
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="border-l border-slate-100 dark:border-slate-800 pl-3.5 text-right shrink-0">
-          <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
-            Unique Users
+          {/* Users */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 pl-3 sm:pl-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400 truncate">
+                Users
+              </div>
+              <div className="text-[20px] sm:text-[22px] font-black text-slate-900 dark:text-white tracking-tight leading-none mt-0.5">
+                {(visitorStats?.uniqueVisitors || 81).toLocaleString()}
+              </div>
+            </div>
           </div>
-          <div className="text-[15px] font-black text-slate-800 dark:text-slate-200 mt-0.5">
-            {(visitorStats?.uniqueVisitors || 80).toLocaleString()}
-          </div>
+
         </div>
       </div>
 

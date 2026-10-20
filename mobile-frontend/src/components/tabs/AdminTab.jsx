@@ -521,24 +521,21 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
             {/* Today Visits */}
             <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Today's Visits</span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  LIVE
-                </span>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Visitors Today</span>
+                <span className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-black">📈</span>
               </div>
               <div className="text-[26px] font-black text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">
-                +{(trafficData?.todayVisits ?? visitorStats?.todayVisits ?? 0).toLocaleString()}
+                {(trafficData?.todayVisits ?? visitorStats?.todayVisits ?? 0).toLocaleString()}
               </div>
               <div className="text-[10px] font-bold text-slate-400 mt-1.5">
                 Activity in the last 24 hours
               </div>
             </div>
 
-            {/* Unique Visitors */}
+            {/* Users */}
             <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Unique Visitors</span>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Users</span>
                 <span className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-black">👤</span>
               </div>
               <div className="text-[26px] font-black text-slate-900 dark:text-white leading-none tracking-tight">
