@@ -189,8 +189,8 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
           className="cursor-pointer bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-blue-500/15 dark:from-emerald-950/50 dark:via-teal-950/40 dark:to-blue-950/50 border border-emerald-500/30 dark:border-emerald-500/40 rounded-2xl p-3.5 flex items-center justify-between shadow-xs hover:bg-emerald-500/20 transition-all group active:scale-[0.99]"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shrink-0 shadow-md text-lg">
-              📲
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-200 dark:border-slate-700 shrink-0 shadow-md flex items-center justify-center p-0.5">
+              <img src="/assets/logo.png" alt="SESI App Logo" className="w-full h-full object-contain" />
             </div>
             <div className="min-w-0">
               <div className="text-[13px] font-black text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
