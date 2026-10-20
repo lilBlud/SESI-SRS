@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { loginDirect, signupDirect } from '../../utils/supabaseClient';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -29,31 +30,52 @@ export default function LoginPage({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = isSignUp ? `${API_BASE}/api/auth/signup` : `${API_BASE}/api/auth/login`;
-      const body = isSignUp ? { fullName, preferredName, email, password, division, staffId } : { email, password };
+      let loggedUser = null;
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          alert('Invalid email or password. Please try again.');
+      // Try direct Supabase auth first (available 24/7)
+      try {
+        if (isSignUp) {
+          loggedUser = await signupDirect({ fullName, preferredName, email, password, division, staffId });
         } else {
-          const errText = await res.text();
-          alert(`Server Error (${res.status}): ` + errText.substring(0, 100));
+          loggedUser = await loginDirect(email, password);
         }
-        return;
+      } catch (sbErr) {
+        if (sbErr.message && (sbErr.message.includes("Invalid") || sbErr.message.includes("already exists"))) {
+          alert(sbErr.message);
+          return;
+        }
+        console.warn("Direct Supabase auth fallback to API:", sbErr);
       }
 
-      const user = JSON.parse(await res.text());
-      if (onLogin) {
-        onLogin(user);
+      // Fallback to backend API if needed
+      if (!loggedUser) {
+        const endpoint = isSignUp ? `${API_BASE}/api/auth/signup` : `${API_BASE}/api/auth/login`;
+        const body = isSignUp ? { fullName, preferredName, email, password, division, staffId } : { email, password };
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            alert('Invalid email or password. Please try again.');
+          } else {
+            const errText = await res.text();
+            alert(`Server Error (${res.status}): ` + errText.substring(0, 100));
+          }
+          return;
+        }
+
+        loggedUser = JSON.parse(await res.text());
+      }
+
+      if (loggedUser && onLogin) {
+        onLogin(loggedUser);
       }
     } catch (error) {
-      alert(`Connection Error: ${error.message} - Make sure the backend server is running.`);
+      alert(`Connection Error: ${error.message}`);
     }
   };
 

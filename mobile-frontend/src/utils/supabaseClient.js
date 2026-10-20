@@ -198,3 +198,82 @@ export async function updatePreferredNameDirect(usernameOrEmail, preferredName) 
 
   return { success: true, preferredName: trimmed };
 }
+
+/**
+ * Direct user login with Supabase StaffUsers.
+ */
+export async function loginDirect(email, password) {
+  if (!email || !password) throw new Error("Email and password required");
+  const targetEmail = email.trim().toLowerCase();
+  const { data, error } = await supabase
+    .from('StaffUsers')
+    .select('*')
+    .eq('Email', targetEmail)
+    .single();
+
+  if (error || !data) {
+    throw new Error("Invalid email or password");
+  }
+
+  if (data.PasswordHash !== password) {
+    throw new Error("Invalid email or password");
+  }
+
+  return {
+    id: data.Id ?? data.id,
+    fullName: data.FullName ?? data.fullName,
+    preferredName: data.PreferredName ?? data.preferredName,
+    email: data.Email ?? data.email,
+    division: data.Division ?? data.division,
+    staffId: data.StaffId ?? data.staffId,
+    profilePicture: data.ProfilePicture ?? data.profilePicture
+  };
+}
+
+/**
+ * Direct user signup with Supabase StaffUsers.
+ */
+export async function signupDirect({ fullName, preferredName, email, password, division, staffId }) {
+  if (!email || !password) throw new Error("Email and password required");
+  const targetEmail = email.trim().toLowerCase();
+
+  const { data: existing } = await supabase
+    .from('StaffUsers')
+    .select('Id')
+    .eq('Email', targetEmail);
+
+  if (existing && existing.length > 0) {
+    throw new Error("Email already exists");
+  }
+
+  const prefName = (preferredName || '').trim().slice(0, 10);
+  const newUser = {
+    FullName: fullName || '',
+    PreferredName: prefName,
+    Email: targetEmail,
+    PasswordHash: password,
+    Division: division || '',
+    StaffId: staffId || '',
+    ProfilePicture: '',
+    CreatedAt: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase
+    .from('StaffUsers')
+    .insert([newUser])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.Id ?? data.id,
+    fullName: data.FullName ?? data.fullName,
+    preferredName: data.PreferredName ?? data.preferredName,
+    email: data.Email ?? data.email,
+    division: data.Division ?? data.division,
+    staffId: data.StaffId ?? data.staffId,
+    profilePicture: data.ProfilePicture ?? data.profilePicture
+  };
+}
+
