@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { API_BASE, currentMonth, getColor, getCatMeta } from '../../utils/constants';
-import { CorporatePerformanceChart, PostImageSlider } from '../ui/UIComponents';
+import { CorporatePerformanceChart, PostImageSlider } from '../ui';
 
 export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstallPrompt, onUpdateUser }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };
@@ -602,17 +602,17 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
                       </div>
                       <div className="px-4 pb-4 pt-0 border-t border-slate-100 dark:border-slate-700 animate-fadeIn">
                         <div className="mt-2">
-                          {activeBookmark.cat === 'Corporate Performance' ? (
+                          {(activeBookmark.cat === 'Corporate Performance' || (activeBookmark.chartData && activeBookmark.chartData.length > 5 && activeBookmark.chartData !== '[]')) ? (
                             <div className="space-y-2 mt-3 mb-2">
                               <p className="text-[13px] text-slate-600 dark:text-slate-300 mb-3 leading-relaxed whitespace-pre-wrap">{activeBookmark.desc}</p>
-                              <CorporatePerformanceChart chartData={activeBookmark.chartData} term={activeBookmark.term || activeBookmark.title || ""} description="" />
+                              <CorporatePerformanceChart chartData={activeBookmark.chartData} term={activeBookmark.term || activeBookmark.title || ""} description="" yAxisFormat={activeBookmark.formulaNotations || activeBookmark.yAxisFormat} formula={activeBookmark.formula} />
                             </div>
                           ) : (
                             <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{activeBookmark.desc}</p>
                           )}
                         </div>
 
-                        {activeBookmark.formula && (
+                        {activeBookmark.formula && activeBookmark.formula !== 'area' && activeBookmark.formula !== 'bar' && (
                           <div className={`mt-3 ${clr.bg} border ${clr.border} rounded-xl p-3`}>
                             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">📐 Formula</div>
                             <div className={`text-[13px] font-black font-mono ${clr.text} leading-relaxed`}>

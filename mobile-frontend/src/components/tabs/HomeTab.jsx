@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { CorporatePerformanceChart, PostImageSlider } from '../ui/UIComponents';
-import { API_BASE, currentMonth, CATEGORIES, CAT_COLORS, getColor, getCatMeta } from '../../utils/constants';
-import { saveImage } from '../ui/Icons';
+import { PostImageSlider, saveImage } from '../ui';
+import { API_BASE, currentMonth, CATEGORIES, getColor, getCatMeta } from '../../utils/constants';
 
 export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions;
@@ -122,34 +121,6 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
         </div>
       </div>
 
-      {/* ── Corporate Performance Slider ── */}
-      {(glossary || []).filter(item => item.cat === 'Corporate Performance').length > 0 && (
-        <div className="mb-6 -mx-4 sm:mx-0">
-          <div className="flex items-center justify-between mb-1 px-6 sm:px-0">
-            <h2 className="text-[15px] font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
-              Corporate Performance
-            </h2>
-            <button
-              onClick={() => { setActiveGlossaryCat('Corporate Performance'); setActiveTab('glossary'); }}
-              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              View All
-            </button>
-          </div>
-          <div 
-            className="flex overflow-x-auto gap-4 pb-4 pt-1 snap-x snap-mandatory scrollbar-hide px-[6vw] md:px-[calc(50%-175px)] items-stretch" 
-            style={{ WebkitOverflowScrolling: 'touch', scrollPaddingLeft: '6vw' }}
-          >
-            {(glossary || []).filter(item => item.cat === 'Corporate Performance').map(item => (
-              <div key={item.id || item.term} className="snap-center shrink-0 w-[88vw] sm:w-[350px] flex">
-                <div className="-mt-4 w-full h-full flex flex-col">
-                  <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Leaderboard on Home ── */}
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
@@ -432,18 +403,43 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
         )}
       </div>
 
-      {/* Full Leaderboard Modal */}
+      {/* Full Leaderboard Modal (Mobile framed on desktop) */}
       {showFullLb && createPortal(
-        <div className="fixed inset-0 z-[100] flex flex-col bg-slate-100 dark:bg-slate-900 animate-slideUp">
-          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-4 pb-4 pt-[max(env(safe-area-inset-top),32px)] flex items-center shadow-md z-10 relative">
-            <button onClick={() => setShowFullLb(false)} className="absolute left-4 top-[max(env(safe-area-inset-top),32px)] w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white active:scale-95 transition-transform" aria-label="Go back">
-              <span className="text-xl leading-none font-bold">←</span>
-            </button>
-            <h2 className="text-lg font-black text-white w-full text-center">Full Leaderboard</h2>
-          </div>
-          <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[max(env(safe-area-inset-bottom),24px)] space-y-3">
+        <div 
+          className="fixed inset-0 z-[100] flex justify-center bg-slate-950/70 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowFullLb(false)}
+        >
+          <div 
+            className="w-full max-w-[430px] h-[100vh] flex flex-col bg-slate-100 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/50 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Background Pattern */}
+            <img
+              src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
+              alt="Background"
+              className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none opacity-40 dark:opacity-20"
+            />
+            {isDark && <div className="absolute inset-0 bg-slate-950/40 -z-10 pointer-events-none"></div>}
+
+            {/* Mobile Header */}
+            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-4 pb-4 pt-[max(env(safe-area-inset-top),24px)] flex items-center shadow-md z-10 relative shrink-0">
+              <button 
+                onClick={() => setShowFullLb(false)} 
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white active:scale-95 transition-all shrink-0" 
+                aria-label="Go back"
+              >
+                <span className="text-xl leading-none font-bold">←</span>
+              </button>
+              <div className="flex-1 text-center pr-8">
+                <h2 className="text-[17px] font-black text-white leading-tight">Full Leaderboard</h2>
+                <p className="text-[11px] text-white/80 font-medium">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+              </div>
+            </div>
+
+            {/* Scrollable Leaderboard List */}
+            <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[max(env(safe-area-inset-bottom),24px)] space-y-3 custom-scrollbar">
               {/* Preferred Name Banner */}
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl p-3 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between shadow-sm">
+              <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl p-3 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between shadow-sm">
                 <div className="min-w-0 pr-2">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Your Leaderboard Name</div>
                   <div className="text-[13px] font-black text-slate-800 dark:text-white truncate">
@@ -470,18 +466,19 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                 const isMe = entry.username === USERNAME || (entry.displayName && entry.displayName === (user?.preferredName || USERNAME));
                 const displayName = entry.displayName || entry.username;
                 return (
-                  <div key={idx} className={`px-4 py-3 rounded-2xl flex items-center gap-4 transition-all shadow-sm ${idx === 0 ? 'bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border border-amber-200/50 dark:border-amber-800/50' :
+                  <div key={idx} className={`px-4 py-3 rounded-2xl flex items-center gap-3 transition-all shadow-sm ${
+                    idx === 0 ? 'bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border border-amber-200/50 dark:border-amber-800/50' :
                     idx === 1 ? 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50' :
-                      idx === 2 ? 'bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/30' :
-                        isMe ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-800' :
-                          'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700'
-                    }`}>
+                    idx === 2 ? 'bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/30' :
+                    isMe ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-800' :
+                    'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700'
+                  }`}>
                     <div className="text-2xl font-black w-8 text-center shrink-0">
-                      {idx < 3 ? medals[idx] : <span className="text-lg text-slate-400">#{idx + 1}</span>}
+                      {idx < 3 ? medals[idx] : <span className="text-sm font-bold text-slate-400">#{idx + 1}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="font-bold text-[15px] truncate text-slate-900 dark:text-white">{displayName}</p>
+                        <p className="font-bold text-[14px] truncate text-slate-900 dark:text-white">{displayName}</p>
                         {isMe && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">You</span>}
                         {isMe && (
                           <button
@@ -500,20 +497,21 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                           {entry.username}
                         </div>
                       )}
-                      <div className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1.5 truncate">
+                      <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1.5 truncate">
                         <span>{entry.division}</span>
                       </div>
                     </div>
-                    <div className="font-black text-emerald-600 dark:text-emerald-400 text-[16px] whitespace-nowrap">
-                      {entry.score} <span className="text-[10px] text-slate-400">pts</span>
+                    <div className="font-black text-emerald-600 dark:text-emerald-400 text-[15px] whitespace-nowrap shrink-0">
+                      {entry.score} <span className="text-[10px] text-slate-400 font-semibold">pts</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Edit Preferred Name Modal */}
       {showEditNameModal && createPortal(

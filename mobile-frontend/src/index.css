@@ -145,30 +145,7 @@
   animation: grid-flow 2s linear infinite;
 }
 
-/* ── Floating Particles ── */
-@keyframes float-up {
-  0% {
-    transform: translateY(100%) scale(0);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.6;
-    transform: translateY(60%) scale(1);
-  }
-  80% {
-    opacity: 0.3;
-  }
-  100% {
-    transform: translateY(-20%) scale(0.5);
-    opacity: 0;
-  }
-}
 
-.floating-particle {
-  position: absolute;
-  bottom: 0;
-  animation: float-up 4s ease-in-out infinite;
-}
 
 /* ── Gentle Float Animation ── */
 @keyframes float {

@@ -1,4 +1,2 @@
-fetch('http://localhost:5037/glossary').then(r => r.json()).then(d => {
-  const item = d.find(x => x.term === 'ASSET CAPITALISATION');
-  console.log(item.chartData);
-}).catch(console.error);
+// Archived: Obsolete ad-hoc test script.
+// Active API endpoints run on port 5195 and are tested directly via mobile-backend.http or mobile-frontend.

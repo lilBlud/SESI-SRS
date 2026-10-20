@@ -25,23 +25,6 @@ export const ProfileIcon = ({ active }) => (
   </svg>
 );
 
-// ─── Animated Background Particles ───
-export function FloatingParticles() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="floating-particle" style={{
-          left: `${10 + i * 16}%`,
-          animationDelay: `${i * 0.7}s`,
-          animationDuration: `${4 + i * 0.5}s`,
-        }}>
-          <div className={`w-${2 + (i % 3)} h-${2 + (i % 3)} rounded-full bg-emerald-400/20`}></div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ─── Save post image helper ───
 export async function saveImage(url, filename) {
   try {
@@ -63,5 +46,3 @@ export async function saveImage(url, filename) {
     alert('Failed to save image automatically. You may need to right-click (or long-press) the image and save it manually.');
   }
 }
-
-// ─── Bookmarks Hook ───

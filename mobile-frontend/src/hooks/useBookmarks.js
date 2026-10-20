@@ -28,5 +28,3 @@ export function useBookmarks() {
 
   return { bookmarks, toggleBookmark, isBookmarked };
 }
-
-// ─── Post Image Slider ───

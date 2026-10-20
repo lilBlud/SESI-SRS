@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CATEGORIES, CAT_COLORS, API_BASE, getColor, getCatMeta } from '../../utils/constants';
-import { CorporatePerformanceChart } from '../ui/UIComponents';
+import { CATEGORIES, API_BASE, getColor, getCatMeta } from '../../utils/constants';
+import { CorporatePerformanceChart } from '../ui';
 
 export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat, setActiveGlossaryCat, bookmarkActions }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions || { isBookmarked: () => false, toggleBookmark: () => { } };
@@ -175,6 +175,12 @@ export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat,
                         {item.term}
                         {item.full && !item.term.includes(' ') && <span className="ml-2 font-semibold text-[13px] text-slate-500 dark:text-slate-400">({item.full})</span>}
                       </h3>
+                      {(item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]')) && (
+                        <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300/50 dark:border-emerald-700/50 flex items-center gap-1">
+                          <span>📈</span>
+                          <span>Performance Card</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                   <svg className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
@@ -183,10 +189,10 @@ export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat,
                 {isExpanded && (
                   <div className="px-4 pb-4 pt-0 border-t border-slate-100 dark:border-slate-700 animate-fadeIn">
                     <div className="mt-2">
-                      {item.cat === 'Corporate Performance' ? (
+                      {(item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]')) ? (
                         <div className="space-y-2 mt-3 mb-2">
                           <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
-                          <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" />
+                          <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" yAxisFormat={item.formulaNotations || item.yAxisFormat} formula={item.formula} />
                         </div>
                       ) : (
                         <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
@@ -194,7 +200,7 @@ export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat,
                     </div>
 
                     {/* Formula Display */}
-                    {item.formula && (
+                    {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
                       <div className={`mt-3 ${clr.bg} border ${clr.border} rounded-xl p-3`}>
                         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">📐 Formula</div>
                         <div className={`text-[13px] font-black font-mono ${clr.text} leading-relaxed`}>
@@ -280,17 +286,17 @@ export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat,
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 align-top whitespace-pre-wrap">
-                      {item.cat === 'Corporate Performance' ? (
+                      {(item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]')) ? (
                         <div className="space-y-1 my-2">
                           <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
                           <div className="mt-3">
-                            <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" />
+                            <CorporatePerformanceChart chartData={item.chartData} term={item.term} description="" yAxisFormat={item.formulaNotations || item.yAxisFormat} formula={item.formula} />
                           </div>
                         </div>
                       ) : (
                         item.desc
                       )}
-                      {item.formula && (
+                      {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
                         <div className={`mt-2 font-mono text-[11px] font-bold ${clr.text} ${clr.bg} px-2 py-1 rounded-lg`}>
                           📐 {item.formula}
                         </div>
@@ -334,14 +340,14 @@ export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat,
                   {card.full && !card.term.includes(' ') && <div className="mt-3 text-sm font-bold text-slate-500 text-center px-4">{card.full}</div>}
                 </div>
                 <div className={`flashcard-back absolute w-full h-full flex flex-col items-center justify-center ${getColor(card.cat).bg} rounded-2xl p-6 text-center overflow-y-auto`}>
-                  {card.cat === 'Corporate Performance' ? (
+                  {(card.cat === 'Corporate Performance' || (card.chartData && card.chartData.length > 5 && card.chartData !== '[]')) ? (
                     <div className="space-y-4 mt-2 w-full">
                       <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{card.desc}</p>
                     </div>
                   ) : (
                     <p className="text-[13px] text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{card.desc}</p>
                   )}
-                  {card.formula && (
+                  {card.formula && card.formula !== 'area' && card.formula !== 'bar' && (
                     <div className="mt-3 bg-white/60 dark:bg-slate-800/60 rounded-lg px-3 py-2 text-left w-full">
                       <div className={`text-[12px] font-black font-mono text-center mb-2 ${getColor(card.cat).text}`}>
                         📐 {card.formula}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export function PostImageSlider({ images, title, onImageClick }) {
   const [idx, setIdx] = useState(0);
@@ -44,12 +44,54 @@ export function PostImageSlider({ images, title, onImageClick }) {
   );
 }
 
+// ─── Corporate Performance Helpers ───
+export const getYAxisUnit = (termName, customFormat) => {
+  if (customFormat && typeof customFormat === 'string' && customFormat.trim()) {
+    const trimmed = customFormat.trim();
+    return trimmed.toLowerCase().startsWith('in ') ? trimmed : `in ${trimmed}`;
+  }
+  if (!termName) return 'in %';
+  const name = termName.toUpperCase();
+  if (name.includes("REVENUE")) return "in RM bil";
+  if (["PAT", "EBIT", "CAPEX", "OPEX"].some(k => name.includes(k))) return "in RM mil";
+  if (["LOSS", "CAPITALISATION", "AUDIT", "ROI", "ROA", "ROE", "PERCENT", "RATE", "MARGIN"].some(k => name.includes(k))) return "in %";
+  if (["SAIDI", "SAIFI", "CAIDI", "MINUTES", "MINS", "DURATION", "SYSTEM UNIT"].some(k => name.includes(k))) return "in mins";
+  if (name.includes("SAFETY") || name.includes("LTIFR")) return "in LTIFR";
+  if (name.includes("RM") || name.includes("COST") || name.includes("PROFIT") || name.includes("EXPENSE")) return "in RM";
+  return "in %";
+};
+
+export const formatYAxisTick = (val, yLabel) => {
+  if (val === null || val === undefined) return '';
+  const num = Number(val);
+  if (isNaN(num)) return val;
+  const labelLower = (yLabel || '').toLowerCase();
+  if (labelLower === 'in %' || labelLower.includes('%')) {
+    return `${Math.round(num)}%`;
+  }
+  if (labelLower.includes('bil')) {
+    return `RM${num % 1 === 0 ? num : num.toFixed(1)}b`;
+  }
+  if (labelLower.includes('mil')) {
+    return `RM${Math.round(num)}m`;
+  }
+  if (labelLower === 'in rm' || labelLower.includes('rm')) {
+    return `RM${Math.round(num)}`;
+  }
+  if (labelLower.includes('min')) {
+    return `${Math.round(num)}m`;
+  }
+  return Math.round(num);
+};
+
+import { DEFAULT_HISTORICAL_METRICS } from '../../data/historicalPerformanceData';
 
 // ─── Corporate Performance Chart ───
-export function CorporatePerformanceChart({ chartData, term, description }) {
+export function CorporatePerformanceChart({ chartData, term = '', description = '', yAxisFormat, chartType, formula }) {
   const [selectedYear, setSelectedYear] = useState(null);
+  const yAxisLabel = getYAxisUnit(term, yAxisFormat);
 
-  // Remove early return if missing
+  // Parse chart data
   let parsed = [];
   try {
     parsed = typeof chartData === 'string' ? JSON.parse(chartData) : chartData;
@@ -57,14 +99,32 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
     // ignore
   }
 
+  const normalizedTerm = (term || '').trim().toUpperCase();
+  const defaultMetric = DEFAULT_HISTORICAL_METRICS[normalizedTerm];
+
   if (!Array.isArray(parsed) || parsed.length === 0) {
-    const isPct = ["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE", "ROI", "ROA", "ROE"].includes((term||'').toUpperCase());
-    parsed = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map((m) => ({
-      month: m,
-      year: "2026",
-      value: isPct ? parseFloat((Math.random() * 20 + 80).toFixed(1)) : Math.floor(Math.random() * 5000 + 1000)
-    }));
+    if (defaultMetric && defaultMetric.chartData) {
+      parsed = [...defaultMetric.chartData];
+    } else {
+      const isPct = yAxisLabel.includes('%');
+      parsed = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map((m) => ({
+        month: m,
+        year: "2026",
+        value: isPct ? parseFloat((Math.random() * 20 + 80).toFixed(1)) : Math.floor(Math.random() * 5000 + 1000)
+      }));
+    }
+  } else if (defaultMetric && defaultMetric.chartData) {
+    // If existing data lacks historical years (from 2022), merge historical baseline for past years
+    const parsedYears = new Set(parsed.map(d => String(d.year)));
+    if (!parsedYears.has("2022") && defaultMetric.chartData.length > 0) {
+      const historicalPoints = defaultMetric.chartData.filter(d => !parsedYears.has(String(d.year)));
+      parsed = [...historicalPoints, ...parsed];
+    }
   }
+
+  const isBar = chartType === 'bar' || 
+    (formula && String(formula).toLowerCase().trim() === 'bar') ||
+    ['CAPEX', 'OPEX', 'ASSET CAPITALISATION', 'ASSET CAP'].includes(normalizedTerm);
 
   // Map month names to numbers for sorting
   const monthMap = { 'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12 };
@@ -83,30 +143,72 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
     value: d.value
   }));
 
-  const getUnitFormatter = (termName) => {
-    if (!termName) return (v) => v;
-    const name = termName.toUpperCase();
-    if (name === "TOTAL REVENUE") return (v) => `RM ${v}`;
-    if (["PAT", "EBIT", "CAPEX", "OPEX"].includes(name)) return (v) => `RM ${v}`;
-    if (["SAIDI", "SYSTEM MINUTES", "SYSTEM UNIT"].includes(name)) return (v) => `${v} mins`;
-    if (["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE"].includes(name)) return (v) => `${v}%`;
-    if (name === "SAFETY" || name === "LTIFR") return (v) => `LTIFR ${v}`;
-    return (v) => v;
+  const getBigStatFormatter = (termName, customFormat) => {
+    const fmt = (customFormat || '').trim().toLowerCase();
+    const name = (termName || '').toUpperCase();
+
+    // Monetary values keep 'RM ' prefix without 'mil' / 'bil' suffix
+    const isRM = fmt.includes('rm') || 
+      ["TOTAL REVENUE", "PAT", "EBIT", "CAPEX", "OPEX"].some(k => name.includes(k));
+
+    if (isRM) {
+      return (v) => `RM ${v}`;
+    }
+
+    // All others return just the raw numeric value (no %, mins, etc.)
+    return (v) => `${v}`;
   };
 
-  const getUnitLabel = (termName) => {
+  const getFooterFormatter = (termName, customFormat) => {
+    const fmt = (customFormat || '').trim().toLowerCase();
+    const name = (termName || '').toUpperCase();
+
+    if (fmt === 'in %' || fmt === '%') return (v) => `${v}%`;
+    if (fmt === 'in rm mil') return (v) => `RM ${v} mil`;
+    if (fmt === 'in rm bil') return (v) => `RM ${v} bil`;
+    if (fmt === 'in rm') return (v) => `RM ${v}`;
+    if (fmt === 'in mins' || fmt === 'mins') return (v) => `${v} mins`;
+    if (fmt === 'in ltifr' || fmt === 'ltifr') return (v) => `LTIFR ${v}`;
+    if (fmt.startsWith('in ')) {
+      const suffix = customFormat.trim().slice(3).trim();
+      return (v) => `${v} ${suffix}`;
+    }
+
+    if (name.includes("REVENUE")) return (v) => `RM ${v} bil`;
+    if (["PAT", "EBIT", "CAPEX", "OPEX"].some(k => name.includes(k))) return (v) => `RM ${v} mil`;
+    if (["SAIDI", "SAIFI", "CAIDI", "SYSTEM MINUTES", "SYSTEM UNIT", "MINUTES", "MINS"].some(k => name.includes(k))) return (v) => `${v} mins`;
+    if (["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE", "ROI", "ROA", "ROE", "PERCENT", "RATE", "MARGIN", "LOSS", "CAPITALISATION"].some(k => name.includes(k))) return (v) => `${v}%`;
+    if (name.includes("SAFETY") || name.includes("LTIFR")) return (v) => `LTIFR ${v}`;
+    if (name.includes("RM") || name.includes("COST") || name.includes("PROFIT") || name.includes("EXPENSE")) return (v) => `RM ${v}`;
+
+    return (v) => `${v}`;
+  };
+
+  const getUnitLabel = (termName, customFormat) => {
+    if (customFormat && customFormat.trim()) {
+      const trimmed = customFormat.trim();
+      const lower = trimmed.toLowerCase();
+      if (lower === 'in %' || lower === '%') return "in percentage (%)";
+      if (lower === 'in rm mil') return "in million";
+      if (lower === 'in rm bil') return "in billion";
+      if (lower === 'in rm') return "in RM";
+      if (lower === 'in mins' || lower === 'mins') return "in minutes (mins)";
+      if (lower === 'in ltifr' || lower === 'ltifr') return "in rate (per 1M hours)";
+      return trimmed.startsWith('in ') ? trimmed : `in ${trimmed}`;
+    }
     if (!termName) return "";
     const name = termName.toUpperCase();
-    if (name === "TOTAL REVENUE") return "in billion";
-    if (["PAT", "EBIT", "CAPEX", "OPEX"].includes(name)) return "in million";
-    if (["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE", "ROI", "ROA", "ROE"].includes(name)) return "in percentage (%)";
-    if (["SAIDI", "SYSTEM MINUTES", "SYSTEM UNIT"].includes(name)) return "in minutes (mins)";
-    if (name === "SAFETY" || name === "LTIFR") return "in rate (per 1M hours)";
+    if (name.includes("REVENUE")) return "in billion";
+    if (["PAT", "EBIT", "CAPEX", "OPEX"].some(k => name.includes(k))) return "in million";
+    if (["LOSS", "CAPITALISATION", "AUDIT", "ROI", "ROA", "ROE", "PERCENT", "RATE", "MARGIN"].some(k => name.includes(k))) return "in percentage (%)";
+    if (["SAIDI", "SAIFI", "CAIDI", "MINUTES", "MINS", "DURATION", "SYSTEM UNIT"].some(k => name.includes(k))) return "in minutes (mins)";
+    if (name.includes("SAFETY") || name.includes("LTIFR")) return "in rate (per 1M hours)";
     return "";
   };
 
-  const formatter = getUnitFormatter(term);
-  const unitLabel = getUnitLabel(term);
+  const bigStatFormatter = getBigStatFormatter(term, yAxisLabel);
+  const footerFormatter = getFooterFormatter(term, yAxisLabel);
+  const unitLabel = getUnitLabel(term, yAxisLabel);
 
   const lastData = formattedData[formattedData.length - 1];
   const firstData = formattedData[0];
@@ -176,9 +278,9 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
 
       {/* Header section matching the aesthetic */}
-      <div className="flex items-end justify-between mb-4 relative z-10">
+      <div className="flex items-end justify-between mb-3 relative z-10">
         <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[12px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{term}</span>
             {/* Dropdown Year Filter */}
             {allYears.length > 0 && (
@@ -207,7 +309,7 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
             {!term.toUpperCase().includes('AUDIT') && (
               <>
                 <span className="text-[28px] font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">
-                  {formatter(lastData?.value ?? 0)}
+                  {bigStatFormatter(lastData?.value ?? 0)}
                 </span>
                 {!isZero && (
                   <span className={`text-[13px] font-bold flex items-center px-1.5 py-0.5 rounded-md ${isPositive ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400' : 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'}`}>
@@ -225,7 +327,7 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
       
       {/* Definition Section */}
       {description && (
-        <div className="mb-5 text-[12px] text-slate-500 dark:text-slate-400 font-medium italic border-l-2 border-emerald-500 pl-3 leading-relaxed relative z-10">
+        <div className="mb-4 text-[12px] text-slate-500 dark:text-slate-400 font-medium italic border-l-2 border-emerald-500 pl-3 leading-relaxed relative z-10">
           {description}
         </div>
       )}
@@ -250,15 +352,14 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
         </div>
       ) : (
         <>
-          <div className="h-36 w-full -ml-2 relative z-10 [&_*]:outline-none [&_svg]:!outline-none" style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}>
+          <div className="h-36 w-full relative z-10 [&_*]:outline-none [&_svg]:!outline-none" style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}>
             <ResponsiveContainer width="100%" height="100%" className="!outline-none focus:!outline-none">
-              {['CAPEX', 'OPEX', 'ASSET CAPITALISATION', 'ASSET CAP'].includes((term || '').toUpperCase()) ? (
+              {isBar ? (
                 <BarChart data={formattedData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }} style={{ outline: 'none' }}>
                   <Tooltip 
                     content={CustomTooltip}
                     cursor={{ fill: '#e2e8f0', opacity: 0.4 }}
                   />
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" opacity={0.3} />
                   <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
                   <YAxis hide={true} domain={[0, (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
                   <Bar 
@@ -287,9 +388,8 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
                     content={CustomTooltip}
                     cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.4 }}
                   />
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" opacity={0.3} />
                   <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
-                  <YAxis hide={true} domain={[(dataMin) => dataMin - (Math.abs(dataMin) * 0.1 || 1), (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
+                  <YAxis hide={true} domain={[(dataMin) => Math.max(0, Math.floor(dataMin * 0.9)), (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
                   <Area 
                     type="monotone" 
                     dataKey="value" 
@@ -313,12 +413,12 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
           <div className="flex justify-between items-center mt-3 px-2 pt-3 border-t border-slate-200 dark:border-slate-700 border-dashed relative z-10">
             <div className="flex flex-col items-start">
               <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{firstData?.name}</span>
-              <span className="text-[10px] font-medium text-slate-400">{formatter(firstData?.value ?? 0)}</span>
+              <span className="text-[10px] font-medium text-slate-400">{footerFormatter(firstData?.value ?? 0)}</span>
             </div>
             
             <div className="flex flex-col items-end">
               <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{lastData?.name} (Latest)</span>
-              <span className="text-[10px] font-bold text-emerald-500/80">{formatter(lastData?.value ?? 0)}</span>
+              <span className="text-[10px] font-bold text-emerald-500/80">{footerFormatter(lastData?.value ?? 0)}</span>
             </div>
           </div>
         </>
@@ -326,5 +426,3 @@ export function CorporatePerformanceChart({ chartData, term, description }) {
     </div>
   );
 }
-
-// ─── Home Tab ───

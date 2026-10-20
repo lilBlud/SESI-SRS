@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { API_BASE, currentMonth } from '../../utils/constants';
 
 export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {

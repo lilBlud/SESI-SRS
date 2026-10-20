@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CorporatePerformanceChart } from '../ui/UIComponents';
+import { CorporatePerformanceChart, getYAxisUnit } from '../ui';
+import { DEFAULT_HISTORICAL_METRICS } from '../../data/historicalPerformanceData';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 const currentMonth = new Date().toISOString().slice(0, 7);
@@ -9,6 +10,7 @@ export default function AdminTab({ onGlossaryChange }) {
   const [token, setToken] = useState(sessionStorage.getItem('adminToken'));
   const [password, setPassword] = useState('');
   const [activeSection, setActiveSection] = useState('questions'); // questions | glossary | infographics
+  const [dictSubTab, setDictSubTab] = useState('corporate'); // 'corporate' | 'dictionary'
 
   // ─── Quiz State ───
   const [questions, setQuestions] = useState([]);
@@ -17,23 +19,24 @@ export default function AdminTab({ onGlossaryChange }) {
   const [qText, setQText] = useState(''); const [optA, setOptA] = useState(''); const [optB, setOptB] = useState(''); const [optC, setOptC] = useState(''); const [optD, setOptD] = useState(''); const [correct, setCorrect] = useState('A');
   const [qMsg, setQMsg] = useState('');
 
-  // ─── Glossary State ───
+  // ─── Glossary / Corporate Performance State ───
   const [glossaryTerms, setGlossaryTerms] = useState([]);
-  const [gTerm, setGTerm] = useState(''); const [gFull, setGFull] = useState(''); const [gDesc, setGDesc] = useState(''); const [gFormula, setGFormula] = useState(''); const [gNotations, setGNotations] = useState(''); const [gMeanings, setGMeanings] = useState(''); const [gCat, setGCat] = useState('IBR Framework');
+  const [gTerm, setGTerm] = useState(''); const [gFull, setGFull] = useState(''); const [gDesc, setGDesc] = useState(''); const [gFormula, setGFormula] = useState('area'); const [gNotations, setGNotations] = useState(''); const [gMeanings, setGMeanings] = useState(''); const [gCat, setGCat] = useState('Corporate Performance');
   const [gChartData, setGChartData] = useState([]); // Array of {month, year, value}
-  const [cMonth, setCMonth] = useState('Jan');
+  const [gYAxisFormat, setGYAxisFormat] = useState('in %');
   const [cYear, setCYear] = useState('2026');
-  const [cValue, setCValue] = useState('');
   const [gMsg, setGMsg] = useState('');
   const [gEditId, setGEditId] = useState(null);
   const [gFilter, setGFilter] = useState('');
   const [gCategoryFilter, setGCategoryFilter] = useState('All');
+  const [syncingData, setSyncingData] = useState(false);
 
   // ─── Infographics State ───
   const [infographics, setInfographics] = useState([]);
   const [iTitle, setITitle] = useState(''); const [iDesc, setIDesc] = useState(''); const [iImages, setIImages] = useState([]); const [iCat, setICat] = useState('General');
   const [iMsg, setIMsg] = useState('');
   const [iEditId, setIEditId] = useState(null);
+  const [iPosting, setIPosting] = useState(false);
 
   useEffect(() => { if (token) loadAll(); }, [token, selectedMonth]);
 
@@ -76,30 +79,23 @@ export default function AdminTab({ onGlossaryChange }) {
     fetchQuestions();
   };
 
-  // ─── Glossary Actions ───
+  // ─── Glossary & Corporate Card Actions ───
 
   const addGlossaryTerm = async (e) => {
     e.preventDefault();
     
-    let finalChartData = [...gChartData];
-    if (gCat === 'Corporate Performance' && cValue !== '') {
-      const existingIdx = finalChartData.findIndex(d => d.month === cMonth && String(d.year) === String(cYear));
-      if (existingIdx >= 0) {
-        finalChartData[existingIdx].value = parseFloat(cValue);
-      } else {
-        finalChartData.push({ month: cMonth, year: cYear, value: parseFloat(cValue) });
-      }
-    }
+    const finalChartData = [...gChartData];
+    const isPerfStudio = dictSubTab === 'corporate';
 
     const payload = { 
-      term: gTerm, 
-      fullName: gCat === 'Corporate Performance' ? '' : gFull, 
+      term: gTerm.trim(), 
+      fullName: isPerfStudio ? '' : (gFull || ''), 
       description: gDesc, 
-      formula: gCat === 'Corporate Performance' ? '' : gFormula, 
-      formulaNotations: gCat === 'Corporate Performance' ? '' : gNotations, 
-      formulaTermMeanings: gCat === 'Corporate Performance' ? '' : gMeanings, 
-      category: gCat, 
-      chartData: finalChartData.length > 0 ? JSON.stringify(finalChartData) : '' 
+      formula: isPerfStudio ? (gFormula || 'area') : (gFormula || ''), 
+      formulaNotations: isPerfStudio ? (gYAxisFormat || 'in %') : (gNotations || ''), 
+      formulaTermMeanings: isPerfStudio ? '' : (gMeanings || ''), 
+      category: gCat || (isPerfStudio ? 'Corporate Performance' : 'IBR Framework'), 
+      chartData: isPerfStudio && finalChartData.length > 0 ? JSON.stringify(finalChartData) : '' 
     };
     let res;
     if (gEditId) {
@@ -109,49 +105,241 @@ export default function AdminTab({ onGlossaryChange }) {
     }
 
     if (res.ok) { 
-      setGMsg(gEditId ? '✅ Term updated!' : '✅ Term added!'); 
+      setGMsg(gEditId ? '✅ Card updated successfully!' : '✅ New card created successfully!'); 
       fetchGlossary(); 
       if (onGlossaryChange) onGlossaryChange(); 
       cancelEditGlossaryTerm();
     }
-    else setGMsg(gEditId ? '❌ Failed to update term' : '❌ Failed to add term');
-    setTimeout(() => setGMsg(''), 3000);
+    else setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
+    setTimeout(() => setGMsg(''), 3500);
   };
 
   const editGlossaryTerm = (t) => {
     setGEditId(t.id);
-    setGTerm(t.term); setGFull(t.fullName || ''); setGDesc(t.description || ''); setGFormula(t.formula || ''); setGNotations(t.formulaNotations || ''); setGMeanings(t.formulaTermMeanings || ''); setGCat(t.category || 'IBR Framework');
+    setGTerm(t.term); setGFull(t.fullName || ''); setGDesc(t.description || ''); setGFormula(t.formula || 'area'); setGNotations(t.formulaNotations || ''); setGMeanings(t.formulaTermMeanings || ''); setGCat(t.category || 'Corporate Performance');
+    setGYAxisFormat(t.formulaNotations || getYAxisUnit(t.term));
     let chart = [];
     try { chart = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) { chart = []; }
     setGChartData(chart);
-    const existing = chart.find(d => d.month === cMonth && String(d.year) === String(cYear));
-    setCValue(existing !== undefined && existing.value !== undefined ? String(existing.value) : '');
+    if (chart.length > 0) {
+      const years = [...new Set(chart.map(d => String(d.year)))].sort();
+      setCYear(years[years.length - 1] || '2026');
+    }
+    const isPerfCard = t.category === 'Corporate Performance' || (chart && chart.length > 0);
+    if (isPerfCard) {
+      setDictSubTab('corporate');
+      setGCategoryFilter('All');
+    } else {
+      setDictSubTab('dictionary');
+    }
+    window.scrollTo({ top: 350, behavior: 'smooth' });
+  };
+
+  const duplicateGlossaryTerm = (t) => {
+    setGEditId(null); // Create new
+    setGTerm(`Copy of ${t.term}`);
+    setGFull(t.fullName || '');
+    setGDesc(t.description || '');
+    setGFormula(t.formula || 'area');
+    setGNotations(t.formulaNotations || '');
+    setGMeanings(t.formulaTermMeanings || '');
+    setGCat(t.category || 'Corporate Performance');
+    setGYAxisFormat(t.formulaNotations || 'in %');
+    let chart = [];
+    try { chart = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) { chart = []; }
+    setGChartData(chart);
+    if (chart.length > 0) {
+      const years = [...new Set(chart.map(d => String(d.year)))].sort();
+      setCYear(years[years.length - 1] || '2026');
+    }
+    setGMsg(`✅ Duplicating "${t.term}" in category "${t.category || 'Corporate Performance'}"!`);
+    setTimeout(() => setGMsg(''), 4000);
+    window.scrollTo({ top: 350, behavior: 'smooth' });
+  };
+
+  const loadPreset = (key) => {
+    const tmpl = DEFAULT_HISTORICAL_METRICS[key];
+    if (!tmpl) return;
+    setGTerm(tmpl.term);
+    setGDesc(tmpl.description);
+    setGYAxisFormat(tmpl.yAxisFormat);
+    setGFormula(tmpl.formula || 'area');
+    setGCat(tmpl.category || (key.includes('EPSB') ? 'EPSB' : 'Corporate Performance'));
+    setGChartData([...tmpl.chartData]);
+    setCYear('2026');
+    
+    // Check if term already exists in DB to link for update
+    const existing = glossaryTerms.find(t => (t.term || '').trim().toUpperCase() === key.toUpperCase());
+    if (existing) {
+      setGEditId(existing.id);
+      if (existing.category) setGCat(existing.category);
+      setGMsg(`✅ Loaded preset "${tmpl.term}" (editing card ID #${existing.id})`);
+    } else {
+      setGEditId(null);
+      setGMsg(`✅ Loaded preset "${tmpl.term}" with 2022–2026 historical data!`);
+    }
+    setTimeout(() => setGMsg(''), 4000);
+  };
+
+  const syncDefaultHistoricalData = async () => {
+    if (!confirm('This will synchronize and update all Performance cards with rich historical data from 2022 to 2026 (including EPSB Revenue, Financial Performance, and Technical Performance). Continue?')) return;
+    setSyncingData(true);
+    try {
+      const keys = Object.keys(DEFAULT_HISTORICAL_METRICS);
+      let updatedCount = 0;
+      let addedCount = 0;
+
+      for (const key of keys) {
+        const tmpl = DEFAULT_HISTORICAL_METRICS[key];
+        const existing = glossaryTerms.find(t => (t.term || '').trim().toUpperCase() === key.toUpperCase());
+
+        const targetCat = tmpl.category || (key.includes('EPSB') ? 'EPSB' : 'Corporate Performance');
+        const payload = {
+          term: tmpl.term,
+          fullName: '',
+          description: tmpl.description,
+          formula: tmpl.formula || 'area',
+          formulaNotations: tmpl.yAxisFormat,
+          formulaTermMeanings: '',
+          category: targetCat,
+          chartData: JSON.stringify(tmpl.chartData)
+        };
+
+        if (existing) {
+          await fetch(`${API_BASE}/api/admin/glossary/${existing.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          updatedCount++;
+        } else {
+          await fetch(`${API_BASE}/api/admin/glossary`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          addedCount++;
+        }
+      }
+
+      await fetchGlossary();
+      if (onGlossaryChange) onGlossaryChange();
+      setGMsg(`✅ Synced! ${updatedCount} cards updated with 2022–2026 data, ${addedCount} new cards added.`);
+    } catch (e) {
+      console.error(e);
+      setGMsg('❌ Error syncing historical data');
+    } finally {
+      setSyncingData(false);
+      setTimeout(() => setGMsg(''), 5000);
+    }
   };
 
   const cancelEditGlossaryTerm = () => {
     setGEditId(null);
-    setGTerm(''); setGFull(''); setGDesc(''); setGFormula(''); setGNotations(''); setGMeanings(''); setGCat('IBR Framework'); setGChartData([]); setCValue('');
+    setGTerm(''); setGFull(''); setGDesc(''); setGFormula('area'); setGNotations(''); setGMeanings('');
+    if (dictSubTab === 'corporate') {
+      setGCat('Corporate Performance');
+      setCYear('2026');
+    } else {
+      setGCat('IBR Framework');
+    }
+    setGChartData([]); setGYAxisFormat('in %');
   };
 
   const deleteGlossaryTerm = async (id) => {
-    if (!confirm('Delete this term?')) return;
+    if (!confirm('Delete this card / term?')) return;
     await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE' });
     fetchGlossary();
     if (onGlossaryChange) onGlossaryChange();
   };
 
   // ─── Infographic Actions ───
-  const handleImageUpload = (e) => {
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      if (!file || !file.type || !file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 1600;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => resolve(e.target.result);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const ensureCompressed = (dataUrl) => {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+      return Promise.resolve(dataUrl);
+    }
+    // If it's already compact (< 450KB), skip recompression
+    if (dataUrl.length < 450000) return Promise.resolve(dataUrl);
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 1600;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
+
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
+    if (files.length === 0) return;
     if (iImages.length + files.length > 10) {
       alert(`You can upload a maximum of 10 images. You already have ${iImages.length}.`);
       return;
     }
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => setIImages(prev => [...prev, reader.result].slice(0, 10));
-      reader.readAsDataURL(file);
-    });
+    setIMsg('⏳ Processing images...');
+    const compressed = await Promise.all(files.map(compressImage));
+    const valid = compressed.filter(Boolean);
+    setIImages(prev => [...prev, ...valid].slice(0, 10));
+    setIMsg('');
+    e.target.value = '';
   };
 
   const removeImage = (idx) => {
@@ -160,23 +348,59 @@ export default function AdminTab({ onGlossaryChange }) {
 
   const addInfographic = async (e) => {
     e.preventDefault();
-    const primaryImage = iImages[0] || '';
-    const additional = iImages.length > 1 ? JSON.stringify(iImages.slice(1)) : '';
-    
-    let res;
-    if (iEditId) {
-      res = await fetch(`${API_BASE}/api/admin/infographics/${iEditId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: iTitle, description: iDesc, imageUrl: primaryImage, additionalImages: additional, category: iCat }) });
-    } else {
-      res = await fetch(`${API_BASE}/api/admin/infographics`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: iTitle, description: iDesc, imageUrl: primaryImage, additionalImages: additional, category: iCat }) });
+    if (!iTitle.trim()) {
+      setIMsg('❌ Title is required');
+      return;
+    }
+    if (iImages.length === 0) {
+      setIMsg('❌ Please upload at least one image/poster');
+      return;
     }
 
-    if (res.ok) { 
-      setIMsg(iEditId ? '✅ Updated!' : '✅ Posted!'); 
-      fetchInfographics(); 
-      cancelEditInfographic();
+    setIPosting(true);
+    setIMsg('⏳ Optimizing & uploading poster...');
+
+    try {
+      // Ensure all images are compressed before sending
+      const compressedImages = await Promise.all(iImages.map(ensureCompressed));
+      const primaryImage = compressedImages[0] || '';
+      const additional = compressedImages.length > 1 ? JSON.stringify(compressedImages.slice(1)) : '';
+      
+      const payload = {
+        title: iTitle.trim(),
+        description: (iDesc || '').trim(),
+        imageUrl: primaryImage,
+        additionalImages: additional,
+        category: iCat || 'General'
+      };
+
+      const url = iEditId 
+        ? `${API_BASE}/api/admin/infographics/${iEditId}` 
+        : `${API_BASE}/api/admin/infographics`;
+      const method = iEditId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) { 
+        setIMsg(iEditId ? '✅ Updated!' : '✅ Posted!'); 
+        await fetchInfographics(); 
+        cancelEditInfographic();
+      } else {
+        const errorText = await res.text();
+        console.error('Post failed:', res.status, errorText);
+        setIMsg(`❌ Server error: ${errorText.slice(0, 100) || 'Failed to post'}`);
+      }
+    } catch (err) {
+      console.error('Post error:', err);
+      setIMsg(`❌ Network error: ${err.message || 'Could not connect to server'}`);
+    } finally {
+      setIPosting(false);
+      setTimeout(() => setIMsg(''), 4000);
     }
-    else setIMsg(iEditId ? '❌ Failed to update' : '❌ Failed to post');
-    setTimeout(() => setIMsg(''), 3000);
   };
 
   const cancelEditInfographic = () => {
@@ -338,199 +562,661 @@ export default function AdminTab({ onGlossaryChange }) {
         </div>
       )}
 
-      {/* ════════ GLOSSARY / DICTIONARY ════════ */}
+      {/* ════════ GLOSSARY / CORPORATE PERFORMANCE ════════ */}
       {activeSection === 'glossary' && (
-        <div className="space-y-4">
-          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
-            <h2 className="text-[16px] font-bold mb-4">Add New Dictionary Term</h2>
-            <form onSubmit={addGlossaryTerm} className="space-y-3">
-              <div className="space-y-3">
-                {gCat === 'Corporate Performance' ? (
-                  <select required value={gTerm} onChange={e => {
-                    const val = e.target.value;
-                    setGTerm(val);
-                    if (val) {
-                      const existing = glossaryTerms.find(t => t.term === val && t.category === 'Corporate Performance');
-                      if (existing) {
-                        setGEditId(existing.id);
-                        setGFull(existing.fullName || '');
-                        setGDesc(existing.description || '');
-                        setGFormula(existing.formula || '');
-                        setGNotations(existing.formulaNotations || '');
-                        setGMeanings(existing.formulaTermMeanings || '');
-                        try { setGChartData(existing.chartData ? JSON.parse(existing.chartData) : []); } catch { setGChartData([]); }
-                      } else {
-                        // If somehow not found, reset edit state
-                        setGEditId(null);
-                        setGChartData([]);
-                      }
-                    }
-                  }} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50 dark:bg-emerald-950/20">
-                    <option value="" disabled>-- Select a Corporate Metric --</option>
-                    <option value="TOTAL REVENUE">TOTAL REVENUE</option>
-                    <option value="PAT">PAT</option>
-                    <option value="EBIT">EBIT</option>
-                    <option value="CAPEX">CAPEX</option>
-                    <option value="OPEX">OPEX</option>
-                    <option value="ASSET CAPITALISATION">ASSET CAPITALISATION</option>
-                    <option value="SAIDI">SAIDI</option>
-                    <option value="SYSTEM LOSS">SYSTEM LOSS</option>
-                    <option value="SYSTEM UNIT">SYSTEM UNIT</option>
-                    <option value="AUDIT ISSUE">AUDIT ISSUE</option>
-                    <option value="SAFETY">SAFETY</option>
-                  </select>
-                ) : (
-                  <input required placeholder="Acronym (e.g. IBR)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" value={gTerm} onChange={e => setGTerm(e.target.value)} />
-                )}
-                <select value={gCat} onChange={e => {
-                  setGCat(e.target.value);
-                  if (e.target.value === 'Corporate Performance') {
-                    setGTerm(''); // Clear term to force selection
-                  }
-                }} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                  <option value="IBR Framework">IBR Framework</option>
-                  <option value="Strategy and Sustainability">Strategy & Sustainability</option>
-                  <option value="Energy Market and Industry">Energy Market & Industry</option>
-                  <option value="ESG">ESG</option>
-                  <option value="EPSB">EPSB</option>
-                  <option value="BDV">BDV</option>
-                  <option value="Governance">Governance</option>
-                  <option value="Corporate Performance">Corporate Performance</option>
-                  <option value="ISO Management">ISO Management</option>
-                  <option value="SE Risk">Sabah Electricity Risk</option>
-                  <option value="ReSET2030">ReSET2030</option>
-                </select>
+        <div className="space-y-5">
+          {/* Sub-Tab Navigation: Performance Card Studio vs Terminology Dictionary */}
+          <div className="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner">
+            <button
+              type="button"
+              onClick={() => {
+                setDictSubTab('corporate');
+                setGCategoryFilter('All');
+                if (!gEditId) {
+                  setGTerm('');
+                  setGDesc('');
+                  setGFormula('area');
+                  setGYAxisFormat('in %');
+                  setGCat('Corporate Performance');
+                  setGChartData([]);
+                }
+              }}
+              className={`py-2 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-center ${
+                dictSubTab === 'corporate'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 font-black'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <span>📈</span>
+              <span className="truncate">Performance Cards</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold shrink-0 ${
+                dictSubTab === 'corporate' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+              }`}>
+                {glossaryTerms.filter(t => {
+                  let c = [];
+                  try { c = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) {}
+                  return t.category === 'Corporate Performance' || c.length > 0;
+                }).length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDictSubTab('dictionary');
+                if (gCat === 'Corporate Performance') setGCat('IBR Framework');
+                if (gCategoryFilter === 'Corporate Performance') setGCategoryFilter('All');
+                if (!gEditId) {
+                  setGTerm('');
+                  setGDesc('');
+                  setGFull('');
+                  setGFormula('');
+                  setGNotations('');
+                  setGMeanings('');
+                  setGChartData([]);
+                }
+              }}
+              className={`py-2 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-center ${
+                dictSubTab === 'dictionary'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 font-black'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <span>📚</span>
+              <span className="truncate">Dictionary Terms</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold shrink-0 ${
+                dictSubTab === 'dictionary' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+              }`}>
+                {glossaryTerms.filter(t => {
+                  let c = [];
+                  try { c = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) {}
+                  return t.category !== 'Corporate Performance' && c.length === 0;
+                }).length}
+              </span>
+            </button>
+          </div>
+
+          {/* ──── TAB 1: CORPORATE PERFORMANCE STUDIO ──── */}
+          {dictSubTab === 'corporate' ? (
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+              {/* Studio Header & 1-Click Sync */}
+              <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-700">
+                <div>
+                  <h2 className="text-[16px] font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>{gEditId ? '✏️' : '✨'}</span>
+                    <span>{gEditId ? `Edit Card: ${gTerm || `#${gEditId}`}` : 'Create New Performance Card'}</span>
+                  </h2>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Build executive KPI cards with multi-year historical trend charts for any category (EPSB, ESG, BDV, etc.).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={syncDefaultHistoricalData}
+                  disabled={syncingData}
+                  className="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] font-bold rounded-xl shadow-md shadow-emerald-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  title="Populates default corporate metrics with 2022–2026 data"
+                >
+                  <span>{syncingData ? '⏳' : '⚡'}</span>
+                  <span>{syncingData ? 'Syncing Historical Baseline...' : 'Sync 2022–2026 Historical Baseline'}</span>
+                </button>
               </div>
-              {gCat !== 'Corporate Performance' && (
-                <input required placeholder="Full name (e.g. Incentive-Based Regulation)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" value={gFull} onChange={e => setGFull(e.target.value)} />
-              )}
-              <textarea required placeholder={gCat === 'Corporate Performance' ? "Metric subtitle or text..." : "Description / explanation..."} rows={3} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" value={gDesc} onChange={e => setGDesc(e.target.value)} />
-              
-              {gCat !== 'Corporate Performance' && (
-                <>
-                  <input placeholder="Formula (e.g. ROI = Net Profit / Cost)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" value={gFormula} onChange={e => setGFormula(e.target.value)} />
-                  <input placeholder="Formula Notations (e.g. AAT, REQT)" className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" value={gNotations} onChange={e => setGNotations(e.target.value)} />
-                  <textarea placeholder="Meaning of terms (e.g. AAT: Actual Tariff...)" rows={3} className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" value={gMeanings} onChange={e => setGMeanings(e.target.value)} />
-                </>
-              )}
-              
-              {/* Chart Data Builder */}
-              {gCat === 'Corporate Performance' && (
-                <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-[13px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                      <span>📈</span> Performance Chart Data
-                    </h3>
-                    <span className="text-[11px] text-slate-400 font-semibold">{cYear}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <select 
-                      value={cMonth} 
-                      onChange={e => {
-                        const m = e.target.value;
-                        setCMonth(m);
-                        const existing = gChartData.find(d => d.month === m && String(d.year) === String(cYear));
-                        setCValue(existing !== undefined && existing.value !== undefined ? String(existing.value) : '');
-                      }} 
-                      className="min-w-0 flex-[1.2] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600"
-                    >
-                      {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                    <select 
-                      value={cYear} 
-                      onChange={e => {
-                        const y = e.target.value;
-                        setCYear(y);
-                        const existing = gChartData.find(d => d.month === cMonth && String(d.year) === String(y));
-                        setCValue(existing !== undefined && existing.value !== undefined ? String(existing.value) : '');
-                      }} 
-                      className="min-w-0 flex-[1.2] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600"
-                    >
-                      {['2026','2027','2028','2029','2030'].map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                    <input 
-                      type="number" 
-                      step="any" 
-                      placeholder="Value" 
-                      value={cValue} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        setCValue(val);
-                        if (val !== '') {
-                          const num = parseFloat(val);
-                          setGChartData(prev => {
-                            const copy = [...prev];
-                            const idx = copy.findIndex(d => d.month === cMonth && String(d.year) === String(cYear));
-                            if (idx >= 0) {
-                              copy[idx] = { ...copy[idx], value: num };
-                            } else {
-                              copy.push({ month: cMonth, year: cYear, value: num });
-                            }
-                            return copy;
-                          });
-                        }
-                      }} 
-                      className="min-w-0 flex-[1.5] p-2.5 rounded-lg border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 font-bold" 
+
+              {/* Fast Presets Selector */}
+              <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[11px] font-extrabold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                    <span>💡</span>
+                    <span>Quick Metric Templates / Presets</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">Click any chip below to load complete 2022–2026 historical data</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {Object.keys(DEFAULT_HISTORICAL_METRICS).map(k => {
+                    const isSelected = (gTerm || '').trim().toUpperCase() === k.toUpperCase();
+                    const isPriority = ['EPSB REVENUE', 'TOTAL REVENUE', 'EBIT', 'FINANCIAL PERFORMANCE', 'TECHNICAL PERFORMANCE'].includes(k);
+                    return (
+                      <button
+                        type="button"
+                        key={k}
+                        onClick={() => loadPreset(k)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                            : isPriority
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 font-extrabold'
+                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        {k}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Card Form */}
+              <form onSubmit={addGlossaryTerm} className="space-y-3.5">
+                {/* Metric Name & Target Category Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
+                        Card Metric Name / Title <span className="text-emerald-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/50">
+                        Free Text (Any KPI)
+                      </span>
+                    </div>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. EPSB REVENUE, EBIT, FINANCIAL PERFORMANCE"
+                      className="w-full p-3 rounded-xl border text-sm font-bold dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={gTerm}
+                      onChange={e => setGTerm(e.target.value)}
                     />
                   </div>
 
-                  {/* Quick Month Chips for Year */}
-                  {gChartData.filter(d => String(d.year) === String(cYear)).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {gChartData.filter(d => String(d.year) === String(cYear)).map(d => (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
+                        Target Category <span className="text-emerald-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium">Where card appears</span>
+                    </div>
+                    <select
+                      value={gCat}
+                      onChange={e => setGCat(e.target.value)}
+                      className="w-full p-3 rounded-xl border text-sm font-bold dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                    >
+                      <option value="Corporate Performance">Corporate Performance</option>
+                      <option value="EPSB">EPSB</option>
+                      <option value="BDV">BDV</option>
+                      <option value="ESG">ESG</option>
+                      <option value="IBR Framework">IBR Framework</option>
+                      <option value="Strategy and Sustainability">Strategy & Sustainability</option>
+                      <option value="Energy Market and Industry">Energy Market & Industry</option>
+                      <option value="Governance">Governance</option>
+                      <option value="ISO Management">ISO Management</option>
+                      <option value="SE Risk">Sabah Electricity Risk</option>
+                      <option value="ReSET2030">ReSET2030</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Y-Axis Unit & Chart Type Row (2 Equal Columns) */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
+                      Chart Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <button
+                        type="button"
+                        onClick={() => setGFormula('area')}
+                        className={`py-2 text-[11px] font-bold rounded-lg transition-all ${
+                          (gFormula || 'area') === 'area'
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                        }`}
+                      >
+                        📈 Area
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setGFormula('bar')}
+                        className={`py-2 text-[11px] font-bold rounded-lg transition-all ${
+                          gFormula === 'bar'
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                        }`}
+                      >
+                        📊 Bar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
+                      Unit / Format
+                    </label>
+                    <select 
+                      value={['in %', 'in RM', 'in RM mil', 'in RM bil', 'in mins', 'in LTIFR', 'in GWh'].includes(gYAxisFormat) ? gYAxisFormat : 'custom'} 
+                      onChange={e => {
+                        if (e.target.value !== 'custom') setGYAxisFormat(e.target.value);
+                        else setGYAxisFormat('');
+                      }}
+                      className="w-full p-2.5 rounded-xl border text-sm font-semibold dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="in %">in % (Percentage)</option>
+                      <option value="in RM">in RM (Ringgit)</option>
+                      <option value="in RM mil">in RM mil (Million)</option>
+                      <option value="in RM bil">in RM bil (Billion)</option>
+                      <option value="in mins">in mins (Minutes)</option>
+                      <option value="in LTIFR">in LTIFR (Safety)</option>
+                      <option value="in GWh">in GWh (Energy)</option>
+                      <option value="custom">Custom Format...</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Custom unit input if selected */}
+                {!['in %', 'in RM', 'in RM mil', 'in RM bil', 'in mins', 'in LTIFR', 'in GWh'].includes(gYAxisFormat) && (
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black text-slate-700 dark:text-slate-300">Custom Unit Text</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. in count, in MW, in hours" 
+                      value={gYAxisFormat} 
+                      onChange={e => setGYAxisFormat(e.target.value)} 
+                      className="w-full p-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600" 
+                    />
+                  </div>
+                )}
+
+                {/* Subtitle / Description */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black text-slate-700 dark:text-slate-300">Card Subtitle / Context *</label>
+                  <textarea
+                    required
+                    placeholder="Short description or formula context (e.g. Total Revenue contribution from Sabah electricity operations...)"
+                    rows={2}
+                    className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none font-medium"
+                    value={gDesc}
+                    onChange={e => setGDesc(e.target.value)}
+                  />
+                </div>
+
+                {/* ──── Multi-Year Historical Data Editor ──── */}
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-[13px] font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <span>📅</span>
+                      <span>Multi-Year Historical Trend Data (from 2022)</span>
+                    </h3>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                      {gChartData.length} total monthly values
+                    </span>
+                  </div>
+
+                  {/* Year Tabs */}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {['2022','2023','2024','2025','2026','2027','2028','2029','2030'].map(y => {
+                      const count = gChartData.filter(d => String(d.year) === y).length;
+                      const hasData = count > 0;
+                      return (
                         <button
                           type="button"
-                          key={d.month}
-                          onClick={() => {
-                            setCMonth(d.month);
-                            setCValue(String(d.value));
-                          }}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${cMonth === d.month ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'}`}
+                          key={y}
+                          onClick={() => setCYear(y)}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border flex items-center gap-1.5 ${
+                            cYear === y 
+                              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30 font-black' 
+                              : hasData 
+                                ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100' 
+                                : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
                         >
-                          {d.month}: <span className="opacity-90">{d.value}</span>
+                          <span>{y}</span>
+                          {hasData && (
+                            <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                              cYear === y ? 'bg-emerald-700 text-white' : 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
+                            }`}>
+                              {count}m
+                            </span>
+                          )}
                         </button>
-                      ))}
+                      );
+                    })}
+                  </div>
+
+                  {/* Month Grid & Quick Tools for Selected Year */}
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                    <div className="bg-slate-100 dark:bg-slate-700/60 px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[12px] font-black text-slate-800 dark:text-slate-100">
+                          {cYear} Monthly Values
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-semibold">
+                          ({gChartData.filter(d => String(d.year) === String(cYear)).length}/12 populated)
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const text = prompt(`Paste 12 comma-separated numbers for ${cYear} Jan–Dec:\n(e.g. 10.5, 11.2, 12.0, 11.8, 13.5, 14.2, 14.8, 15.0, 15.6, 16.2, 16.5, 17.0)`);
+                            if (!text) return;
+                            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            const vals = text.split(/[,;\t\n]+/).map(v => v.trim()).filter(v => v !== '');
+                            setGChartData(prev => {
+                              const copy = prev.filter(d => String(d.year) !== String(cYear));
+                              vals.forEach((v, i) => {
+                                if (i < 12 && !isNaN(parseFloat(v))) {
+                                  copy.push({ month: months[i], year: cYear, value: parseFloat(v) });
+                                }
+                              });
+                              return copy;
+                            });
+                          }}
+                          className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
+                        >
+                          📋 Paste 12
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = prompt(`Fill all 12 months of ${cYear} with a constant value:`);
+                            if (val === null || val.trim() === '' || isNaN(parseFloat(val))) return;
+                            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            setGChartData(prev => {
+                              const copy = prev.filter(d => String(d.year) !== String(cYear));
+                              months.forEach(m => copy.push({ month: m, year: cYear, value: parseFloat(val) }));
+                              return copy;
+                            });
+                          }}
+                          className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors border border-emerald-200 dark:border-emerald-800"
+                        >
+                          ⚡ Fill All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const startStr = prompt(`Generate linear trend for ${cYear}.\nEnter Jan start value:`);
+                            if (startStr === null || isNaN(parseFloat(startStr))) return;
+                            const endStr = prompt(`Enter Dec end value:`);
+                            if (endStr === null || isNaN(parseFloat(endStr))) return;
+                            const start = parseFloat(startStr);
+                            const end = parseFloat(endStr);
+                            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            setGChartData(prev => {
+                              const copy = prev.filter(d => String(d.year) !== String(cYear));
+                              months.forEach((m, idx) => {
+                                const interpolated = start + ((end - start) / 11) * idx;
+                                copy.push({ month: m, year: cYear, value: Math.round(interpolated * 100) / 100 });
+                              });
+                              return copy;
+                            });
+                          }}
+                          className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 px-2 py-1 rounded-lg transition-colors border border-purple-200 dark:border-purple-800"
+                        >
+                          📈 Trend
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextY = String(Number(cYear) + 1);
+                            const currentVals = gChartData.filter(d => String(d.year) === String(cYear));
+                            if (currentVals.length === 0) {
+                              alert(`No data in ${cYear} to copy.`);
+                              return;
+                            }
+                            if (!confirm(`Copy all ${currentVals.length} months from ${cYear} to ${nextY}?`)) return;
+                            setGChartData(prev => {
+                              const copy = prev.filter(d => String(d.year) !== nextY);
+                              currentVals.forEach(d => {
+                                copy.push({ month: d.month, year: nextY, value: d.value });
+                              });
+                              return copy;
+                            });
+                            setCYear(nextY);
+                          }}
+                          className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 px-2 py-1 rounded-lg transition-colors border border-amber-200 dark:border-amber-800"
+                        >
+                          ⏩ Copy to Next Year
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (gChartData.filter(d => String(d.year) === String(cYear)).length === 0) return;
+                            if (!confirm(`Clear all data points for ${cYear}?`)) return;
+                            setGChartData(prev => prev.filter(d => String(d.year) !== String(cYear)));
+                          }}
+                          className="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 px-2 py-1 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                        >
+                          🗑 Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 12 Month Grid */}
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-px bg-slate-200 dark:bg-slate-700">
+                      {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m => {
+                        const existing = gChartData.find(d => d.month === m && String(d.year) === String(cYear));
+                        const val = existing !== undefined && existing.value !== undefined ? String(existing.value) : '';
+                        return (
+                          <div key={m} className="bg-white dark:bg-slate-800 p-2.5 flex flex-col items-center gap-1">
+                            <span className={`text-[10px] font-black uppercase tracking-wider ${val ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{m}</span>
+                            <input
+                              type="number"
+                              step="any"
+                              placeholder="—"
+                              value={val}
+                              onChange={e => {
+                                const v = e.target.value;
+                                setGChartData(prev => {
+                                  const copy = [...prev];
+                                  const idx = copy.findIndex(d => d.month === m && String(d.year) === String(cYear));
+                                  if (v === '' || isNaN(parseFloat(v))) {
+                                    if (idx >= 0) copy.splice(idx, 1);
+                                  } else {
+                                    if (idx >= 0) {
+                                      copy[idx] = { ...copy[idx], value: parseFloat(v) };
+                                    } else {
+                                      copy.push({ month: m, year: cYear, value: parseFloat(v) });
+                                    }
+                                  }
+                                  return copy;
+                                });
+                              }}
+                              className={`w-full text-center p-1.5 rounded-lg border text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
+                                val 
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300' 
+                                  : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-400'
+                              }`}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Multi-Year Data Coverage Chips */}
+                  {(() => {
+                    const yearsWithData = [...new Set(gChartData.map(d => String(d.year)))].sort();
+                    if (yearsWithData.length === 0) return null;
+                    return (
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Years Available in Dataset</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {yearsWithData.map(y => {
+                            const entries = gChartData.filter(d => String(d.year) === y);
+                            return (
+                              <button
+                                type="button"
+                                key={y}
+                                onClick={() => setCYear(y)}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border flex items-center gap-1 ${
+                                  cYear === y 
+                                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' 
+                                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                }`}
+                              >
+                                <span>{y}:</span>
+                                <span className={cYear === y ? 'text-emerald-200' : 'text-emerald-600 dark:text-emerald-400 font-extrabold'}>{entries.length} mos</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Live Interactive Chart Preview */}
+                  {gChartData.length > 0 && (
+                    <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <span>👁️</span>
+                          <span>Live Interactive Card Preview</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400">Test year switcher before saving</span>
+                      </div>
+                      <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-900">
+                        <CorporatePerformanceChart 
+                          chartData={JSON.stringify(gChartData)} 
+                          term={gTerm || 'PREVIEW METRIC'} 
+                          description={gDesc || 'Interactive preview of card as seen on Corporate Performance tab'} 
+                          yAxisFormat={gYAxisFormat}
+                          formula={gFormula || 'area'}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
 
-              {gMsg && (
-                <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-2xl font-bold animate-fadeIn text-[14px] flex items-center gap-2 border ${gMsg.startsWith('✅') ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-500/30' : 'bg-red-600 text-white border-red-500 shadow-red-500/30'}`}>
-                  {gMsg}
+                {/* Form Action Buttons */}
+                <div className="flex gap-2.5 pt-2">
+                  {gEditId && (
+                    <button 
+                      type="button" 
+                      onClick={cancelEditGlossaryTerm} 
+                      className="flex-1 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-xl active:scale-95 transition-all"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                  <button 
+                    type="submit" 
+                    className="flex-[2] py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
+                  >
+                    <span>{gEditId ? '💾' : '➕'}</span>
+                    <span>{gEditId ? `Update Card (${gTerm})` : '+ Create Performance Card'}</span>
+                  </button>
                 </div>
-              )}
-              
-              <div className="flex gap-2">
-                {gEditId && (
-                  <button type="button" onClick={cancelEditGlossaryTerm} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl active:scale-95 transition-all">Cancel</button>
-                )}
-                <button type="submit" className="flex-[2] py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
-                  {gEditId ? 'Update Term' : '+ Add Term'}
-                </button>
-              </div>
-            </form>
-          </div>
+              </form>
+            </div>
+          ) : (
+            /* ──── TAB 2: TERMINOLOGY DICTIONARY ──── */
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+              <h2 className="text-[16px] font-bold">
+                {gEditId ? `Edit Dictionary Term: ${gTerm}` : 'Add New Dictionary Term'}
+              </h2>
+              <form onSubmit={addGlossaryTerm} className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input 
+                    required 
+                    placeholder="Acronym / Term (e.g. IBR, OPEX, WACC)" 
+                    className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold" 
+                    value={gTerm} 
+                    onChange={e => setGTerm(e.target.value)} 
+                  />
+                  <select 
+                    value={gCat} 
+                    onChange={e => setGCat(e.target.value)} 
+                    className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold"
+                  >
+                    <option value="IBR Framework">IBR Framework</option>
+                    <option value="Strategy and Sustainability">Strategy & Sustainability</option>
+                    <option value="Energy Market and Industry">Energy Market & Industry</option>
+                    <option value="ESG">ESG</option>
+                    <option value="EPSB">EPSB</option>
+                    <option value="BDV">BDV</option>
+                    <option value="Governance">Governance</option>
+                    <option value="ISO Management">ISO Management</option>
+                    <option value="SE Risk">Sabah Electricity Risk</option>
+                    <option value="ReSET2030">ReSET2030</option>
+                  </select>
+                </div>
+                <input 
+                  required 
+                  placeholder="Full name (e.g. Incentive-Based Regulation)" 
+                  className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+                  value={gFull} 
+                  onChange={e => setGFull(e.target.value)} 
+                />
+                <textarea 
+                  required 
+                  placeholder="Comprehensive description / explanation..." 
+                  rows={3} 
+                  className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" 
+                  value={gDesc} 
+                  onChange={e => setGDesc(e.target.value)} 
+                />
+                <input 
+                  placeholder="Formula (e.g. ROI = Net Profit / Cost)" 
+                  className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" 
+                  value={gFormula} 
+                  onChange={e => setGFormula(e.target.value)} 
+                />
+                <input 
+                  placeholder="Formula Notations (e.g. AAT, REQT)" 
+                  className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono" 
+                  value={gNotations} 
+                  onChange={e => setGNotations(e.target.value)} 
+                />
+                <textarea 
+                  placeholder="Meaning of terms (e.g. AAT: Actual Tariff...)" 
+                  rows={3} 
+                  className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" 
+                  value={gMeanings} 
+                  onChange={e => setGMeanings(e.target.value)} 
+                />
 
-          {/* Terms list */}
-          <div className="space-y-4">
-            <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
+                  {gEditId && (
+                    <button 
+                      type="button" 
+                      onClick={cancelEditGlossaryTerm} 
+                      className="flex-1 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-xl active:scale-95 transition-all"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button 
+                    type="submit" 
+                    className="flex-[2] py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
+                  >
+                    {gEditId ? 'Update Term' : '+ Add Term'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Floating Toast Notification */}
+          {gMsg && (
+            <div 
+              className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 max-w-[90vw] px-4 py-2.5 rounded-2xl shadow-2xl font-bold text-[12px] sm:text-[13px] flex items-center justify-center gap-2 border text-center transition-all animate-fadeIn ${
+                gMsg.includes('❌') || gMsg.toLowerCase().includes('fail') || gMsg.toLowerCase().includes('error')
+                  ? 'bg-rose-600 text-white border-rose-500 shadow-rose-500/40'
+                  : 'bg-slate-900/95 dark:bg-emerald-950/95 text-white border-emerald-500/50 shadow-xl backdrop-blur-md'
+              }`}
+            >
+              <span>{gMsg}</span>
+            </div>
+          )}
+
+          {/* ──── CARDS & TERMS REPOSITORY LIST ──── */}
+          <div className="space-y-4 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
                 <input 
                   type="text" 
-                  placeholder="Search terms..." 
+                  placeholder={dictSubTab === 'corporate' ? "Search corporate cards..." : "Search glossary terms..."}
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
                   value={gFilter} 
                   onChange={e => setGFilter(e.target.value)} 
                 />
               </div>
               <select 
-                className="w-1/3 p-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" 
+                className="p-2.5 rounded-xl border text-sm font-semibold dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" 
                 value={gCategoryFilter} 
                 onChange={e => setGCategoryFilter(e.target.value)}
               >
                 <option value="All">All Categories</option>
+                <option value="Corporate Performance">Corporate Performance</option>
                 <option value="IBR Framework">IBR Framework</option>
                 <option value="Strategy and Sustainability">Strategy & Sustainability</option>
                 <option value="Energy Market and Industry">Energy Market & Industry</option>
@@ -538,56 +1224,133 @@ export default function AdminTab({ onGlossaryChange }) {
                 <option value="EPSB">EPSB</option>
                 <option value="BDV">BDV</option>
                 <option value="Governance">Governance</option>
-                <option value="Corporate Performance">Corporate Performance</option>
                 <option value="ISO Management">ISO Management</option>
                 <option value="SE Risk">Sabah Electricity Risk</option>
                 <option value="ReSET2030">ReSET2030</option>
               </select>
             </div>
             
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
-              {glossaryTerms.filter(t => {
-                const matchSearch = t.term.toLowerCase().includes(gFilter.toLowerCase()) || (t.fullName && t.fullName.toLowerCase().includes(gFilter.toLowerCase()));
-                const matchCategory = gCategoryFilter === 'All' || t.category === gCategoryFilter;
-                return matchSearch && matchCategory;
-              }).length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200">No matching terms found.</div>
-              ) : (
-                glossaryTerms.filter(t => {
-                  const matchSearch = t.term.toLowerCase().includes(gFilter.toLowerCase()) || (t.fullName && t.fullName.toLowerCase().includes(gFilter.toLowerCase()));
-                  const matchCategory = gCategoryFilter === 'All' || t.category === gCategoryFilter;
+            <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1 custom-scrollbar">
+              {(() => {
+                const filtered = glossaryTerms.filter(t => {
+                  let parsedChart = [];
+                  try { parsedChart = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) { parsedChart = []; }
+                  const isPerfCard = t.category === 'Corporate Performance' || (parsedChart && parsedChart.length > 0);
+                  
+                  if (dictSubTab === 'corporate' && !isPerfCard) return false;
+                  if (dictSubTab === 'dictionary' && isPerfCard) return false;
+
+                  const matchSearch = (t.term || '').toLowerCase().includes(gFilter.toLowerCase()) || ((t.fullName || '') && t.fullName.toLowerCase().includes(gFilter.toLowerCase()));
+                  const matchCategory = gCategoryFilter === 'All' ? true : t.category === gCategoryFilter;
                   return matchSearch && matchCategory;
-                }).map(t => (
-                  <div key={t.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col gap-3">
-                    <div className="flex gap-3 items-start">
-                      <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center justify-center font-black text-[13px] font-mono shrink-0">
-                        {t.term.length > 4 ? t.term.slice(0,3) : t.term}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-[14px]">{t.term}</p>
-                          <span className="text-[9px] bg-slate-100 dark:bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">{t.category}</span>
-                        </div>
-                        <p className="text-[12px] text-slate-600 dark:text-slate-400 mt-0.5">{t.fullName}</p>
-                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{t.description}</p>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <button onClick={() => editGlossaryTerm(t)} className="text-blue-500 bg-blue-50 dark:bg-blue-950/20 p-2 rounded-xl">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                        </button>
-                        <button onClick={() => deleteGlossaryTerm(t.id)} className="text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded-xl">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                      </div>
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="text-center py-12 text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                      No matching {dictSubTab === 'corporate' ? 'performance cards' : 'terms'} found.
                     </div>
-                    {t.category === 'Corporate Performance' && t.chartData && t.chartData !== '[]' && (
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
-                        <CorporatePerformanceChart chartData={t.chartData} term={t.term} description={t.description || t.desc} />
+                  );
+                }
+
+                return filtered.map(t => {
+                  let parsedChart = [];
+                  try { parsedChart = t.chartData ? JSON.parse(t.chartData) : []; } catch(e) { parsedChart = []; }
+                  const yearsWithData = [...new Set(parsedChart.map(d => String(d.year)))].sort();
+                  const isPerfCard = t.category === 'Corporate Performance' || (parsedChart && parsedChart.length > 0);
+
+                  return (
+                    <div key={t.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col gap-3 shadow-sm hover:border-emerald-500/50 transition-all">
+                      <div className="flex gap-3 items-start">
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-[13px] font-mono shrink-0 shadow-sm ${
+                          isPerfCard 
+                            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white' 
+                            : 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+                        }`}>
+                          {t.term.length > 5 ? t.term.slice(0, 3) : t.term}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="font-extrabold text-[15px] text-slate-900 dark:text-white">{t.term}</p>
+                            <span className="text-[9px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-bold uppercase">
+                              {t.category}
+                            </span>
+                            {isPerfCard && (
+                              <span className="text-[9px] bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full font-bold">
+                                {t.formula === 'bar' ? '📊 Bar' : '📈 Area'}
+                              </span>
+                            )}
+                            {t.formulaNotations && (
+                              <span className="text-[9px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                                {t.formulaNotations}
+                              </span>
+                            )}
+                          </div>
+                          {t.fullName && <p className="text-[12px] font-medium text-slate-600 dark:text-slate-400 mt-0.5">{t.fullName}</p>}
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{t.description}</p>
+                          
+                          {/* Historical years badge */}
+                          {isPerfCard && yearsWithData.length > 0 && (
+                            <div className="flex items-center gap-1.5 mt-2">
+                              <span className="text-[10px] text-slate-400 font-bold">Years:</span>
+                              <div className="flex flex-wrap gap-1">
+                                {yearsWithData.map(y => (
+                                  <span key={y} className="text-[9px] px-1.5 py-0.2 rounded font-extrabold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                    {y}
+                                  </span>
+                                ))}
+                                <span className="text-[9px] px-1.5 py-0.2 rounded font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                                  {parsedChart.length} pts
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-1 shrink-0">
+                          <button 
+                            onClick={() => editGlossaryTerm(t)} 
+                            title="Edit Card" 
+                            className="text-blue-600 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 p-2 rounded-xl transition-all"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          </button>
+                          {isPerfCard && (
+                            <button 
+                              onClick={() => duplicateGlossaryTerm(t)} 
+                              title="Duplicate Card" 
+                              className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 p-2 rounded-xl transition-all"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => deleteGlossaryTerm(t.id)} 
+                            title="Delete Card" 
+                            className="text-red-500 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 p-2 rounded-xl transition-all"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))
-              )}
+
+                      {/* Interactive chart display for performance cards */}
+                      {isPerfCard && parsedChart.length > 0 && (
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
+                          <CorporatePerformanceChart 
+                            chartData={t.chartData} 
+                            term={t.term} 
+                            description={t.description || t.desc} 
+                            yAxisFormat={t.formulaNotations} 
+                            formula={t.formula || 'area'}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
@@ -638,13 +1401,41 @@ export default function AdminTab({ onGlossaryChange }) {
                 )}
               </div>
 
-              {iMsg && <div className={`text-sm font-semibold px-3 py-2 rounded-xl ${iMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{iMsg}</div>}
+              {iMsg && (
+                <div className={`text-sm font-semibold px-3 py-2 rounded-xl transition-all ${
+                  iMsg.startsWith('✅') 
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' 
+                    : iMsg.startsWith('⏳')
+                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                    : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300'
+                }`}>
+                  {iMsg}
+                </div>
+              )}
               <div className="flex gap-2">
-                <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
-                  {iEditId ? 'Update Poster' : 'Post Poster'}
+                <button 
+                  type="submit" 
+                  disabled={iPosting} 
+                  className={`flex-1 py-3 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 ${
+                    iPosting 
+                      ? 'bg-emerald-400 cursor-not-allowed opacity-75' 
+                      : 'bg-gradient-to-r from-emerald-600 to-teal-600'
+                  }`}
+                >
+                  {iPosting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Posting...</span>
+                    </>
+                  ) : (
+                    <span>{iEditId ? 'Update Poster' : 'Post Poster'}</span>
+                  )}
                 </button>
                 {iEditId && (
-                  <button type="button" onClick={cancelEditInfographic} className="px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white font-bold rounded-xl active:scale-95 transition-all shadow-sm">
+                  <button type="button" onClick={cancelEditInfographic} disabled={iPosting} className="px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white font-bold rounded-xl active:scale-95 transition-all shadow-sm">
                     Cancel
                   </button>
                 )}

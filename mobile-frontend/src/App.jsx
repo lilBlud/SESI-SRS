@@ -1,68 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import AdminTab from './components/tabs/AdminTab';
+import { AdminTab, HomeTab, GlossaryTab, QuizTab, ProfileTab } from './components/tabs';
 import LoginPage from './components/pages/LoginPage';
-import { mockGlossary } from './utils/mockData.js';
 import { API_BASE } from './utils/constants.js';
-
-
-import { HomeIcon, BookIcon, QuizIcon, ProfileIcon, FloatingParticles } from './components/ui/Icons';
+import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { useBookmarks } from './hooks/useBookmarks';
-import { HomeTab } from './components/tabs/HomeTab';
-import { GlossaryTab } from './components/tabs/GlossaryTab';
-import { QuizTab } from './components/tabs/QuizTab';
-import { ProfileTab } from './components/tabs/ProfileTab';
-
-// --- MOCK API INTERCEPTOR FOR OFFLINE CLOUDFLARE DEMO ---
-if (false) {
-  window.__MOCK_FETCH_ADDED__ = true;
-  const originalFetch = window.fetch.bind(window);
-  window.fetch = async (...args) => {
-    const [url, options] = args;
-    const urlString = typeof url === 'string' ? url : (url?.url || '');
-
-    if (urlString.includes('/api/glossary')) {
-      return new Response(JSON.stringify(mockGlossary), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    if (urlString.includes('/api/leaderboard')) {
-      return new Response(JSON.stringify([
-        { staffId: 'DEMO-001', username: 'Demo User', division: 'IDD', score: 120 },
-        { staffId: 'EMP-892', username: 'Ahmad Faiz', division: 'Finance', score: 95 },
-        { staffId: 'EMP-301', username: 'Sarah Tan', division: 'Corporate Planning', score: 80 }
-      ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    if (urlString.includes('/api/quiz')) {
-      return new Response(JSON.stringify([
-        { id: 1, question: "What does IBR stand for?", options: ["Incentive-Based Regulation", "Internal Business Rules", "International Banking Rates", "Integrated Baseline Review"], correctIndex: 0 },
-        { id: 2, question: "Which is a component of Corporate Performance?", options: ["EBIT", "SAIFI", "CAIDI", "BBM"], correctIndex: 0 }
-      ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    if (urlString.includes('/api/streak')) {
-      return new Response(JSON.stringify({ streakCount: 5, lastAnsweredMonth: '2026-10' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    if (urlString.includes('/api/submit-answer')) {
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    if (urlString.includes('/api/admin/infographics')) {
-      return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    if (urlString.includes('/api/profile')) {
-      return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    return originalFetch(...args);
-  };
-}
-// --------------------------------------------------------
-
-
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -140,13 +81,15 @@ function App() {
 
   useEffect(() => { fetchGlossary(); }, [fetchGlossary]);
 
-  // Fetch streak on mount
+  // Fetch streak on mount and whenever user logs in
   useEffect(() => {
-    fetch(`${API_BASE}/api/streak/${encodeURIComponent(USERNAME)}`)
-      .then(r => r.ok ? r.json() : { streak: 0 })
-      .then(d => setStreak(d.streak || 0))
-      .catch(() => { });
-  }, []);
+    if (USERNAME) {
+      fetch(`${API_BASE}/api/streak/${encodeURIComponent(USERNAME)}`)
+        .then(r => r.ok ? r.json() : { streak: 0 })
+        .then(d => setStreak(d.streak || 0))
+        .catch(() => { });
+    }
+  }, [USERNAME]);
 
   const [hasShownAlreadySaved, setHasShownAlreadySaved] = useState(false);
 
@@ -162,8 +105,6 @@ function App() {
       setTimeout(() => setStreakToast(null), 3000);
     }
   };
-
-  // (Removed duplicated iOS prompt state)
 
   const tabs = [
     { id: 'home', label: 'Home', Icon: HomeIcon },
@@ -352,7 +293,6 @@ function App() {
                   });
                 } else {
                   alert("To install on iOS: Tap the 'Share' icon in Safari (at the bottom), then select 'Add to Home Screen'.");
-                  // Intentionally NOT closing the popup here so iOS users can read it while they share!
                 }
               }} className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-500/30">
                 Install App
@@ -366,4 +306,3 @@ function App() {
 }
 
 export default App;
-
