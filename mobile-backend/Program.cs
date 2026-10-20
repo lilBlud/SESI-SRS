@@ -319,6 +319,92 @@ app.MapGet("/api/awards/{month}", async (string month, AppDbContext db) =>
 }).WithName("GetAwards");
 
 // ═══════════════════════════════════════════
+//  VISITOR & TRAFFIC TRACKING
+// ═══════════════════════════════════════════
+
+app.MapPost("/api/visitors/record", async (RecordVisitRequest req, HttpContext context, AppDbContext db) =>
+{
+    var visitorId = (req.VisitorId ?? "").Trim();
+    if (string.IsNullOrWhiteSpace(visitorId))
+    {
+        visitorId = context.Connection.RemoteIpAddress?.ToString() ?? Guid.NewGuid().ToString("N");
+    }
+
+    var userAgent = context.Request.Headers["User-Agent"].ToString();
+    if (userAgent.Length > 200) userAgent = userAgent.Substring(0, 200);
+
+    // Debounce: check if same visitor was recorded within the last 5 minutes to prevent spam
+    var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-5);
+    var recentVisit = await db.VisitorLogs
+        .AnyAsync(v => v.VisitorId == visitorId && v.VisitedAt >= fiveMinutesAgo);
+
+    if (!recentVisit)
+    {
+        var log = new VisitorLog
+        {
+            VisitorId = visitorId,
+            Username = req.Username ?? "",
+            Division = req.Division ?? "",
+            Path = req.Path ?? "/",
+            UserAgent = userAgent,
+            VisitedAt = DateTime.UtcNow
+        };
+        db.VisitorLogs.Add(log);
+        await db.SaveChangesAsync();
+    }
+
+    var todayStart = DateTime.UtcNow.AddHours(8).Date.AddHours(-8);
+    var totalVisits = await db.VisitorLogs.CountAsync();
+    var todayVisits = await db.VisitorLogs.CountAsync(v => v.VisitedAt >= todayStart);
+    var uniqueVisitors = await db.VisitorLogs.Select(v => v.VisitorId).Distinct().CountAsync();
+
+    return Results.Ok(new
+    {
+        totalVisits,
+        todayVisits,
+        uniqueVisitors
+    });
+}).WithName("RecordVisit").RequireCors("AllowAll");
+
+app.MapGet("/api/visitors/stats", async (AppDbContext db) =>
+{
+    var todayStart = DateTime.UtcNow.AddHours(8).Date.AddHours(-8);
+    var totalVisits = await db.VisitorLogs.CountAsync();
+    var todayVisits = await db.VisitorLogs.CountAsync(v => v.VisitedAt >= todayStart);
+    var uniqueVisitors = await db.VisitorLogs.Select(v => v.VisitorId).Distinct().CountAsync();
+
+    var divisionBreakdown = await db.VisitorLogs
+        .Where(v => !string.IsNullOrEmpty(v.Division))
+        .GroupBy(v => v.Division)
+        .Select(g => new { division = g.Key, count = g.Count() })
+        .OrderByDescending(x => x.count)
+        .Take(8)
+        .ToListAsync();
+
+    var recentVisits = await db.VisitorLogs
+        .OrderByDescending(v => v.VisitedAt)
+        .Take(15)
+        .Select(v => new
+        {
+            id = v.Id,
+            visitorId = v.VisitorId,
+            username = string.IsNullOrWhiteSpace(v.Username) ? "Anonymous Visitor" : v.Username,
+            division = string.IsNullOrWhiteSpace(v.Division) ? "General" : v.Division,
+            visitedAt = v.VisitedAt
+        })
+        .ToListAsync();
+
+    return Results.Ok(new
+    {
+        totalVisits,
+        todayVisits,
+        uniqueVisitors,
+        divisionBreakdown,
+        recentVisits
+    });
+}).WithName("GetVisitorStats").RequireCors("AllowAll");
+
+// ═══════════════════════════════════════════
 //  ADMIN API ENDPOINTS
 // ═══════════════════════════════════════════
 

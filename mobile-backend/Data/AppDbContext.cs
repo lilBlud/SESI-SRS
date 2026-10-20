@@ -14,5 +14,6 @@ namespace mobile_backend.Data
         public DbSet<GlossaryTerm> GlossaryTerms { get; set; } = null!;
         public DbSet<Infographic> Infographics { get; set; } = null!;
         public DbSet<StaffUser> StaffUsers { get; set; } = null!;
+        public DbSet<VisitorLog> VisitorLogs { get; set; } = null!;
     }
 }

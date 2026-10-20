@@ -91,6 +91,33 @@ function App() {
     }
   }, [USERNAME]);
 
+  // Visitor Tracking
+  const [visitorStats, setVisitorStats] = useState({ totalVisits: 0, todayVisits: 0, uniqueVisitors: 0 });
+
+  useEffect(() => {
+    let visitorId = localStorage.getItem('sesi_visitor_id');
+    if (!visitorId) {
+      visitorId = 'v_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+      try { localStorage.setItem('sesi_visitor_id', visitorId); } catch {}
+    }
+
+    fetch(`${API_BASE}/api/visitors/record`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        visitorId,
+        username: user?.fullName || '',
+        division: user?.division || '',
+        path: window.location.pathname
+      })
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d) setVisitorStats(d);
+      })
+      .catch(() => {});
+  }, [user?.fullName, user?.division]);
+
   const [hasShownAlreadySaved, setHasShownAlreadySaved] = useState(false);
 
   // Handle streak updates from child components
@@ -223,11 +250,13 @@ function App() {
       </header>
 
       <main className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20">
-        {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} />}
+        {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} />}
         {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} triggerInstallPrompt={() => setShowInstallPrompt(true)} onUpdateUser={handleUpdateUser} />}
-        {activeTab === 'admin' && <AdminTab onGlossaryChange={fetchGlossary} />}
+        {activeTab === 'admin' && <AdminTab onGlossaryChange={fetchGlossary} visitorStats={visitorStats} onRefreshVisitorStats={() => {
+          fetch(`${API_BASE}/api/visitors/stats`).then(r => r.ok ? r.json() : null).then(d => { if (d) setVisitorStats(d); });
+        }} />}
       </main>
 
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-50 pb-3">

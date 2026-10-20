@@ -103,4 +103,23 @@ namespace mobile_backend.Models
         public string Term { get; set; } = string.Empty;
         public DateTime SearchDate { get; set; }
     }
+
+    public class VisitorLog
+    {
+        public int Id { get; set; }
+        public string VisitorId { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string Division { get; set; } = string.Empty;
+        public string Path { get; set; } = "/";
+        public string UserAgent { get; set; } = string.Empty;
+        public DateTime VisitedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public class RecordVisitRequest
+    {
+        public string? VisitorId { get; set; }
+        public string? Username { get; set; }
+        public string? Division { get; set; }
+        public string? Path { get; set; }
+    }
 }

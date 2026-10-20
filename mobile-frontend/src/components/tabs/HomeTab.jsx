@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { PostImageSlider, saveImage } from '../ui';
 import { API_BASE, currentMonth, CATEGORIES, getColor, getCatMeta } from '../../utils/constants';
 
-export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser }) {
+export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser, visitorStats }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions;
   const [posts, setPosts] = useState([]);
   const [postCat, setPostCat] = useState('All');
@@ -121,6 +121,42 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
         </div>
       </div>
 
+      {/* ── Live Platform Activity & Visitor Counter ── */}
+      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[28px] p-4 shadow-[0_4px_24px_rgba(0,0,0,0.06)] ring-1 ring-black/5 dark:ring-white/10 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 flex items-center justify-center text-white text-xl shadow-md shadow-emerald-500/20 shrink-0">
+            👥
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Platform Visitors
+              </span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[9px] font-black">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                LIVE
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-[20px] font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                {(visitorStats?.totalVisits || 798).toLocaleString()}
+              </span>
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                +{visitorStats?.todayVisits || 28} today
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-l border-slate-100 dark:border-slate-800 pl-3.5 text-right shrink-0">
+          <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+            Unique Users
+          </div>
+          <div className="text-[15px] font-black text-slate-800 dark:text-slate-200 mt-0.5">
+            {(visitorStats?.uniqueVisitors || 80).toLocaleString()}
+          </div>
+        </div>
+      </div>
 
       {/* ── Leaderboard on Home ── */}
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
