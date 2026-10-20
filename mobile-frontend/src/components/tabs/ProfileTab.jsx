@@ -275,6 +275,24 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, triggerInstall
         </div>
       </div>
 
+      {/* Install App Button in Profile */}
+      {typeof window !== 'undefined' && !window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone && triggerInstallPrompt && (
+        <button
+          type="button"
+          onClick={triggerInstallPrompt}
+          className="w-full py-3 px-4 bg-white dark:bg-slate-800 border border-emerald-500/30 dark:border-emerald-500/40 rounded-2xl flex items-center justify-between shadow-sm hover:border-emerald-500 transition-all active:scale-[0.99] text-left"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl">📲</span>
+            <div>
+              <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">Install SESI App to Home Screen</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Launch directly like a native mobile app</div>
+            </div>
+          </div>
+          <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">Install →</span>
+        </button>
+      )}
+
       {/* Stats / Total Score & Standing */}
       {!loading && (
         <div className="flex gap-3">

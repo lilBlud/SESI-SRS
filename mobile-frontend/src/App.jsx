@@ -40,19 +40,15 @@ function App() {
 
   useEffect(() => {
     if (user) {
-      const isIos = () => {
-        const userAgent = window.navigator.userAgent.toLowerCase();
-        return /iphone|ipad|ipod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      };
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
       const isIosStandalone = ('standalone' in window.navigator) && window.navigator.standalone === true;
       const hasDismissed = sessionStorage.getItem('dismissedInstallPrompt');
 
-      // Clear old localStorage to ensure it pops up for the user during testing
+      // Clear any old suppression so beta testers always get prompted
       localStorage.removeItem('dismissedInstallPrompt');
 
-      if ((!isStandalone && !isIosStandalone && !hasDismissed) || (isIos() && !isIosStandalone && !hasDismissed)) {
-        const timer = setTimeout(() => setShowInstallPrompt(true), 1500);
+      if (!isStandalone && !isIosStandalone && !hasDismissed) {
+        const timer = setTimeout(() => setShowInstallPrompt(true), 1000);
         return () => clearTimeout(timer);
       }
     }
@@ -60,7 +56,7 @@ function App() {
 
   const dismissInstallPrompt = () => {
     setShowInstallPrompt(false);
-    sessionStorage.setItem('dismissedInstallPrompt', 'true');
+    try { sessionStorage.setItem('dismissedInstallPrompt', 'true'); } catch { }
   };
 
   const bookmarkActions = useBookmarks();
@@ -157,11 +153,20 @@ function App() {
 
   const handleLogin = (userData) => {
     try { localStorage.setItem('sesi_user', JSON.stringify(userData)); } catch { }
+    try { sessionStorage.removeItem('dismissedInstallPrompt'); } catch { }
     setUser(userData);
+    
+    // Trigger install popup 700ms after login if on browser (not installed app)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIosStandalone = ('standalone' in window.navigator) && window.navigator.standalone === true;
+    if (!isStandalone && !isIosStandalone) {
+      setTimeout(() => setShowInstallPrompt(true), 700);
+    }
   };
 
   const handleLogout = () => {
     try { localStorage.removeItem('sesi_user'); } catch { }
+    try { sessionStorage.removeItem('dismissedInstallPrompt'); } catch { }
     setUser(null);
   };
 
@@ -265,7 +270,7 @@ function App() {
       </header>
 
       <main className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20">
-        {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} />}
+        {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
         {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} triggerInstallPrompt={() => setShowInstallPrompt(true)} onUpdateUser={handleUpdateUser} />}

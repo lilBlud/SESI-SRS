@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { PostImageSlider, saveImage } from '../ui';
 import { API_BASE, currentMonth, CATEGORIES, getColor, getCatMeta } from '../../utils/constants';
 
-export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser, visitorStats }) {
+export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser, visitorStats, triggerInstallPrompt }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions;
   const [posts, setPosts] = useState([]);
   const [postCat, setPostCat] = useState('All');
@@ -120,6 +120,35 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
           </div>
         </div>
       </div>
+
+      {/* ── Install App Banner (When in mobile browser) ── */}
+      {typeof window !== 'undefined' && !window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone && triggerInstallPrompt && (
+        <div
+          onClick={triggerInstallPrompt}
+          className="cursor-pointer bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-blue-500/15 dark:from-emerald-950/50 dark:via-teal-950/40 dark:to-blue-950/50 border border-emerald-500/30 dark:border-emerald-500/40 rounded-2xl p-3.5 flex items-center justify-between shadow-xs hover:bg-emerald-500/20 transition-all group active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shrink-0 shadow-md text-lg">
+              📲
+            </div>
+            <div className="min-w-0">
+              <div className="text-[13px] font-black text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
+                Install SESI App on Phone
+                <span className="text-[9px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded-md">App</span>
+              </div>
+              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                Add to your Home Screen for faster access
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-black rounded-xl shadow-sm transition-transform active:scale-95 shrink-0 ml-2"
+          >
+            Install
+          </button>
+        </div>
+      )}
 
       {/* ── Visitors Today & Users Counter ── */}
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl sm:rounded-[26px] p-3.5 sm:p-4 shadow-[0_4px_24px_rgba(0,0,0,0.06)] ring-1 ring-black/5 dark:ring-white/10">
