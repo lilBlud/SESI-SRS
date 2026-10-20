@@ -1,11 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AdminTab, HomeTab, GlossaryTab, QuizTab, ProfileTab } from './components/tabs';
 import LoginPage from './components/pages/LoginPage';
+import PasscodeGate from './components/pages/PasscodeGate';
 import { API_BASE } from './utils/constants.js';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { useBookmarks } from './hooks/useBookmarks';
 
 function App() {
+  const [isPasscodeUnlocked, setIsPasscodeUnlocked] = useState(() => {
+    try {
+      return localStorage.getItem('sesi_passcode_unlocked') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('sesi_user');
@@ -167,6 +176,8 @@ function App() {
   const handleLogout = () => {
     try { localStorage.removeItem('sesi_user'); } catch { }
     try { sessionStorage.removeItem('dismissedInstallPrompt'); } catch { }
+    try { localStorage.removeItem('sesi_passcode_unlocked'); } catch { }
+    setIsPasscodeUnlocked(false);
     setUser(null);
   };
 
@@ -183,6 +194,17 @@ function App() {
       handleUpdateUser({ division: 'IDD' });
     }
   }, [user]);
+
+  if (!isPasscodeUnlocked) {
+    return (
+      <PasscodeGate
+        onUnlock={() => {
+          setIsPasscodeUnlocked(true);
+          try { localStorage.setItem('sesi_passcode_unlocked', 'true'); } catch { }
+        }}
+      />
+    );
+  }
 
   if (!user) {
     return <LoginPage onLogin={handleLogin} />;
@@ -206,32 +228,42 @@ function App() {
         </div>
       )}
 
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/80 safe-area-top shadow-sm relative">
-        <div className="flex items-center justify-between px-4 h-16 relative z-10">
+      {/* ─── CRISP, SOLID TOP BAR (Prevents WebKit text blurring and backdrop bleed-through) ─── */}
+      <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 safe-area-top shadow-xs relative transition-colors duration-150">
+        <div className="flex items-center justify-between px-4 h-16 relative z-10" style={{ transform: 'translateZ(0)', WebkitFontSmoothing: 'antialiased' }}>
 
           {/* ─── LOGO AREA + BACK BUTTON ─── */}
           <div className="flex items-center gap-2.5">
             {/* Back Button - shown when not on home */}
             {activeTab !== 'home' && (
-              <button onClick={() => setActiveTab('home')} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all shrink-0 mr-0.5">
+              <button
+                onClick={() => setActiveTab('home')}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all shrink-0 mr-0.5 border border-slate-200/60 dark:border-slate-700/60"
+                aria-label="Back to home"
+              >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
               </button>
             )}
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-slate-200 dark:border-slate-800 shrink-0">
-              <img src="/assets/logo.png" alt="S&S Logo" className="w-full h-full object-cover p-0.5" />
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-slate-200 dark:border-slate-700 shrink-0 shadow-xs">
+              <img
+                src="/assets/logo.png"
+                alt="S&S Logo"
+                className="w-full h-full object-contain p-0.5"
+                style={{ imageRendering: '-webkit-optimize-contrast' }}
+              />
             </div>
-            <div className="flex flex-col justify-center">
-              <span className="text-[20px] font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-emerald-400 dark:to-teal-400">
+            <div className="flex flex-col justify-center select-none">
+              <span className="text-[20px] font-black tracking-tight leading-none text-emerald-600 dark:text-emerald-400">
                 SESI
               </span>
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 leading-none tracking-tight">
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 mt-0.5 leading-none tracking-tight">
                 Sabah Electricity Supply Industry
               </span>
             </div>
           </div>
 
           {/* ─── ACTIONS AREA ─── */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
 
             {/* Streak Badge */}
             {streak > 0 && (
@@ -242,17 +274,25 @@ function App() {
             )}
 
             {/* Settings/Theme Pill Group */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 rounded-full p-1 border border-slate-200/50 dark:border-slate-700/50 shrink-0">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 border border-slate-200 dark:border-slate-700 shrink-0">
 
               {/* Admin Button */}
-              <button onClick={() => setActiveTab('admin')} className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all relative">
+              <button
+                onClick={() => setActiveTab('admin')}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all relative"
+                aria-label="Admin settings"
+              >
                 <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 {/* Small indicator dot to make it pop */}
                 <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full border-[1.5px] border-slate-100 dark:border-slate-800"></div>
               </button>
 
               {/* Dark Mode Toggle */}
-              <button onClick={() => setIsDark(!isDark)} className="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all hover:text-slate-900 dark:hover:text-white">
+              <button
+                onClick={() => setIsDark(!isDark)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all hover:text-slate-900 dark:hover:text-white"
+                aria-label="Toggle theme"
+              >
                 {isDark ? (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                 ) : (
@@ -261,7 +301,11 @@ function App() {
               </button>
 
               {/* Logout Button */}
-              <button onClick={handleLogout} className="w-8 h-8 flex items-center justify-center rounded-full text-rose-500/80 dark:text-rose-400/80 hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:shadow-sm transition-all hover:text-rose-600 dark:hover:text-rose-300 ml-1">
+              <button
+                onClick={handleLogout}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:shadow-sm transition-all hover:text-rose-600"
+                aria-label="Sign out"
+              >
                 <svg className="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
               </button>
             </div>
