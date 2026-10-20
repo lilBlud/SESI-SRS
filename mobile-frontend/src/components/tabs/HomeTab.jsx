@@ -244,10 +244,10 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
               </div>
               <div className="flex items-baseline gap-1.5 mt-0.5">
                 <span className="text-[20px] sm:text-[22px] font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                  {(visitorStats?.todayVisits || 29).toLocaleString()}
+                  {(visitorStats?.todayVisits ?? 0).toLocaleString()}
                 </span>
                 <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 truncate">
-                  ({(visitorStats?.totalVisits || 799).toLocaleString()} total)
+                  ({(visitorStats?.totalVisits ?? 0).toLocaleString()} total)
                 </span>
               </div>
             </div>
@@ -266,7 +266,7 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                 Users
               </div>
               <div className="text-[20px] sm:text-[22px] font-black text-slate-900 dark:text-white tracking-tight leading-none mt-0.5">
-                {(visitorStats?.uniqueVisitors || 81).toLocaleString()}
+                {(visitorStats?.uniqueVisitors ?? 0).toLocaleString()}
               </div>
             </div>
           </div>

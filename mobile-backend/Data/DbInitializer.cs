@@ -27,6 +27,7 @@ namespace mobile_backend.Data
                     ALTER TABLE ""StaffUsers"" ADD COLUMN IF NOT EXISTS ""ProfilePicture"" text DEFAULT '';
                     UPDATE ""StaffUsers"" SET ""Division"" = 'IDD' WHERE ""FullName"" = 'Demo User' OR ""StaffId"" = 'DEMO-001';
                     UPDATE ""UserAnswers"" SET ""Division"" = 'IDD' WHERE ""Username"" = 'Demo User' OR ""StaffId"" = 'DEMO-001';
+                    DELETE FROM ""VisitorLogs"" WHERE ""VisitorId"" LIKE 'v_seed_%';
                 ", conn);
                 cmd.ExecuteNonQuery();
             }
@@ -77,58 +78,7 @@ namespace mobile_backend.Data
             }
             catch {}
 
-            try
-            {
-                if (!db.VisitorLogs.Any())
-                {
-                    var divisions = new[] { "IDD", "Sales Division", "Strategic Planning", "Operations", "Finance", "HR Division", "IT Division" };
-                    var sampleUsers = new[] { "Ahmad Azib", "Cameron", "Ka", "Evelien", "QuizWiz", "CoolCat", "Sarah", "John", "Nurul", "Farhan" };
-                    var rand = new Random(42);
-                    var initialLogs = new List<VisitorLog>();
 
-                    // Generate baseline visits across past 30 days
-                    for (int day = 30; day >= 1; day--)
-                    {
-                        int visitsPerDay = rand.Next(15, 35);
-                        for (int v = 0; v < visitsPerDay; v++)
-                        {
-                            var user = sampleUsers[rand.Next(sampleUsers.Length)];
-                            var div = divisions[rand.Next(divisions.Length)];
-                            var vid = "v_seed_" + rand.Next(1, 80);
-                            initialLogs.Add(new VisitorLog
-                            {
-                                VisitorId = vid,
-                                Username = rand.Next(10) > 3 ? user : "",
-                                Division = div,
-                                Path = "/",
-                                UserAgent = "Mozilla/5.0 (Mobile)",
-                                VisitedAt = DateTime.UtcNow.AddDays(-day).AddMinutes(rand.Next(0, 1440))
-                            });
-                        }
-                    }
-
-                    // Add today's visits
-                    for (int v = 0; v < 18; v++)
-                    {
-                        var user = sampleUsers[rand.Next(sampleUsers.Length)];
-                        var div = divisions[rand.Next(divisions.Length)];
-                        var vid = "v_seed_" + rand.Next(1, 40);
-                        initialLogs.Add(new VisitorLog
-                        {
-                            VisitorId = vid,
-                            Username = rand.Next(10) > 2 ? user : "",
-                            Division = div,
-                            Path = "/",
-                            UserAgent = "Mozilla/5.0 (Mobile)",
-                            VisitedAt = DateTime.UtcNow.AddMinutes(-rand.Next(5, 360))
-                        });
-                    }
-
-                    db.VisitorLogs.AddRange(initialLogs);
-                    db.SaveChanges();
-                }
-            }
-            catch {}
 
             try 
             {

@@ -430,10 +430,11 @@ app.MapPost("/api/visitors/record", async (RecordVisitRequest req, HttpContext c
         await db.SaveChangesAsync();
     }
 
+    var baseQuery = db.VisitorLogs.Where(v => !v.VisitorId.StartsWith("v_seed_"));
     var todayStart = DateTime.UtcNow.AddHours(8).Date.AddHours(-8);
-    var totalVisits = await db.VisitorLogs.CountAsync();
-    var todayVisits = await db.VisitorLogs.CountAsync(v => v.VisitedAt >= todayStart);
-    var uniqueVisitors = await db.VisitorLogs.Select(v => v.VisitorId).Distinct().CountAsync();
+    var totalVisits = await baseQuery.CountAsync();
+    var todayVisits = await baseQuery.CountAsync(v => v.VisitedAt >= todayStart);
+    var uniqueVisitors = await baseQuery.Select(v => v.VisitorId).Distinct().CountAsync();
 
     return Results.Ok(new
     {
@@ -445,22 +446,23 @@ app.MapPost("/api/visitors/record", async (RecordVisitRequest req, HttpContext c
 
 app.MapGet("/api/visitors/stats", async (AppDbContext db) =>
 {
+    var baseQuery = db.VisitorLogs.Where(v => !v.VisitorId.StartsWith("v_seed_"));
     var todayStart = DateTime.UtcNow.AddHours(8).Date.AddHours(-8);
-    var totalVisits = await db.VisitorLogs.CountAsync();
-    var todayVisits = await db.VisitorLogs.CountAsync(v => v.VisitedAt >= todayStart);
-    var uniqueVisitors = await db.VisitorLogs.Select(v => v.VisitorId).Distinct().CountAsync();
+    var totalVisits = await baseQuery.CountAsync();
+    var todayVisits = await baseQuery.CountAsync(v => v.VisitedAt >= todayStart);
+    var uniqueVisitors = await baseQuery.Select(v => v.VisitorId).Distinct().CountAsync();
 
-    var divisionBreakdown = await db.VisitorLogs
-        .Where(v => !string.IsNullOrEmpty(v.Division))
+    var divisionBreakdown = await baseQuery
+        .Where(v => !string.IsNullOrEmpty(v.Division) && v.Division != "General")
         .GroupBy(v => v.Division)
         .Select(g => new { division = g.Key, count = g.Count() })
         .OrderByDescending(x => x.count)
         .Take(8)
         .ToListAsync();
 
-    var recentVisits = await db.VisitorLogs
+    var recentVisits = await baseQuery
         .OrderByDescending(v => v.VisitedAt)
-        .Take(15)
+        .Take(25)
         .Select(v => new
         {
             id = v.Id,

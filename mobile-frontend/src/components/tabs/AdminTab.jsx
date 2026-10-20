@@ -478,7 +478,7 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
   }
 
   const sections = [
-    { id: 'traffic', label: 'Visitors', count: (trafficData?.totalVisits ?? visitorStats?.totalVisits ?? 0) },
+    { id: 'traffic', label: 'Visitors' },
     { id: 'questions', label: 'Quiz', count: qCount },
     { id: 'glossary', label: 'Dictionary', count: glossaryTerms.length },
     { id: 'infographics', label: 'Posts', count: infographics.length },
@@ -504,16 +504,18 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
               setActiveSection(s.id);
               setShowForm(false);
             }} 
-            className={`py-2 px-1 rounded-xl text-center transition-all ${
+            className={`py-2 px-1 rounded-xl text-center transition-all flex flex-col items-center justify-center min-h-[46px] ${
               activeSection === s.id 
                 ? 'bg-emerald-600 text-white shadow-md font-black' 
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold'
             }`}
           >
             <div className="text-[12px] sm:text-[13px] leading-tight truncate">{s.label}</div>
-            <div className={`text-[10px] mt-0.5 ${activeSection === s.id ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
-              ({s.count})
-            </div>
+            {s.count !== undefined && (
+              <div className={`text-[10px] mt-0.5 ${activeSection === s.id ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
+                ({s.count})
+              </div>
+            )}
           </button>
         ))}
       </div>
