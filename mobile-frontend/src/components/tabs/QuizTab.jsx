@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { API_BASE, currentMonth } from '../../utils/constants';
+import { getQuizQuestionsDirect, supabase } from '../../utils/supabaseClient';
 
 export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   const [state, setState] = useState('idle'); // idle | loading | active | review | leaderboard
@@ -18,8 +19,11 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   const startQuiz = async () => {
     setState('loading');
     try {
-      const res = await fetch(`${API_BASE}/api/quiz/${currentMonth}`);
-      const data = await res.json();
+      let data = await getQuizQuestionsDirect(currentMonth).catch(() => null);
+      if (!data || data.length === 0) {
+        const res = await fetch(`${API_BASE}/api/quiz/${currentMonth}`);
+        data = await res.json();
+      }
       if (!data || data.length === 0) {
         alert("No questions available for this month yet. Check back later!");
         setState('idle');
@@ -35,7 +39,7 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
       setQStartTime(Date.now());
     } catch (e) {
       console.error(e);
-      alert("Network Error: " + e.message + ". Make sure backend is running and accessible.");
+      alert("Network Error: " + e.message + ". Make sure database is accessible.");
       setState('idle');
     }
   };
@@ -61,37 +65,45 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
 
     setAnswers(prev => [...prev, { questionId: q.id, selected: idx, correct: q.correctIndex, isCorrect, points: pointsAwarded }]);
 
+    const payload = {
+      Username: USERNAME,
+      PreferredName: user?.preferredName || "",
+      Division: DIVISION,
+      Month: currentMonth,
+      QuestionId: q.id || q.Id || 0,
+      QuestionText: q.question || q.Question || "",
+      SelectedOption: (q.options || q.Options || [])[idx] || "",
+      IsCorrect: isCorrect,
+      TimeTakenSeconds: timeTakenSeconds,
+      PointsAwarded: pointsAwarded
+    };
+
     fetch(`${API_BASE}/api/submit-answer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        Username: USERNAME,
-        PreferredName: user?.preferredName || "",
-        Division: DIVISION,
-        Month: currentMonth,
-        QuestionId: q.id,
-        QuestionText: q.question,
-        SelectedOption: q.options[idx],
-        IsCorrect: isCorrect,
-        TimeTakenSeconds: timeTakenSeconds,
-        PointsAwarded: pointsAwarded
-      })
+      body: JSON.stringify(payload)
     })
       .then(async (res) => {
-        if (!res.ok) {
-          const text = await res.text();
-          alert("Failed to save answer: " + res.status + " " + text);
-        } else {
-          fetch(`${API_BASE}/api/streak/record`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: USERNAME })
-          }).then(r => r.ok && r.json()).then(data => {
-            if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
-          }).catch(() => { });
-        }
+        if (!res.ok) throw new Error("API status " + res.status);
+        fetch(`${API_BASE}/api/streak/record`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: USERNAME })
+        }).then(r => r.ok && r.json()).then(data => {
+          if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
+        }).catch(() => { });
       })
-      .catch(e => alert("Network error saving answer: " + e.message));
+      .catch(async () => {
+        // Fallback to direct Supabase insert
+        try {
+          await supabase.from('UserAnswers').insert([{
+            ...payload,
+            DateAnswered: new Date().toISOString()
+          }]);
+        } catch (dbErr) {
+          console.error("Supabase direct insert fallback error:", dbErr);
+        }
+      });
   };
 
   const nextQuestion = () => {

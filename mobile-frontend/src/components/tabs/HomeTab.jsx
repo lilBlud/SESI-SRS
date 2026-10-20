@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PostImageSlider, saveImage } from '../ui';
 import { API_BASE, currentMonth, CATEGORIES, getColor, getCatMeta } from '../../utils/constants';
+import { getInfographicsDirect, getLeaderboardDirect } from '../../utils/supabaseClient';
 
 function LeaderboardAvatar({
   entry,
@@ -86,33 +87,61 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
   const filteredPosts = postCat === 'All' ? posts : posts.filter(p => (p.category || 'General') === postCat);
 
   const fetchLeaderboard = React.useCallback(() => {
-    fetch(`${API_BASE}/api/leaderboard/${currentMonth}`)
-      .then(res => res.ok ? res.json() : [])
+    const applyPodium = (data) => {
+      if (!data || data.length < 3) {
+        data = [
+          { username: "Cameron", displayName: "Cameron", score: 4201, division: "Sales Division" },
+          { username: "Ka", displayName: "Ka", score: 3912, division: "HR Division" },
+          { username: "Evelien", displayName: "Evelien", score: 2926, division: "IT Division" },
+          { username: "QuizWiz", displayName: "QuizWiz", score: 2800, division: "Marketing" },
+          { username: "CoolCat", displayName: "CoolCat", score: 2500, division: "Finance" },
+          { username: "Ahmad", displayName: "Ahmad", score: 1920, division: "Strategic Planning" },
+          { username: "Sarah", displayName: "Sarah", score: 1850, division: "Operations" },
+          { username: "John", displayName: "John", score: 1500, division: "HR Division" }
+        ];
+      }
+      setLeaderboard(data);
+      setLoadingLb(false);
+    };
+
+    getLeaderboardDirect(currentMonth)
       .then(data => {
-        // Inject mock Kahoot podium data if the DB doesn't have enough entries
-        if (data.length < 3) {
-          data = [
-            { username: "Cameron", displayName: "Cameron", score: 4201, division: "Sales Division" },
-            { username: "Ka", displayName: "Ka", score: 3912, division: "HR Division" },
-            { username: "Evelien", displayName: "Evelien", score: 2926, division: "IT Division" },
-            { username: "QuizWiz", displayName: "QuizWiz", score: 2800, division: "Marketing" },
-            { username: "CoolCat", displayName: "CoolCat", score: 2500, division: "Finance" },
-            { username: "Ahmad", displayName: "Ahmad", score: 1920, division: "Strategic Planning" },
-            { username: "Sarah", displayName: "Sarah", score: 1850, division: "Operations" },
-            { username: "John", displayName: "John", score: 1500, division: "HR Division" }
-          ];
+        if (data && data.length > 0) {
+          applyPodium(data);
+        } else {
+          fetch(`${API_BASE}/api/leaderboard/${currentMonth}`)
+            .then(res => res.ok ? res.json() : [])
+            .then(applyPodium)
+            .catch(() => applyPodium([]));
         }
-        setLeaderboard(data);
-        setLoadingLb(false);
       })
-      .catch(() => setLoadingLb(false));
+      .catch(() => {
+        fetch(`${API_BASE}/api/leaderboard/${currentMonth}`)
+          .then(res => res.ok ? res.json() : [])
+          .then(applyPodium)
+          .catch(() => applyPodium([]));
+      });
   }, []);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/admin/infographics`)
-      .then(res => res.json())
-      .then(data => setPosts(data))
-      .catch(console.error);
+    getInfographicsDirect()
+      .then(data => {
+        if (data && data.length > 0) {
+          setPosts(data);
+        } else {
+          fetch(`${API_BASE}/api/admin/infographics`)
+            .then(res => res.json())
+            .then(d => setPosts(d))
+            .catch(console.error);
+        }
+      })
+      .catch(err => {
+        console.warn("Direct Supabase fetch failed, trying API fallback:", err);
+        fetch(`${API_BASE}/api/admin/infographics`)
+          .then(res => res.json())
+          .then(data => setPosts(data))
+          .catch(console.error);
+      });
 
     fetchLeaderboard();
   }, [fetchLeaderboard]);

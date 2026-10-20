@@ -3,6 +3,7 @@ import { AdminTab, HomeTab, GlossaryTab, QuizTab, ProfileTab } from './component
 import LoginPage from './components/pages/LoginPage';
 import PasscodeGate from './components/pages/PasscodeGate';
 import { API_BASE } from './utils/constants.js';
+import { getGlossaryDirect } from './utils/supabaseClient.js';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { useBookmarks } from './hooks/useBookmarks';
 
@@ -78,10 +79,24 @@ function App() {
 
   // Fetch glossary from DB
   const fetchGlossary = useCallback(() => {
-    fetch(`${API_BASE}/api/glossary?t=${Date.now()}`)
-      .then(r => r.json())
-      .then(d => setGlossary(d))
-      .catch(e => console.error(e));
+    getGlossaryDirect()
+      .then(d => {
+        if (d && d.length > 0) {
+          setGlossary(d);
+        } else {
+          fetch(`${API_BASE}/api/glossary?t=${Date.now()}`)
+            .then(r => r.json())
+            .then(data => setGlossary(data))
+            .catch(e => console.error(e));
+        }
+      })
+      .catch(err => {
+        console.warn("Direct Supabase glossary fetch failed, trying API fallback:", err);
+        fetch(`${API_BASE}/api/glossary?t=${Date.now()}`)
+          .then(r => r.json())
+          .then(d => setGlossary(d))
+          .catch(e => console.error(e));
+      });
   }, []);
 
   useEffect(() => { fetchGlossary(); }, [fetchGlossary]);

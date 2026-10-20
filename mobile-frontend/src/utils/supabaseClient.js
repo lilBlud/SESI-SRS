@@ -1,0 +1,115 @@
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://avlypjdoahothehakchf.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable__T0Lcs6Js5Iy8x3EVnMhsw_6Cj_gcxv';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/**
+ * Fetch all infographics directly from Supabase.
+ * Returns array of normalized infographic objects.
+ */
+export async function getInfographicsDirect() {
+  const { data, error } = await supabase
+    .from('Infographics')
+    .select('*')
+    .order('PostedAt', { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map(p => ({
+    id: p.Id ?? p.id,
+    title: p.Title ?? p.title ?? '',
+    description: p.Description ?? p.description ?? '',
+    imageUrl: p.ImageUrl ?? p.imageUrl ?? '',
+    additionalImages: p.AdditionalImages ?? p.additionalImages ?? '',
+    category: p.Category ?? p.category ?? 'General',
+    postedAt: p.PostedAt ?? p.postedAt ?? new Date().toISOString()
+  }));
+}
+
+/**
+ * Fetch all glossary terms directly from Supabase.
+ * Returns array of normalized glossary term objects.
+ */
+export async function getGlossaryDirect() {
+  const { data, error } = await supabase
+    .from('GlossaryTerms')
+    .select('*')
+    .order('Term', { ascending: true });
+
+  if (error) throw error;
+
+  return (data || []).map(g => ({
+    id: g.Id ?? g.id,
+    term: g.Term ?? g.term ?? '',
+    full: g.FullName ?? g.full ?? g.fullName ?? '',
+    desc: g.Description ?? g.desc ?? g.description ?? '',
+    formula: g.Formula ?? g.formula ?? '',
+    formulaNotations: g.FormulaNotations ?? g.formulaNotations ?? '',
+    formulaTermMeanings: g.FormulaTermMeanings ?? g.formulaTermMeanings ?? '',
+    cat: g.Category ?? g.cat ?? g.category ?? 'General',
+    chartData: g.ChartData ?? g.chartData ?? ''
+  }));
+}
+
+/**
+ * Fetch monthly quiz questions directly from Supabase.
+ */
+export async function getQuizQuestionsDirect(month) {
+  const { data, error } = await supabase
+    .from('QuizQuestions')
+    .select('*')
+    .eq('Month', month);
+
+  if (error) throw error;
+
+  return (data || []).map(q => {
+    const correctOpt = q.CorrectOption ?? q.correctOption ?? 'A';
+    const optMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+    return {
+      Id: q.Id ?? q.id,
+      Question: q.QuestionText ?? q.questionText ?? '',
+      Options: [
+        q.OptionA ?? q.optionA ?? '',
+        q.OptionB ?? q.optionB ?? '',
+        q.OptionC ?? q.optionC ?? '',
+        q.OptionD ?? q.optionD ?? ''
+      ],
+      CorrectIndex: optMap[correctOpt.toUpperCase()] ?? 0
+    };
+  });
+}
+
+/**
+ * Fetch monthly leaderboard directly from Supabase UserAnswers.
+ */
+export async function getLeaderboardDirect(month) {
+  const { data, error } = await supabase
+    .from('UserAnswers')
+    .select('*')
+    .eq('Month', month);
+
+  if (error) throw error;
+
+  const raw = data || [];
+  const groups = {};
+
+  for (const a of raw) {
+    const key = (a.PreferredName ?? a.preferredName ?? '').trim() || (a.Username ?? a.username ?? 'Anonymous');
+    if (!groups[key]) {
+      groups[key] = {
+        username: key,
+        displayName: key,
+        score: 0,
+        division: a.Division ?? a.division ?? 'General',
+        dateTaken: a.DateAnswered ?? a.dateAnswered ?? ''
+      };
+    }
+    groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
+  }
+
+  return Object.values(groups)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
+}
