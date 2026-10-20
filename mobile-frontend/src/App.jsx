@@ -260,19 +260,6 @@ function App() {
                 <svg className="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
               </button>
             </div>
-
-            {/* Profile Avatar Quick Button */}
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all shrink-0 active:scale-95 flex items-center justify-center font-bold text-xs shadow-sm ml-0.5 ${activeTab === 'profile' ? 'border-emerald-500 ring-2 ring-emerald-400/40' : 'border-slate-200 dark:border-slate-700 hover:border-emerald-400'} bg-gradient-to-br from-emerald-500 to-teal-600 text-white`}
-              title="My Profile"
-            >
-              {user?.profilePicture ? (
-                <img src={user.profilePicture} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span>{(user?.preferredName || USERNAME).charAt(0).toUpperCase()}</span>
-              )}
-            </button>
           </div>
         </div>
       </header>
