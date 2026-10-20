@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CorporatePerformanceChart, getYAxisUnit } from '../ui';
 import { DEFAULT_HISTORICAL_METRICS } from '../../data/historicalPerformanceData';
-import { getInfographicsDirect, supabase } from '../../utils/supabaseClient';
+import { getInfographicsDirect, getGlossaryDirect, supabase } from '../../utils/supabaseClient';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 const currentMonth = new Date().toISOString().slice(0, 7);
@@ -86,6 +86,15 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
   };
 
   const fetchGlossary = async () => {
+    try {
+      const direct = await getGlossaryDirect();
+      if (direct && direct.length >= 0) {
+        setGlossaryTerms(direct);
+        return;
+      }
+    } catch (e) {
+      console.warn("Direct fetch glossary failed in AdminTab:", e);
+    }
     const res = await fetch(`${API_BASE}/api/admin/glossary?t=${Date.now()}`).catch(() => null);
     if (res && res.ok) setGlossaryTerms(await res.json());
   };
@@ -127,30 +136,68 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
     const finalChartData = [...gChartData];
     const isPerfStudio = dictSubTab === 'corporate';
 
-    const payload = { 
-      term: gTerm.trim(), 
-      fullName: isPerfStudio ? '' : (gFull || ''), 
-      description: gDesc, 
-      formula: isPerfStudio ? (gFormula || 'area') : (gFormula || ''), 
-      formulaNotations: isPerfStudio ? (gYAxisFormat || 'in %') : (gNotations || ''), 
-      formulaTermMeanings: isPerfStudio ? '' : (gMeanings || ''), 
-      category: gCat || (isPerfStudio ? 'Corporate Performance' : 'IBR Framework'), 
-      chartData: isPerfStudio && finalChartData.length > 0 ? JSON.stringify(finalChartData) : '' 
+    const supabasePayload = {
+      Term: gTerm.trim(),
+      FullName: isPerfStudio ? '' : (gFull || ''),
+      Description: gDesc || '',
+      Formula: isPerfStudio ? (gFormula || 'area') : (gFormula || ''),
+      FormulaNotations: isPerfStudio ? (gYAxisFormat || 'in %') : (gNotations || ''),
+      FormulaTermMeanings: isPerfStudio ? '' : (gMeanings || ''),
+      Category: gCat || (isPerfStudio ? 'Corporate Performance' : 'IBR Framework'),
+      ChartData: isPerfStudio && finalChartData.length > 0 ? JSON.stringify(finalChartData) : '',
+      CreatedAt: new Date().toISOString()
     };
-    let res;
-    if (gEditId) {
-      res = await fetch(`${API_BASE}/api/admin/glossary/${gEditId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    } else {
-      res = await fetch(`${API_BASE}/api/admin/glossary`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+
+    let directSuccess = false;
+    try {
+      if (gEditId) {
+        const { error } = await supabase
+          .from('GlossaryTerms')
+          .update(supabasePayload)
+          .eq('Id', gEditId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('GlossaryTerms')
+          .insert([supabasePayload]);
+        if (error) throw error;
+      }
+      directSuccess = true;
+    } catch (sbErr) {
+      console.warn("Direct Supabase glossary post error, trying API fallback:", sbErr);
     }
 
-    if (res.ok) { 
-      setGMsg(gEditId ? '✅ Card updated successfully!' : '✅ New card created successfully!'); 
-      fetchGlossary(); 
-      if (onGlossaryChange) onGlossaryChange(); 
+    if (directSuccess) {
+      setGMsg(gEditId ? '✅ Card updated successfully!' : '✅ New card created successfully!');
+      fetchGlossary();
+      if (onGlossaryChange) onGlossaryChange();
       cancelEditGlossaryTerm();
+    } else {
+      const payload = { 
+        term: gTerm.trim(), 
+        fullName: isPerfStudio ? '' : (gFull || ''), 
+        description: gDesc, 
+        formula: isPerfStudio ? (gFormula || 'area') : (gFormula || ''), 
+        formulaNotations: isPerfStudio ? (gYAxisFormat || 'in %') : (gNotations || ''), 
+        formulaTermMeanings: isPerfStudio ? '' : (gMeanings || ''), 
+        category: gCat || (isPerfStudio ? 'Corporate Performance' : 'IBR Framework'), 
+        chartData: isPerfStudio && finalChartData.length > 0 ? JSON.stringify(finalChartData) : '' 
+      };
+      let res;
+      if (gEditId) {
+        res = await fetch(`${API_BASE}/api/admin/glossary/${gEditId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      } else {
+        res = await fetch(`${API_BASE}/api/admin/glossary`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      }
+
+      if (res && res.ok) { 
+        setGMsg(gEditId ? '✅ Card updated successfully!' : '✅ New card created successfully!'); 
+        fetchGlossary(); 
+        if (onGlossaryChange) onGlossaryChange(); 
+        cancelEditGlossaryTerm();
+      }
+      else setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
     }
-    else setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
     setTimeout(() => setGMsg(''), 3500);
   };
 
@@ -292,7 +339,13 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
 
   const deleteGlossaryTerm = async (id) => {
     if (!confirm('Delete this card / term?')) return;
-    await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE' });
+    try {
+      const { error } = await supabase.from('GlossaryTerms').delete().eq('Id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.warn("Direct Supabase delete glossary failed, trying API:", err);
+      await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE' }).catch(() => null);
+    }
     fetchGlossary();
     if (onGlossaryChange) onGlossaryChange();
   };
