@@ -25,6 +25,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                 errorCodesToAdd: null);
         }));
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 52428800; // 50MB
+});
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.MaxDepth = 128;
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -249,7 +258,8 @@ app.MapPost("/api/user/profile-picture", async (UpdateProfilePictureRequest req,
     if (string.IsNullOrWhiteSpace(req.Username))
         return Results.BadRequest(new { error = "Username is required" });
 
-    var staff = await db.StaffUsers.FirstOrDefaultAsync(u => u.FullName == req.Username || u.Email == req.Username);
+    var target = req.Username.Trim().ToLower();
+    var staff = await db.StaffUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == target || u.FullName.ToLower() == target);
     if (staff == null)
         return Results.NotFound(new { error = "User not found" });
 
@@ -259,9 +269,11 @@ app.MapPost("/api/user/profile-picture", async (UpdateProfilePictureRequest req,
 }).WithName("UpdateProfilePicture").RequireCors("AllowAll");
 
 // ─── User: Get User Profile ───
+app.MapMethods("/api/user/profile/{username}", new[] { "OPTIONS" }, () => Results.Ok()).RequireCors("AllowAll");
 app.MapGet("/api/user/profile/{username}", async (string username, AppDbContext db) =>
 {
-    var staff = await db.StaffUsers.FirstOrDefaultAsync(u => u.FullName == username || u.Email == username);
+    var target = (username ?? "").Trim().ToLower();
+    var staff = await db.StaffUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == target || u.FullName.ToLower() == target);
     if (staff == null)
         return Results.NotFound(new { error = "User not found" });
 
