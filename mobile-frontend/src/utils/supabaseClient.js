@@ -140,6 +140,42 @@ function extractUserTargets(userOrIdentifiers) {
 }
 
 /**
+ * Check if the user has already answered the quiz for the specified month.
+ * Returns status including whether they have attempted, recorded score, and count.
+ */
+export async function getUserMonthlyQuizStatusDirect(userOrIdentifiers, month) {
+  const targets = extractUserTargets(userOrIdentifiers);
+  if (targets.length === 0) {
+    return { hasAttempted: false, recordedScore: 0, answersCount: 0, answeredQuestionIds: [] };
+  }
+
+  const { data, error } = await supabase
+    .from('UserAnswers')
+    .select('*')
+    .eq('Month', month);
+
+  if (error || !data) {
+    return { hasAttempted: false, recordedScore: 0, answersCount: 0, answeredQuestionIds: [] };
+  }
+
+  const userAnswers = data.filter(a => {
+    const u = (a.Username ?? a.username ?? '').trim().toLowerCase();
+    const p = (a.PreferredName ?? a.preferredName ?? '').trim().toLowerCase();
+    return targets.includes(u) || (p && targets.includes(p));
+  });
+
+  const totalScore = userAnswers.reduce((sum, a) => sum + Number(a.PointsAwarded ?? a.pointsAwarded ?? 0), 0);
+  const answeredQuestionIds = [...new Set(userAnswers.map(a => Number(a.QuestionId ?? a.questionId)).filter(Boolean))];
+
+  return {
+    hasAttempted: userAnswers.length > 0,
+    recordedScore: totalScore,
+    answersCount: userAnswers.length,
+    answeredQuestionIds
+  };
+}
+
+/**
  * Fetch user's recent answered questions directly from Supabase.
  */
 export async function getUserRecentAnswersDirect(userOrIdentifiers, month) {

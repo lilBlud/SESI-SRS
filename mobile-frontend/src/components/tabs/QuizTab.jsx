@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API_BASE, currentMonth } from '../../utils/constants';
-import { getQuizQuestionsDirect, supabase } from '../../utils/supabaseClient';
+import { getQuizQuestionsDirect, getUserMonthlyQuizStatusDirect, supabase } from '../../utils/supabaseClient';
 
 export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   const [state, setState] = useState('idle'); // idle | loading | active | review | leaderboard
@@ -9,16 +9,40 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
   const [answers, setAnswers] = useState([]);
-  const [score, setScore] = useState(0); // This is now total points
+  const [score, setScore] = useState(0); // Current run points
   const [qStartTime, setQStartTime] = useState(0);
+  const [quizStatus, setQuizStatus] = useState({
+    hasAttempted: false,
+    recordedScore: 0,
+    answersCount: 0,
+    answeredQuestionIds: []
+  });
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
 
   const USERNAME = user?.fullName || "Ahmad Azib Danish"; // Simulated logged-in user
   const DIVISION = user?.division || "Strategic Planning Division"; // Simulated division
+  const userIdentifiers = [user?.fullName, user?.preferredName, user?.email, USERNAME].filter(Boolean);
+
+  // Fetch monthly quiz status on mount or user change
+  useEffect(() => {
+    getUserMonthlyQuizStatusDirect(userIdentifiers, currentMonth)
+      .then(status => {
+        if (status) setQuizStatus(status);
+      })
+      .catch(() => {});
+  }, [user?.fullName, user?.preferredName, user?.email, USERNAME]);
 
   // Fetch Monthly questions
   const startQuiz = async () => {
     setState('loading');
     try {
+      // Re-verify latest status
+      const latestStatus = await getUserMonthlyQuizStatusDirect(userIdentifiers, currentMonth).catch(() => quizStatus);
+      if (latestStatus) {
+        setQuizStatus(latestStatus);
+        setIsPracticeMode(latestStatus.hasAttempted);
+      }
+
       let data = await getQuizQuestionsDirect(currentMonth).catch(() => null);
       if (!data || data.length === 0) {
         const res = await fetch(`${API_BASE}/api/quiz/${currentMonth}`).catch(() => null);
@@ -61,40 +85,45 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
     const q = questions[currentQ];
     const isCorrect = idx === q.correctIndex;
 
+    // First attempt only check: User must not be in practice mode and question not previously answered
+    const isFirstTime = !isPracticeMode && !quizStatus.answeredQuestionIds.includes(Number(q.id));
+
     let pointsAwarded = 0;
-    if (isCorrect) {
+    if (isCorrect && isFirstTime) {
       pointsAwarded = Math.max(500, 1000 - (timeTakenSeconds * 10)); // max 1000, min 500
       setScore(s => s + pointsAwarded);
     }
 
-    setAnswers(prev => [...prev, { questionId: q.id, selected: idx, correct: q.correctIndex, isCorrect, points: pointsAwarded }]);
+    setAnswers(prev => [...prev, { questionId: q.id, selected: idx, correct: q.correctIndex, isCorrect, points: pointsAwarded, isFirstTime }]);
 
-    const payload = {
-      Username: USERNAME,
-      PreferredName: user?.preferredName || "",
-      Division: DIVISION,
-      Month: currentMonth,
-      QuestionId: q.id || q.Id || 0,
-      QuestionText: q.question || q.Question || "",
-      SelectedOption: (q.options || q.Options || [])[idx] || "",
-      IsCorrect: isCorrect,
-      TimeTakenSeconds: timeTakenSeconds,
-      PointsAwarded: pointsAwarded
-    };
+    // Only record to leaderboard database on first attempt
+    if (isFirstTime) {
+      const payload = {
+        Username: USERNAME,
+        PreferredName: user?.preferredName || "",
+        Division: DIVISION,
+        Month: currentMonth,
+        QuestionId: q.id || q.Id || 0,
+        QuestionText: q.question || q.Question || "",
+        SelectedOption: (q.options || q.Options || [])[idx] || "",
+        IsCorrect: isCorrect,
+        TimeTakenSeconds: timeTakenSeconds,
+        PointsAwarded: pointsAwarded
+      };
 
-    // Primary: Save directly to Supabase UserAnswers
-    try {
-      await supabase.from('UserAnswers').insert([{
-        ...payload,
-        DateAnswered: new Date().toISOString()
-      }]);
-    } catch (dbErr) {
-      console.warn("Direct Supabase insert failed, trying API fallback:", dbErr);
-      fetch(`${API_BASE}/api/submit-answer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(() => {});
+      try {
+        await supabase.from('UserAnswers').insert([{
+          ...payload,
+          DateAnswered: new Date().toISOString()
+        }]);
+      } catch (dbErr) {
+        console.warn("Direct Supabase insert failed, trying API fallback:", dbErr);
+        fetch(`${API_BASE}/api/submit-answer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      }
     }
 
     // Record streak (best-effort)
@@ -155,30 +184,69 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
           {streak >= 7 && <div className="ml-auto text-[11px] bg-orange-500 text-white px-2 py-1 rounded-full font-bold">🏆 Week!</div>}
         </div>
 
+        {/* Official Score Status (if already taken) */}
+        {quizStatus.hasAttempted && (
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-4 flex items-center justify-between text-left shadow-xs">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-lg shadow-sm shrink-0">
+                ✓
+              </div>
+              <div className="min-w-0">
+                <div className="text-[14px] font-black text-emerald-950 dark:text-emerald-200 truncate">
+                  Monthly Quiz Completed
+                </div>
+                <div className="text-[12px] text-emerald-700 dark:text-emerald-400 font-semibold">
+                  Official Score: <span className="font-black text-emerald-600 dark:text-emerald-300">+{quizStatus.recordedScore} pts</span>
+                </div>
+              </div>
+            </div>
+            <span className="text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0 border border-emerald-300 dark:border-emerald-700">
+              Recorded
+            </span>
+          </div>
+        )}
+
         <div className="space-y-3">
           <button
             onClick={startQuiz}
-            className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl p-5 shadow-lg shadow-emerald-500/25 text-left active:scale-[0.98] transition-all flex items-center justify-between"
+            className={`w-full text-white rounded-2xl p-5 shadow-lg text-left active:scale-[0.98] transition-all flex items-center justify-between ${
+              quizStatus.hasAttempted
+                ? 'bg-gradient-to-r from-slate-700 to-slate-800 shadow-slate-900/20'
+                : 'bg-gradient-to-r from-emerald-600 to-teal-600 shadow-emerald-500/25'
+            }`}
           >
             <div>
-              <span className="text-[16px] font-bold">Start Monthly Quiz</span>
-              <p className="text-[13px] text-emerald-100 mt-1">Test your knowledge for this month</p>
+              <span className="text-[16px] font-bold">
+                {quizStatus.hasAttempted ? 'Retake in Practice Mode' : 'Start Monthly Quiz'}
+              </span>
+              <p className={`text-[13px] mt-1 ${quizStatus.hasAttempted ? 'text-slate-300' : 'text-emerald-100'}`}>
+                {quizStatus.hasAttempted
+                  ? 'Practice questions to refresh your knowledge (0 pts)'
+                  : 'Test your knowledge & earn leaderboard points'}
+              </p>
             </div>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+            <svg className="w-6 h-6 shrink-0 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
           </button>
 
-
+          {/* Practice Notice */}
+          {quizStatus.hasAttempted && (
+            <div className="flex items-start gap-2.5 p-3.5 bg-amber-50/90 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 rounded-xl text-[12px] text-amber-900 dark:text-amber-300 leading-relaxed text-left">
+              <span className="text-base shrink-0">ℹ️</span>
+              <span>
+                <strong>Notice:</strong> Your official score for this month is already saved to the Leaderboard. Retakes are for practice and will not award additional points.
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-
-
   // ─ Active Quiz ─
   if (state === 'active') {
     const q = questions[currentQ];
     const progress = ((currentQ + 1) / questions.length) * 100;
+    const lastAns = answers[answers.length - 1];
 
     return (
       <div className="animate-fadeIn space-y-5">
@@ -186,7 +254,14 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
           <button onClick={() => setState('idle')} className="flex items-center text-[12px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
             <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg> Back
           </button>
-          <span className="text-[12px] font-bold text-slate-500">Question {currentQ + 1}</span>
+          <div className="flex items-center gap-2">
+            {isPracticeMode && (
+              <span className="text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md">
+                Practice Mode
+              </span>
+            )}
+            <span className="text-[12px] font-bold text-slate-500">Question {currentQ + 1} / {questions.length}</span>
+          </div>
         </div>
 
         {/* Progress bar */}
@@ -222,8 +297,21 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
 
         {answered && (
           <div className="mt-6 animate-scaleIn space-y-3">
-            <div className={`text-center font-black text-xl ${answers[answers.length - 1]?.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
-              +{answers[answers.length - 1]?.points || 0} Points
+            <div className="text-center">
+              {isPracticeMode ? (
+                <div className="flex flex-col items-center justify-center gap-1">
+                  <span className={`font-black text-xl ${lastAns?.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
+                    {lastAns?.isCorrect ? '✓ Correct Answer' : '✗ Incorrect Answer'}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400">
+                    Practice Mode • 0 pts awarded
+                  </span>
+                </div>
+              ) : (
+                <div className={`font-black text-xl ${lastAns?.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                  +{lastAns?.points || 0} Points
+                </div>
+              )}
             </div>
             <button onClick={nextQuestion} className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg">
               {currentQ < questions.length - 1 ? 'Next Question →' : 'Finish Quiz'}
@@ -246,8 +334,26 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30">
             <span className="text-3xl font-black text-white">{pct}%</span>
           </div>
-          <h2 className="text-2xl font-black mt-4">Quiz Completed!</h2>
-          <p className="text-slate-500 text-[14px] mt-1">You earned <span className="font-bold text-emerald-600">{score} pts</span> ({correctCount} / {questions.length} correct)</p>
+          <h2 className="text-2xl font-black mt-4">
+            {isPracticeMode ? 'Practice Completed!' : 'Quiz Completed!'}
+          </h2>
+          <div className="text-slate-500 dark:text-slate-400 text-[14px] mt-2 px-2">
+            {isPracticeMode ? (
+              <div className="space-y-3">
+                <p>
+                  You answered <strong className="text-slate-900 dark:text-white font-bold">{correctCount} of {questions.length}</strong> questions correctly.
+                </p>
+                <div className="p-3.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl text-[12px] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 leading-relaxed text-left flex items-start gap-2">
+                  <span className="text-base shrink-0">ℹ️</span>
+                  <span>
+                    Your official monthly leaderboard score remains safe at <strong className="text-emerald-600 dark:text-emerald-400 font-black">{quizStatus.recordedScore} pts</strong>.
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p>You earned <span className="font-bold text-emerald-600">{score} pts</span> ({correctCount} / {questions.length} correct) for the Leaderboard!</p>
+            )}
+          </div>
         </div>
 
         {/* Streak update */}
@@ -259,8 +365,10 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
           </div>
         </div>
 
-
-        <button onClick={() => setState('idle')} className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white font-bold rounded-2xl">
+        <button onClick={() => {
+          setState('idle');
+          getUserMonthlyQuizStatusDirect(userIdentifiers, currentMonth).then(s => s && setQuizStatus(s)).catch(() => {});
+        }} className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white font-bold rounded-2xl">
           Back to Hub
         </button>
       </div>
