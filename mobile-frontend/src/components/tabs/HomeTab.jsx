@@ -13,7 +13,10 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
   const [showFullLb, setShowFullLb] = useState(false);
   const [imgViewerPost, setImgViewerPost] = useState(null); // { images, idx }
   const [showEditNameModal, setShowEditNameModal] = useState(false);
-  const USERNAME = user?.fullName || user?.preferredName || user?.username || user?.email || "User";
+  const preferredName = (user?.preferredName || '').trim();
+  const realFullName = (user?.fullName || user?.username || user?.email || 'User').trim();
+  const greetingName = preferredName || realFullName.split(' ')[0] || 'User';
+  const USERNAME = preferredName || realFullName;
 
   const postCatCounts = posts.reduce((acc, p) => {
     const c = p.category || 'General';
@@ -66,7 +69,7 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
   }, [fetchLeaderboard]);
 
   const handleSavePreferredName = async (newName) => {
-    const usernameTarget = user?.email || user?.fullName || USERNAME;
+    const usernameTarget = user || user?.email || user?.fullName || realFullName;
     await updatePreferredNameDirect(usernameTarget, newName);
     if (onUpdateUser) onUpdateUser({ preferredName: newName });
     fetchLeaderboard();
@@ -93,7 +96,7 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
         {/* Content */}
         <div className="relative z-10 p-6 pt-5 min-h-[170px]">
           <h1 className="text-[24px] font-black tracking-tight leading-tight text-slate-900 dark:text-white dark:[text-shadow:_0_2px_15px_rgb(0_0_0_/_1),_0_1px_2px_rgb(0_0_0_/_1)]">
-            Welcome back, {USERNAME.split(' ')[0]}!
+            Welcome back, {greetingName}!
           </h1>
           <p className="text-emerald-700 dark:text-[#a0e8c5] text-[13px] mt-1.5 leading-relaxed font-bold dark:[text-shadow:_0_1px_4px_rgb(0_0_0_/_1)]">
             Energy Transition & Regulatory updates.
@@ -530,7 +533,7 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
         isOpen={showEditNameModal}
         onClose={() => setShowEditNameModal(false)}
         currentName={user?.preferredName || ''}
-        fullName={USERNAME}
+        fullName={realFullName}
         onSave={handleSavePreferredName}
       />
 

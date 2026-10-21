@@ -108,21 +108,30 @@ function App() {
     }
   }, [user]);
 
-  // Sync latest user profile (including avatar if updated)
+  // Sync latest user profile (including avatar and preferredName if updated)
   useEffect(() => {
-    if (user?.email || user?.fullName) {
-      const u = user.email || user.fullName;
+    if (user?.email || user?.fullName || user?.staffId) {
+      const u = user.email || user.fullName || user.staffId;
       getUserProfileDirect(u)
         .then(data => {
-          if (data && data.profilePicture !== undefined && data.profilePicture !== user.profilePicture) {
-            handleUpdateUser({ profilePicture: data.profilePicture });
+          if (data) {
+            const updates = {};
+            if (data.profilePicture !== undefined && data.profilePicture !== user.profilePicture) {
+              updates.profilePicture = data.profilePicture;
+            }
+            if (data.preferredName !== undefined && data.preferredName !== user.preferredName) {
+              updates.preferredName = data.preferredName;
+            }
+            if (Object.keys(updates).length > 0) {
+              handleUpdateUser(updates);
+            }
           }
         })
         .catch(err => {
           console.warn("Direct profile sync failed:", err);
         });
     }
-  }, [user?.email, user?.fullName]);
+  }, [user?.email, user?.fullName, user?.staffId]);
 
   // Visitor Tracking
   const [visitorStats, setVisitorStats] = useState({ totalVisits: 0, todayVisits: 0, uniqueVisitors: 0 });

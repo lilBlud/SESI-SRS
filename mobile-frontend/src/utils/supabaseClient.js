@@ -290,11 +290,13 @@ export async function recordUserActivityDirect(userOrUsername) {
 
     let newlyRecorded = false;
     if (!alreadyDone) {
+      const staffId = (typeof userOrUsername === 'object' && userOrUsername?.id) ? userOrUsername.id : null;
       const { error: insErr } = await supabase
         .from('UserActivities')
         .insert([{
           Username: primaryName,
-          ActivityDate: todayTimestamp
+          ActivityDate: todayTimestamp,
+          staff_id: staffId
         }]);
       if (!insErr) newlyRecorded = true;
     }
@@ -458,7 +460,9 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
  */
 export async function getUserProfileDirect(usernameOrEmail) {
   if (!usernameOrEmail) return null;
-  const target = usernameOrEmail.trim().toLowerCase();
+  const target = (typeof usernameOrEmail === 'string' ? usernameOrEmail : String(usernameOrEmail?.email || usernameOrEmail?.fullName || usernameOrEmail?.staffId || '')).trim().toLowerCase();
+  if (!target) return null;
+
   const { data, error } = await supabase
     .from('StaffUsers')
     .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture');
@@ -467,7 +471,9 @@ export async function getUserProfileDirect(usernameOrEmail) {
 
   const user = data.find(u => 
     (u.Email && u.Email.toLowerCase() === target) || 
-    (u.FullName && u.FullName.toLowerCase() === target)
+    (u.FullName && u.FullName.toLowerCase() === target) ||
+    (u.StaffId && u.StaffId.toLowerCase() === target) ||
+    (String(u.Id) === target)
   );
 
   if (!user) return null;
@@ -513,17 +519,29 @@ export async function updateProfilePictureDirect(usernameOrEmail, profilePicture
 /**
  * Update preferred display name directly in Supabase StaffUsers and UserAnswers.
  */
-export async function updatePreferredNameDirect(usernameOrEmail, preferredName) {
-  if (!usernameOrEmail) throw new Error("Username required");
+export async function updatePreferredNameDirect(userOrUsernameOrEmail, preferredName) {
+  if (!userOrUsernameOrEmail) throw new Error("Username required");
   const trimmed = (preferredName || '').trim().slice(0, 10);
-  const target = usernameOrEmail.trim().toLowerCase();
+  
+  let target = '';
+  let targetId = null;
+  if (typeof userOrUsernameOrEmail === 'object' && userOrUsernameOrEmail !== null) {
+    targetId = userOrUsernameOrEmail.id ?? userOrUsernameOrEmail.Id ?? null;
+    target = (userOrUsernameOrEmail.email || userOrUsernameOrEmail.Email || userOrUsernameOrEmail.fullName || userOrUsernameOrEmail.FullName || userOrUsernameOrEmail.staffId || userOrUsernameOrEmail.StaffId || '').trim().toLowerCase();
+  } else {
+    target = String(userOrUsernameOrEmail).trim().toLowerCase();
+  }
 
   const { data: allUsers } = await supabase
     .from('StaffUsers')
     .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture');
+
   const match = (allUsers || []).find(u => 
+    (targetId && (u.Id === targetId || u.id === targetId)) ||
     (u.Email && u.Email.toLowerCase() === target) || 
-    (u.FullName && u.FullName.toLowerCase() === target)
+    (u.FullName && u.FullName.toLowerCase() === target) ||
+    (u.StaffId && u.StaffId.toLowerCase() === target) ||
+    (String(u.Id) === target)
   );
 
   if (match) {
@@ -534,7 +552,15 @@ export async function updatePreferredNameDirect(usernameOrEmail, preferredName) 
   }
 
   // Update in UserAnswers across all aliases
-  const targetUsernames = [usernameOrEmail, match?.FullName, match?.Email].filter(Boolean);
+  const targetUsernames = [
+    target,
+    match?.FullName,
+    match?.Email,
+    match?.StaffId,
+    typeof userOrUsernameOrEmail === 'object' ? userOrUsernameOrEmail?.fullName : null,
+    typeof userOrUsernameOrEmail === 'object' ? userOrUsernameOrEmail?.preferredName : null
+  ].filter(Boolean);
+
   for (const tu of new Set(targetUsernames)) {
     await supabase
       .from('UserAnswers')

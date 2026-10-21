@@ -25,7 +25,7 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   });
   const [isPracticeMode, setIsPracticeMode] = useState(false);
 
-  const USERNAME = user?.fullName || user?.preferredName || user?.username || user?.email || "User";
+  const USERNAME = user?.preferredName || user?.fullName || user?.username || user?.email || "User";
   const DIVISION = user?.division || "IDD";
   const userIdentifiers = extractUserTargets(user || USERNAME);
 
@@ -110,7 +110,8 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
         SelectedOption: (q.options || q.Options || [])[idx] || "",
         IsCorrect: isCorrect,
         TimeTakenSeconds: timeTakenSeconds,
-        PointsAwarded: pointsAwarded
+        PointsAwarded: pointsAwarded,
+        staff_id: user?.id || null
       };
 
       try {

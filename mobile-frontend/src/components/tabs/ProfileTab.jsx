@@ -79,7 +79,7 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
   };
 
   const handleSavePreferredName = async (newName) => {
-    const usernameTarget = user?.email || user?.fullName || USERNAME;
+    const usernameTarget = user || user?.email || user?.fullName || USERNAME;
     await updatePreferredNameDirect(usernameTarget, newName);
     if (onUpdateUser) onUpdateUser({ preferredName: newName });
     const userIdentifiers = extractUserTargets(user || usernameTarget);
