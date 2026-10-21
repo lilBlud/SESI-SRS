@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { API_BASE, currentMonth, getColor, getCatMeta } from '../../utils/constants';
+import { currentMonth, getColor, getCatMeta } from '../../utils/constants';
 import { 
   updateProfilePictureDirect, 
   updatePreferredNameDirect,
   getUserRecentAnswersDirect,
   getUserActiveMonthsDirect,
   getUserScoreAndRankDirect,
-  getLeaderboardDirect
+  extractUserTargets
 } from '../../utils/supabaseClient';
 import { CorporatePerformanceChart, PostImageSlider, InstagramPhotoCropper } from '../ui';
+import { EditPreferredNameModal } from '../modals';
 
 export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };
@@ -22,14 +23,12 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
   const [activeBookmark, setActiveBookmark] = useState(null);
   const [imgViewerIdx, setImgViewerIdx] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [selectedPhotoSrc, setSelectedPhotoSrc] = useState(null);
   const galleryInputRef = React.useRef(null);
   const cameraInputRef = React.useRef(null);
-  const USERNAME = user?.fullName || "Ahmad Azib Danish";
+  const USERNAME = user?.fullName || user?.preferredName || user?.username || user?.email || "User";
 
   const handlePhotoFileSelected = (file) => {
     if (!file) return;
@@ -49,36 +48,13 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
     setUploadingPhoto(true);
     try {
       const usernameTarget = user?.email || user?.fullName || USERNAME;
-      let directSuccess = false;
-      try {
-        await updateProfilePictureDirect(usernameTarget, croppedBase64);
-        directSuccess = true;
-      } catch (err) {
-        console.warn("Direct Supabase profile picture update failed, trying API:", err);
-      }
-
-      if (!directSuccess) {
-        const res = await fetch(`${API_BASE}/api/user/profile-picture`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: usernameTarget,
-            profilePicture: croppedBase64
-          })
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.error || `Server responded with ${res.status}`);
-        }
-      }
-
+      await updateProfilePictureDirect(usernameTarget, croppedBase64);
       if (onUpdateUser) onUpdateUser({ profilePicture: croppedBase64 });
       setSelectedPhotoSrc(null);
       setShowPhotoModal(false);
     } catch (err) {
       console.error("Profile picture upload error:", err);
-      throw new Error("Unable to save photo: " + (err.message || "Network error. Please try again."));
+      alert("Unable to save photo: " + (err.message || "Network error. Please try again."));
     } finally {
       setUploadingPhoto(false);
       if (galleryInputRef.current) galleryInputRef.current.value = '';
@@ -90,26 +66,7 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
     setUploadingPhoto(true);
     try {
       const usernameTarget = user?.email || user?.fullName || USERNAME;
-      let directSuccess = false;
-      try {
-        await updateProfilePictureDirect(usernameTarget, '');
-        directSuccess = true;
-      } catch (err) {
-        console.warn("Direct Supabase remove photo failed, trying API:", err);
-      }
-
-      if (!directSuccess) {
-        const res = await fetch(`${API_BASE}/api/user/profile-picture`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: usernameTarget,
-            profilePicture: ''
-          })
-        });
-        if (!res.ok) alert("Failed to remove profile picture");
-      }
-
+      await updateProfilePictureDirect(usernameTarget, '');
       if (onUpdateUser) onUpdateUser({ profilePicture: '' });
       setShowPhotoModal(false);
     } catch (err) {
@@ -121,39 +78,17 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
     }
   };
 
-  const handleSavePreferredName = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!editName.trim()) return;
-    setSaving(true);
-    try {
-      const trimmed = editName.trim();
-      let directSuccess = false;
-      try {
-        await updatePreferredNameDirect(USERNAME, trimmed);
-        directSuccess = true;
-      } catch (err) {
-        console.warn("Direct Supabase preferred name update failed, trying API:", err);
+  const handleSavePreferredName = async (newName) => {
+    const usernameTarget = user?.email || user?.fullName || USERNAME;
+    await updatePreferredNameDirect(usernameTarget, newName);
+    if (onUpdateUser) onUpdateUser({ preferredName: newName });
+    const userIdentifiers = extractUserTargets(user || usernameTarget);
+    getUserScoreAndRankDirect(userIdentifiers, currentMonth).then(stats => {
+      if (stats) {
+        setCurrentRank(stats.rank);
+        setTotalScore(stats.score);
       }
-
-      if (!directSuccess) {
-        const res = await fetch(`${API_BASE}/api/user/preferred-name`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: USERNAME,
-            preferredName: trimmed
-          })
-        });
-        if (!res.ok) throw new Error("API failed");
-      }
-
-      if (onUpdateUser) onUpdateUser({ preferredName: trimmed });
-      setShowEditModal(false);
-    } catch (err) {
-      alert("Error saving name: " + err.message);
-    } finally {
-      setSaving(false);
-    }
+    }).catch(() => {});
   };
 
   // Format month (e.g. "2026-10" to "Oct 2026")
@@ -165,7 +100,8 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
 
   useEffect(() => {
     // Fetch available months for this user once
-    const userIdentifiers = [user?.fullName, user?.preferredName, user?.email, USERNAME].filter(Boolean);
+    const userIdentifiers = extractUserTargets(user || USERNAME);
+    if (userIdentifiers.length === 0) return;
     getUserActiveMonthsDirect(userIdentifiers)
       .then(months => {
         const list = [...(months || [])];
@@ -174,63 +110,34 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
         }
         setActiveMonths(list);
       })
-      .catch(() => {
-        fetch(`${API_BASE}/api/profile/${encodeURIComponent(USERNAME)}/active-months`)
-          .then(r => r.ok ? r.json() : [])
-          .then(data => {
-            if (!data.includes(currentMonth)) {
-              data.unshift(currentMonth);
-            }
-            setActiveMonths(data);
-          })
-          .catch(console.error);
-      });
-  }, [USERNAME, user?.email, user?.fullName, user?.preferredName]);
+      .catch(console.error);
+  }, [USERNAME, user]);
 
   useEffect(() => {
     setLoading(true);
-    const userIdentifiers = [user?.fullName, user?.preferredName, user?.email, USERNAME].filter(Boolean);
-    const qs = filterMonth ? `?month=${filterMonth}` : '';
+    const userIdentifiers = extractUserTargets(user || USERNAME);
+    if (userIdentifiers.length === 0) {
+      setLoading(false);
+      return;
+    }
 
     Promise.all([
-      getUserRecentAnswersDirect(userIdentifiers, filterMonth).catch(() => null),
-      getUserScoreAndRankDirect(userIdentifiers, currentMonth).catch(() => null),
-      getLeaderboardDirect(currentMonth).catch(() => null)
+      getUserRecentAnswersDirect(userIdentifiers, filterMonth).catch(() => []),
+      getUserScoreAndRankDirect(userIdentifiers, currentMonth).catch(() => ({ score: 0, rank: null }))
     ])
-      .then(([directAnswers, directStats, directLeaderboard]) => {
-        if (directAnswers !== null && directStats !== null) {
-          setRecentQuizzes(directAnswers);
+      .then(([directAnswers, directStats]) => {
+        setRecentQuizzes(directAnswers || []);
+        if (directStats) {
           setCurrentRank(directStats.rank);
           setTotalScore(directStats.score);
-          setLoading(false);
-          return;
         }
-
-        // Fallback to API_BASE if direct fetch failed
-        Promise.all([
-          fetch(`${API_BASE}/api/profile/${encodeURIComponent(USERNAME)}/recent-answers${qs}`).then(r => r.ok ? r.json() : []),
-          fetch(`${API_BASE}/api/leaderboard/${currentMonth}`).then(r => r.ok ? r.json() : [])
-        ])
-          .then(([answers, leaderboard]) => {
-            setRecentQuizzes(answers);
-            const userEntry = (leaderboard || []).find(entry => 
-              entry.username === USERNAME || 
-              (entry.displayName && entry.displayName === (user?.preferredName || USERNAME)) ||
-              (user?.fullName && entry.username === user.fullName)
-            );
-            setCurrentRank(userEntry ? leaderboard.indexOf(userEntry) + 1 : null);
-            setTotalScore(userEntry ? userEntry.score : 0);
-            setLoading(false);
-          })
-          .catch(e => {
-            console.error(e);
-            setLoading(false);
-          });
+        setLoading(false);
       })
-      .catch(() => {
+      .catch(err => {
+        console.warn("Direct profile data fetch failed:", err);
         setLoading(false);
       });
-  }, [filterMonth, USERNAME, user?.preferredName, user?.email, user?.fullName]);
+  }, [filterMonth, USERNAME, user]);
 
   return (
     <div className="space-y-6 animate-slideUp">
@@ -304,10 +211,7 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold truncate">{user?.preferredName || USERNAME}</h2>
               <button
-                onClick={() => {
-                  setEditName(user?.preferredName || USERNAME);
-                  setShowEditModal(true);
-                }}
+                onClick={() => setShowEditModal(true)}
                 className="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs transition-transform active:scale-95 shrink-0"
                 title="Edit Leaderboard Preferred Name"
               >
@@ -892,58 +796,13 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
       })(), document.body)}
 
       {/* Edit Preferred Name Modal */}
-      {showEditModal && createPortal(
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800 animate-scaleIn text-left relative overflow-hidden">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-xl font-black mb-4 shadow-lg shadow-emerald-500/20">
-              ✏️
-            </div>
-            <h3 className="text-[19px] font-black text-slate-900 dark:text-white">Leaderboard Display Name</h3>
-            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Choose a shorter nickname or preferred name to show on the leaderboard and podium.
-            </p>
-
-            <form onSubmit={handleSavePreferredName} className="mt-4 space-y-4">
-              <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  Display Name (max 10 chars)
-                </label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  maxLength={10}
-                  placeholder="e.g. Azib"
-                  autoFocus
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
-                />
-                <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
-                  <span className="truncate pr-2">Real name: {USERNAME}</span>
-                  <span>{editName.length}/10</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[13px] rounded-xl transition-all active:scale-95"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving || !editName.trim()}
-                  className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-[13px] rounded-xl shadow-lg shadow-emerald-500/25 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  {saving ? "Saving..." : "Save Name"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
+      <EditPreferredNameModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        currentName={user?.preferredName || ''}
+        fullName={user?.fullName || USERNAME}
+        onSave={handleSavePreferredName}
+      />
 
       {/* Profile Photo Options Modal */}
       {/* ─── Instagram-Style Profile Photo Action Sheet ─── */}

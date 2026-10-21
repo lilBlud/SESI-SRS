@@ -70,7 +70,6 @@ function App() {
   };
 
   const bookmarkActions = useBookmarks();
-  const USERNAME = user?.fullName || "Ahmad Azib Danish";
 
   useEffect(() => {
     if (isDark) document.documentElement.classList.add('dark');
@@ -83,19 +82,10 @@ function App() {
       .then(d => {
         if (d && d.length > 0) {
           setGlossary(d);
-        } else {
-          fetch(`${API_BASE}/api/glossary?t=${Date.now()}`)
-            .then(r => r.json())
-            .then(data => setGlossary(data))
-            .catch(e => console.error(e));
         }
       })
       .catch(err => {
-        console.warn("Direct Supabase glossary fetch failed, trying API fallback:", err);
-        fetch(`${API_BASE}/api/glossary?t=${Date.now()}`)
-          .then(r => r.json())
-          .then(d => setGlossary(d))
-          .catch(e => console.error(e));
+        console.warn("Direct Supabase glossary fetch failed:", err);
       });
   }, []);
 
@@ -103,23 +93,20 @@ function App() {
 
   // Fetch streak on mount and whenever user logs in
   useEffect(() => {
-    if (user || USERNAME) {
-      getUserStreakDirect(user || USERNAME)
+    if (user) {
+      getUserStreakDirect(user)
         .then(res => {
           if (res && typeof res.streak === 'number') {
             setStreak(res.streak);
           }
         })
-        .catch(() => {
-          if (USERNAME) {
-            fetch(`${API_BASE}/api/streak/${encodeURIComponent(USERNAME)}`)
-              .then(r => r.ok ? r.json() : { streak: 0 })
-              .then(d => setStreak(d.streak || 0))
-              .catch(() => { });
-          }
+        .catch(err => {
+          console.warn("Direct streak fetch failed:", err);
         });
+    } else {
+      setStreak(0);
     }
-  }, [user, USERNAME]);
+  }, [user]);
 
   // Sync latest user profile (including avatar if updated)
   useEffect(() => {
@@ -131,15 +118,8 @@ function App() {
             handleUpdateUser({ profilePicture: data.profilePicture });
           }
         })
-        .catch(() => {
-          fetch(`${API_BASE}/api/user/profile/${encodeURIComponent(u)}`)
-            .then(r => r.ok ? r.json() : null)
-            .then(data => {
-              if (data && data.profilePicture !== undefined && data.profilePicture !== user.profilePicture) {
-                handleUpdateUser({ profilePicture: data.profilePicture });
-              }
-            })
-            .catch(() => {});
+        .catch(err => {
+          console.warn("Direct profile sync failed:", err);
         });
     }
   }, [user?.email, user?.fullName]);

@@ -214,7 +214,7 @@ export async function getLeaderboardDirect(month) {
     .slice(0, 10);
 }
 
-function extractUserTargets(userOrIdentifiers) {
+export function extractUserTargets(userOrIdentifiers) {
   if (!userOrIdentifiers) return [];
   if (Array.isArray(userOrIdentifiers)) {
     return userOrIdentifiers.map(t => String(t || '').trim().toLowerCase()).filter(Boolean);

@@ -1,107 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { PostImageSlider, saveImage } from '../ui';
-import { API_BASE, currentMonth, CATEGORIES, getColor, getCatMeta } from '../../utils/constants';
-import { getInfographicsDirect, getLeaderboardDirect } from '../../utils/supabaseClient';
-
-function LeaderboardAvatar({
-  entry,
-  user,
-  currentStreak = 0,
-  sizeClass = "w-10 h-10",
-  textClass = "text-[14px]",
-  bgClass = "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800",
-  shadowClass = "shadow-slate-400/40",
-  delayClass = "",
-  isPodium = false
-}) {
-  const [imgErr, setImgErr] = useState(false);
-
-  const isMe = entry && user && (
-    (entry.username && (entry.username.toLowerCase() === (user.fullName || '').toLowerCase() || entry.username.toLowerCase() === (user.email || '').toLowerCase())) ||
-    (entry.displayName && (
-      entry.displayName.toLowerCase() === (user.preferredName || '').toLowerCase() ||
-      entry.displayName.toLowerCase() === (user.fullName || '').toLowerCase()
-    ))
-  );
-
-  const pic = !imgErr && (entry?.profilePicture || (isMe ? user?.profilePicture : null));
-  const initials = (entry?.displayName || entry?.username || '??').substring(0, 2).toUpperCase();
-
-  const streakCount = typeof entry?.streak === 'number'
-    ? entry.streak
-    : (isMe && typeof currentStreak === 'number' ? currentStreak : 0);
-
-  if (isPodium) {
-    return (
-      <div className={`relative inline-flex items-center justify-center z-10 -mb-5 shrink-0 animate-bounce-slow ${delayClass}`}>
-        <div
-          className={`${sizeClass} rounded-full flex items-center justify-center font-black ${textClass} shadow-lg border-2 border-white dark:border-slate-900 ${bgClass} ${shadowClass} overflow-hidden p-0.5`}
-        >
-          {pic ? (
-            <img
-              src={pic}
-              alt={entry.displayName || entry.username}
-              className="w-full h-full object-cover rounded-full"
-              onError={() => setImgErr(true)}
-            />
-          ) : (
-            <span>{initials}</span>
-          )}
-        </div>
-
-        {/* Small Streak Icon on Top-Right */}
-        <div
-          className={`absolute -top-0.5 -right-3 rounded-full px-1.5 h-[15px] text-[8px] font-black flex items-center justify-center gap-0.5 shadow-xs border border-white dark:border-slate-800 z-30 pointer-events-none select-none ${
-            streakCount > 0
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
-              : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-          }`}
-          title={`${streakCount}-day streak`}
-        >
-          <span className="text-[7.5px] leading-none">🔥</span>
-          <span className="leading-none text-[8px] font-black">{streakCount}</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Row / List item avatar
-  return (
-    <div className="relative inline-flex items-center justify-center shrink-0">
-      <div
-        className={`${sizeClass} rounded-full flex items-center justify-center font-black ${textClass} shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden ${bgClass} shadow-xs p-0.5`}
-      >
-        {pic ? (
-          <img
-            src={pic}
-            alt={entry?.displayName || entry?.username}
-            className="w-full h-full object-cover rounded-full"
-            onError={() => setImgErr(true)}
-          />
-        ) : (
-          <span>{initials}</span>
-        )}
-      </div>
-
-      {/* Small Streak Icon on Top-Right */}
-      <div
-        className={`absolute -top-0.5 -right-2 rounded-full px-1 h-3 text-[7px] font-black flex items-center justify-center gap-0.5 shadow-xs border border-white dark:border-slate-800 z-20 pointer-events-none select-none ${
-          streakCount > 0
-            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
-            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-        }`}
-        title={`${streakCount}-day streak`}
-      >
-        <span className="text-[6.5px] leading-none">🔥</span>
-        <span className="leading-none text-[7px] font-black">{streakCount}</span>
-      </div>
-    </div>
-  );
-}
+import { PostImageSlider, saveImage, LeaderboardAvatar } from '../ui';
+import { FullLeaderboardModal, ImageViewerModal, EditPreferredNameModal } from '../modals';
+import { currentMonth, CATEGORIES, getColor, getCatMeta } from '../../utils/constants';
+import { getInfographicsDirect, getLeaderboardDirect, updatePreferredNameDirect } from '../../utils/supabaseClient';
 
 export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser, visitorStats, triggerInstallPrompt }) {
-  const { isBookmarked, toggleBookmark } = bookmarkActions;
+  const { isBookmarked = () => false, toggleBookmark = () => {} } = bookmarkActions || {};
   const [posts, setPosts] = useState([]);
   const [postCat, setPostCat] = useState('All');
   const [leaderboard, setLeaderboard] = useState([]);
@@ -109,9 +13,7 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
   const [showFullLb, setShowFullLb] = useState(false);
   const [imgViewerPost, setImgViewerPost] = useState(null); // { images, idx }
   const [showEditNameModal, setShowEditNameModal] = useState(false);
-  const [tempName, setTempName] = useState('');
-  const [savingName, setSavingName] = useState(false);
-  const USERNAME = user?.fullName || "Ahmad Azib Danish";
+  const USERNAME = user?.fullName || user?.preferredName || user?.username || user?.email || "User";
 
   const postCatCounts = posts.reduce((acc, p) => {
     const c = p.category || 'General';
@@ -141,20 +43,11 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
 
     getLeaderboardDirect(currentMonth)
       .then(data => {
-        if (data && data.length > 0) {
-          applyPodium(data);
-        } else {
-          fetch(`${API_BASE}/api/leaderboard/${currentMonth}`)
-            .then(res => res.ok ? res.json() : [])
-            .then(applyPodium)
-            .catch(() => applyPodium([]));
-        }
+        applyPodium(data && data.length > 0 ? data : []);
       })
-      .catch(() => {
-        fetch(`${API_BASE}/api/leaderboard/${currentMonth}`)
-          .then(res => res.ok ? res.json() : [])
-          .then(applyPodium)
-          .catch(() => applyPodium([]));
+      .catch(err => {
+        console.warn("Direct Supabase leaderboard fetch error:", err);
+        applyPodium([]);
       });
   }, []);
 
@@ -163,50 +56,20 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
       .then(data => {
         if (data && data.length > 0) {
           setPosts(data);
-        } else {
-          fetch(`${API_BASE}/api/admin/infographics`)
-            .then(res => res.json())
-            .then(d => setPosts(d))
-            .catch(console.error);
         }
       })
       .catch(err => {
-        console.warn("Direct Supabase fetch failed, trying API fallback:", err);
-        fetch(`${API_BASE}/api/admin/infographics`)
-          .then(res => res.json())
-          .then(data => setPosts(data))
-          .catch(console.error);
+        console.warn("Direct Supabase infographics fetch error:", err);
       });
 
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
-  const handleSavePreferredName = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!tempName.trim()) return;
-    setSavingName(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/user/preferred-name`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: USERNAME,
-          preferredName: tempName.trim()
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (onUpdateUser) onUpdateUser({ preferredName: data.preferredName });
-        setShowEditNameModal(false);
-        fetchLeaderboard();
-      } else {
-        alert("Failed to update preferred name");
-      }
-    } catch (err) {
-      alert("Error: " + err.message);
-    } finally {
-      setSavingName(false);
-    }
+  const handleSavePreferredName = async (newName) => {
+    const usernameTarget = user?.email || user?.fullName || USERNAME;
+    await updatePreferredNameDirect(usernameTarget, newName);
+    if (onUpdateUser) onUpdateUser({ preferredName: newName });
+    fetchLeaderboard();
   };
 
   const medals = ['🥇', '🥈', '🥉'];
@@ -651,232 +514,34 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
         )}
       </div>
 
-      {/* Full Leaderboard Modal (Mobile framed on desktop) */}
-      {showFullLb && createPortal(
-        <div 
-          className="fixed inset-0 z-[100] flex justify-center bg-slate-950/70 backdrop-blur-sm animate-fadeIn"
-          onClick={() => setShowFullLb(false)}
-        >
-          <div 
-            className="w-full max-w-[430px] h-[100vh] flex flex-col bg-slate-100 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/50 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Background Pattern */}
-            <img
-              src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
-              alt="Background"
-              className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none opacity-40 dark:opacity-20"
-            />
-            {isDark && <div className="absolute inset-0 bg-slate-950/40 -z-10 pointer-events-none"></div>}
-
-            {/* Mobile Header */}
-            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-4 pb-4 pt-[max(env(safe-area-inset-top),24px)] flex items-center shadow-md z-10 relative shrink-0">
-              <button 
-                onClick={() => setShowFullLb(false)} 
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white active:scale-95 transition-all shrink-0" 
-                aria-label="Go back"
-              >
-                <span className="text-xl leading-none font-bold">←</span>
-              </button>
-              <div className="flex-1 text-center pr-8">
-                <h2 className="text-[17px] font-black text-white leading-tight">Full Leaderboard</h2>
-                <p className="text-[11px] text-white/80 font-medium">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
-              </div>
-            </div>
-
-            {/* Scrollable Leaderboard List */}
-            <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[max(env(safe-area-inset-bottom),24px)] space-y-3 custom-scrollbar">
-              {/* Preferred Name Banner */}
-              <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl p-3 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                  <LeaderboardAvatar
-                    entry={{ username: USERNAME, displayName: user?.preferredName || USERNAME, profilePicture: user?.profilePicture }}
-                    user={user}
-                    sizeClass="w-9 h-9"
-                    textClass="text-[12px] font-black text-white"
-                    bgClass="bg-gradient-to-br from-emerald-400 to-teal-500"
-                  />
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Your Leaderboard Profile</div>
-                    <div className="text-[13px] font-black text-slate-800 dark:text-white truncate">
-                      {user?.preferredName || USERNAME}
-                    </div>
-                    {user?.preferredName && user?.preferredName !== USERNAME && (
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                        {USERNAME}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setTempName(user?.preferredName || USERNAME);
-                    setShowEditNameModal(true);
-                  }}
-                  className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-[11px] rounded-xl shadow-sm transition-all active:scale-95 flex items-center gap-1 shrink-0"
-                >
-                  <span>✏️</span> Edit Name
-                </button>
-              </div>
-
-              {leaderboard.map((entry, idx) => {
-                const isMe = entry.username === USERNAME ||
-                  (user && (entry.username?.toLowerCase() === (user.fullName || '').toLowerCase() || entry.username?.toLowerCase() === (user.email || '').toLowerCase())) ||
-                  (entry.displayName && entry.displayName === (user?.preferredName || USERNAME));
-                const displayName = entry.displayName || entry.username;
-                return (
-                  <div key={idx} className={`px-4 py-3 rounded-2xl flex items-center gap-3 transition-all shadow-sm ${
-                    idx === 0 ? 'bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border border-amber-200/50 dark:border-amber-800/50' :
-                    idx === 1 ? 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50' :
-                    idx === 2 ? 'bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/30' :
-                    isMe ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-800' :
-                    'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700'
-                  }`}>
-                    <div className="text-2xl font-black w-8 text-center shrink-0">
-                      {idx < 3 ? medals[idx] : <span className="text-sm font-bold text-slate-400">#{idx + 1}</span>}
-                    </div>
-                    <LeaderboardAvatar
-                      entry={entry}
-                      user={user}
-                      currentStreak={streak}
-                      sizeClass="w-9 h-9"
-                      textClass="text-[11px] font-black text-slate-700 dark:text-slate-200"
-                      bgClass={
-                        idx === 0 ? "bg-gradient-to-br from-yellow-300 to-amber-500 text-white" :
-                        idx === 1 ? "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800" :
-                        idx === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500 text-white" :
-                        "bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600"
-                      }
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="font-bold text-[14px] truncate text-slate-900 dark:text-white">{displayName}</p>
-                        {isMe && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">You</span>}
-                        {isMe && (
-                          <button
-                            onClick={() => {
-                              setTempName(user?.preferredName || displayName);
-                              setShowEditNameModal(true);
-                            }}
-                            className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-bold flex items-center gap-0.5 ml-1"
-                          >
-                            ✏️ Edit
-                          </button>
-                        )}
-                      </div>
-                      {displayName !== entry.username && (
-                        <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                          {entry.username}
-                        </div>
-                      )}
-                      <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1.5 truncate">
-                        <span>{entry.division}</span>
-                      </div>
-                    </div>
-                    <div className="font-black text-emerald-600 dark:text-emerald-400 text-[15px] whitespace-nowrap shrink-0">
-                      {entry.score} <span className="text-[10px] text-slate-400 font-semibold">pts</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* Full Leaderboard Modal */}
+      <FullLeaderboardModal
+        isOpen={showFullLb}
+        onClose={() => setShowFullLb(false)}
+        leaderboard={leaderboard}
+        user={user}
+        streak={streak}
+        isDark={isDark}
+        onEditNameClick={() => setShowEditNameModal(true)}
+      />
 
       {/* Edit Preferred Name Modal */}
-      {showEditNameModal && createPortal(
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800 animate-scaleIn text-left relative overflow-hidden">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-xl font-black mb-4 shadow-lg shadow-emerald-500/20">
-              ✏️
-            </div>
-            <h3 className="text-[19px] font-black text-slate-900 dark:text-white">Preferred Name</h3>
-            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Set a shorter nickname or preferred name to show on the leaderboard and podium.
-            </p>
-
-            <form onSubmit={handleSavePreferredName} className="mt-4 space-y-4">
-              <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  Leaderboard Display Name (max 10 chars)
-                </label>
-                <input
-                  type="text"
-                  value={tempName}
-                  onChange={(e) => setTempName(e.target.value)}
-                  maxLength={10}
-                  placeholder="e.g. Azib"
-                  autoFocus
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
-                />
-                <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
-                  <span className="truncate pr-2">Real name: {USERNAME}</span>
-                  <span>{tempName.length}/10</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowEditNameModal(false)}
-                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[13px] rounded-xl transition-all active:scale-95"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingName || !tempName.trim()}
-                  className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-[13px] rounded-xl shadow-lg shadow-emerald-500/25 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  {savingName ? "Saving..." : "Save Name"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
+      <EditPreferredNameModal
+        isOpen={showEditNameModal}
+        onClose={() => setShowEditNameModal(false)}
+        currentName={user?.preferredName || ''}
+        fullName={USERNAME}
+        onSave={handleSavePreferredName}
+      />
 
       {/* Image Viewer Modal */}
-      {imgViewerPost && createPortal(
-        <div className="fixed inset-0 z-[100] flex flex-col bg-black animate-fadeIn" onClick={() => setImgViewerPost(null)}>
-          <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),16px)] pb-2 z-10">
-            <button onClick={() => setImgViewerPost(null)} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white active:scale-95 transition-transform">
-              <span className="text-xl leading-none font-bold">←</span>
-            </button>
-            <span className="text-white/70 text-[13px] font-bold">{imgViewerPost.idx + 1} / {imgViewerPost.images.length}</span>
-            <button onClick={(e) => { e.stopPropagation(); saveImage(imgViewerPost.images[imgViewerPost.idx], 'sesi-post.png'); }} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white active:scale-95 transition-transform">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            </button>
-          </div>
-          <div className="flex-1 flex items-center justify-center px-4 relative" onClick={(e) => e.stopPropagation()}>
-            <img src={imgViewerPost.images[imgViewerPost.idx]} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
-            {imgViewerPost.idx > 0 && (
-              <button onClick={() => setImgViewerPost(p => ({ ...p, idx: p.idx - 1 }))} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-bold active:scale-95">←</button>
-            )}
-            {imgViewerPost.idx < imgViewerPost.images.length - 1 && (
-              <button onClick={() => setImgViewerPost(p => ({ ...p, idx: p.idx + 1 }))} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-bold active:scale-95">→</button>
-            )}
-          </div>
-          {/* Thumbnail strip at bottom */}
-          {imgViewerPost.images.length > 1 && (
-            <div className="flex items-center justify-center gap-2 px-4 py-3 pb-[max(env(safe-area-inset-bottom),16px)]">
-              {imgViewerPost.images.map((img, i) => (
-                <button key={i} onClick={(e) => { e.stopPropagation(); setImgViewerPost(p => ({ ...p, idx: i })); }} className={`w-12 h-12 rounded-lg overflow-hidden ring-2 transition-all ${i === imgViewerPost.idx ? 'ring-white scale-110' : 'ring-transparent opacity-50'}`}>
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>,
-        document.body
-      )}
+      <ImageViewerModal
+        isOpen={!!imgViewerPost}
+        images={imgViewerPost?.images || []}
+        currentIndex={imgViewerPost?.idx || 0}
+        onClose={() => setImgViewerPost(null)}
+        onChangeIndex={(idx) => setImgViewerPost(p => ({ ...p, idx }))}
+      />
     </div>
   );
 }
-
-
-
-// ─── Glossary Tab ───

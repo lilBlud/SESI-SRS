@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE, currentMonth } from '../../utils/constants';
-import { getQuizQuestionsDirect, getUserMonthlyQuizStatusDirect, recordUserActivityDirect, supabase } from '../../utils/supabaseClient';
+import { currentMonth } from '../../utils/constants';
+import { 
+  getQuizQuestionsDirect, 
+  getUserMonthlyQuizStatusDirect, 
+  recordUserActivityDirect, 
+  extractUserTargets, 
+  supabase 
+} from '../../utils/supabaseClient';
 
 export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   const [state, setState] = useState('idle'); // idle | loading | active | review | leaderboard
@@ -19,9 +25,9 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   });
   const [isPracticeMode, setIsPracticeMode] = useState(false);
 
-  const USERNAME = user?.fullName || "Ahmad Azib Danish"; // Simulated logged-in user
-  const DIVISION = user?.division || "Strategic Planning Division"; // Simulated division
-  const userIdentifiers = [user?.fullName, user?.preferredName, user?.email, USERNAME].filter(Boolean);
+  const USERNAME = user?.fullName || user?.preferredName || user?.username || user?.email || "User";
+  const DIVISION = user?.division || "IDD";
+  const userIdentifiers = extractUserTargets(user || USERNAME);
 
   // Fetch monthly quiz status on mount or user change
   useEffect(() => {
@@ -30,7 +36,7 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
         if (status) setQuizStatus(status);
       })
       .catch(() => {});
-  }, [user?.fullName, user?.preferredName, user?.email, USERNAME]);
+  }, [user, USERNAME]);
 
   // Fetch Monthly questions
   const startQuiz = async () => {
@@ -44,10 +50,6 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
       }
 
       let data = await getQuizQuestionsDirect(currentMonth).catch(() => null);
-      if (!data || data.length === 0) {
-        const res = await fetch(`${API_BASE}/api/quiz/${currentMonth}`).catch(() => null);
-        if (res && res.ok) data = await res.json().catch(() => null);
-      }
       if (!data || data.length === 0) {
         alert("No questions available for this month yet. Check back later!");
         setState('idle');
@@ -117,28 +119,17 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
           DateAnswered: new Date().toISOString()
         }]);
       } catch (dbErr) {
-        console.warn("Direct Supabase insert failed, trying API fallback:", dbErr);
-        fetch(`${API_BASE}/api/submit-answer`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
+        console.warn("Direct Supabase insert failed:", dbErr);
       }
     }
 
-    // Record streak directly to Supabase with API fallback
+    // Record streak directly to Supabase
     recordUserActivityDirect(user || USERNAME)
       .then(res => {
         if (res && onStreakUpdate) onStreakUpdate(res.streak, res.recorded);
       })
-      .catch(() => {
-        fetch(`${API_BASE}/api/streak/record`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: USERNAME })
-        }).then(r => r.ok && r.json()).then(data => {
-          if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
-        }).catch(() => { });
+      .catch(err => {
+        console.warn("Direct Supabase recordUserActivityDirect failed:", err);
       });
   };
 
