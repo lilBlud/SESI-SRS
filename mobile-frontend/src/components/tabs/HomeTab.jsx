@@ -52,15 +52,15 @@ function LeaderboardAvatar({
 
         {/* Small Streak Icon on Top-Right */}
         <div
-          className={`absolute top-0.5 -right-2 rounded-full px-1.5 py-[0.5px] text-[9px] font-black flex items-center gap-0.5 shadow-md border-2 border-white dark:border-slate-900 z-30 pointer-events-none select-none ${
+          className={`absolute -top-0.5 -right-3 rounded-full px-1.5 h-4 text-[8.5px] font-black flex items-center justify-center gap-0.5 shadow-md border-[1.5px] border-white dark:border-slate-900 z-30 pointer-events-none select-none ${
             streakCount > 0
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-orange-500/30'
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-orange-500/25'
               : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
           }`}
           title={`${streakCount}-day streak`}
         >
-          <span className="text-[9px] leading-none">🔥</span>
-          <span className="leading-none text-[9px] font-black">{streakCount}</span>
+          <span className="text-[8px] leading-none">🔥</span>
+          <span className="leading-none text-[8.5px] font-black">{streakCount}</span>
         </div>
       </div>
     );
@@ -86,15 +86,15 @@ function LeaderboardAvatar({
 
       {/* Small Streak Icon on Top-Right */}
       <div
-        className={`absolute -top-1 -right-1.5 rounded-full px-1 py-[0.5px] text-[8px] font-black flex items-center gap-0.5 shadow-xs border border-white dark:border-slate-900 z-20 pointer-events-none select-none ${
+        className={`absolute -top-0.5 -right-2 rounded-full px-1 h-3.5 text-[7.5px] font-black flex items-center justify-center gap-0.5 shadow-xs border border-white dark:border-slate-900 z-20 pointer-events-none select-none ${
           streakCount > 0
             ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-orange-500/20'
             : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
         }`}
         title={`${streakCount}-day streak`}
       >
-        <span className="text-[8px] leading-none">🔥</span>
-        <span className="leading-none text-[8px] font-black">{streakCount}</span>
+        <span className="text-[7px] leading-none">🔥</span>
+        <span className="leading-none text-[7.5px] font-black">{streakCount}</span>
       </div>
     </div>
   );
