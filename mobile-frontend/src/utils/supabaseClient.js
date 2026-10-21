@@ -67,16 +67,25 @@ export async function getQuizQuestionsDirect(month) {
   return (data || []).map(q => {
     const correctOpt = q.CorrectOption ?? q.correctOption ?? 'A';
     const optMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+    const correctIdx = optMap[correctOpt.toUpperCase()] ?? 0;
+    const options = [
+      q.OptionA ?? q.optionA ?? '',
+      q.OptionB ?? q.optionB ?? '',
+      q.OptionC ?? q.optionC ?? '',
+      q.OptionD ?? q.optionD ?? ''
+    ];
+    const questionText = q.QuestionText ?? q.questionText ?? '';
+    const id = q.Id ?? q.id;
+
     return {
-      Id: q.Id ?? q.id,
-      Question: q.QuestionText ?? q.questionText ?? '',
-      Options: [
-        q.OptionA ?? q.optionA ?? '',
-        q.OptionB ?? q.optionB ?? '',
-        q.OptionC ?? q.optionC ?? '',
-        q.OptionD ?? q.optionD ?? ''
-      ],
-      CorrectIndex: optMap[correctOpt.toUpperCase()] ?? 0
+      id,
+      Id: id,
+      question: questionText,
+      Question: questionText,
+      options,
+      Options: options,
+      correctIndex: correctIdx,
+      CorrectIndex: correctIdx
     };
   });
 }
@@ -112,6 +121,132 @@ export async function getLeaderboardDirect(month) {
   return Object.values(groups)
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
+}
+
+function extractUserTargets(userOrIdentifiers) {
+  if (!userOrIdentifiers) return [];
+  if (Array.isArray(userOrIdentifiers)) {
+    return userOrIdentifiers.map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
+  } else if (typeof userOrIdentifiers === 'object') {
+    return [
+      userOrIdentifiers.fullName,
+      userOrIdentifiers.preferredName,
+      userOrIdentifiers.username,
+      userOrIdentifiers.email
+    ].map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
+  } else {
+    return [String(userOrIdentifiers || '').trim().toLowerCase()].filter(Boolean);
+  }
+}
+
+/**
+ * Fetch user's recent answered questions directly from Supabase.
+ */
+export async function getUserRecentAnswersDirect(userOrIdentifiers, month) {
+  const targets = extractUserTargets(userOrIdentifiers);
+  if (targets.length === 0) return [];
+
+  let query = supabase
+    .from('UserAnswers')
+    .select('*')
+    .order('DateAnswered', { ascending: false });
+
+  if (month) {
+    query = query.eq('Month', month);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const filtered = (data || []).filter(a => {
+    const u = (a.Username ?? a.username ?? '').trim().toLowerCase();
+    const p = (a.PreferredName ?? a.preferredName ?? '').trim().toLowerCase();
+    return targets.includes(u) || (p && targets.includes(p));
+  });
+
+  return filtered.slice(0, 50).map(a => ({
+    id: a.Id ?? a.id,
+    questionText: a.QuestionText ?? a.questionText ?? '',
+    isCorrect: a.IsCorrect ?? a.isCorrect ?? false,
+    pointsAwarded: Number(a.PointsAwarded ?? a.pointsAwarded ?? 0),
+    timeTakenSeconds: Number(a.TimeTakenSeconds ?? a.timeTakenSeconds ?? 0),
+    dateAnswered: a.DateAnswered ?? a.dateAnswered ?? new Date().toISOString(),
+    selectedOption: a.SelectedOption ?? a.selectedOption ?? '',
+    month: a.Month ?? a.month ?? ''
+  }));
+}
+
+/**
+ * Fetch distinct active months for a user directly from Supabase.
+ */
+export async function getUserActiveMonthsDirect(userOrIdentifiers) {
+  const targets = extractUserTargets(userOrIdentifiers);
+  if (targets.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('UserAnswers')
+    .select('Month, Username, PreferredName');
+
+  if (error) throw error;
+
+  const months = new Set();
+  (data || []).forEach(a => {
+    const u = (a.Username ?? a.username ?? '').trim().toLowerCase();
+    const p = (a.PreferredName ?? a.preferredName ?? '').trim().toLowerCase();
+    if (targets.includes(u) || (p && targets.includes(p))) {
+      const m = a.Month ?? a.month;
+      if (m) months.add(m);
+    }
+  });
+
+  return Array.from(months).sort((a, b) => b.localeCompare(a));
+}
+
+/**
+ * Calculate user total score and rank directly from Supabase UserAnswers.
+ */
+export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
+  const targets = extractUserTargets(userOrIdentifiers);
+  if (targets.length === 0) return { score: 0, rank: null };
+
+  const { data, error } = await supabase
+    .from('UserAnswers')
+    .select('*')
+    .eq('Month', month);
+
+  if (error || !data) return { score: 0, rank: null };
+
+  const groups = {};
+  for (const a of data) {
+    const u = (a.Username ?? a.username ?? '').trim();
+    const p = (a.PreferredName ?? a.preferredName ?? '').trim();
+    const key = u || p || 'Anonymous';
+    if (!groups[key]) {
+      groups[key] = {
+        username: u,
+        preferredName: p,
+        score: 0
+      };
+    }
+    if (p) groups[key].preferredName = p;
+    groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
+  }
+
+  const sorted = Object.values(groups).sort((a, b) => b.score - a.score);
+  const userIdx = sorted.findIndex(g => {
+    const u = g.username.toLowerCase();
+    const p = (g.preferredName || '').toLowerCase();
+    return targets.includes(u) || (p && targets.includes(p));
+  });
+
+  if (userIdx === -1) {
+    return { score: 0, rank: null };
+  }
+
+  return {
+    score: sorted[userIdx].score,
+    rank: userIdx + 1
+  };
 }
 
 /**

@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { API_BASE, currentMonth, getColor, getCatMeta } from '../../utils/constants';
-import { updateProfilePictureDirect, updatePreferredNameDirect } from '../../utils/supabaseClient';
+import { 
+  updateProfilePictureDirect, 
+  updatePreferredNameDirect,
+  getUserRecentAnswersDirect,
+  getUserActiveMonthsDirect,
+  getUserScoreAndRankDirect,
+  getLeaderboardDirect
+} from '../../utils/supabaseClient';
 import { CorporatePerformanceChart, PostImageSlider, InstagramPhotoCropper } from '../ui';
 
 export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }) {
@@ -158,37 +165,72 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
 
   useEffect(() => {
     // Fetch available months for this user once
-    fetch(`${API_BASE}/api/profile/${encodeURIComponent(USERNAME)}/active-months`)
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        // Always include current month in the filter
-        if (!data.includes(currentMonth)) {
-          data.unshift(currentMonth);
+    const userIdentifiers = [user?.fullName, user?.preferredName, user?.email, USERNAME].filter(Boolean);
+    getUserActiveMonthsDirect(userIdentifiers)
+      .then(months => {
+        const list = [...(months || [])];
+        if (!list.includes(currentMonth)) {
+          list.unshift(currentMonth);
         }
-        setActiveMonths(data);
+        setActiveMonths(list);
       })
-      .catch(console.error);
-  }, [USERNAME]);
+      .catch(() => {
+        fetch(`${API_BASE}/api/profile/${encodeURIComponent(USERNAME)}/active-months`)
+          .then(r => r.ok ? r.json() : [])
+          .then(data => {
+            if (!data.includes(currentMonth)) {
+              data.unshift(currentMonth);
+            }
+            setActiveMonths(data);
+          })
+          .catch(console.error);
+      });
+  }, [USERNAME, user?.email, user?.fullName, user?.preferredName]);
 
   useEffect(() => {
     setLoading(true);
+    const userIdentifiers = [user?.fullName, user?.preferredName, user?.email, USERNAME].filter(Boolean);
     const qs = filterMonth ? `?month=${filterMonth}` : '';
+
     Promise.all([
-      fetch(`${API_BASE}/api/profile/${encodeURIComponent(USERNAME)}/recent-answers${qs}`).then(r => r.ok ? r.json() : []),
-      fetch(`${API_BASE}/api/leaderboard/${currentMonth}`).then(r => r.ok ? r.json() : [])
+      getUserRecentAnswersDirect(userIdentifiers, filterMonth).catch(() => null),
+      getUserScoreAndRankDirect(userIdentifiers, currentMonth).catch(() => null),
+      getLeaderboardDirect(currentMonth).catch(() => null)
     ])
-      .then(([answers, leaderboard]) => {
-        setRecentQuizzes(answers);
-        const userEntry = leaderboard.find(entry => entry.username === USERNAME || (entry.displayName && entry.displayName === (user?.preferredName || USERNAME)));
-        setCurrentRank(userEntry ? leaderboard.indexOf(userEntry) + 1 : null);
-        setTotalScore(userEntry ? userEntry.score : 0);
-        setLoading(false);
+      .then(([directAnswers, directStats, directLeaderboard]) => {
+        if (directAnswers !== null && directStats !== null) {
+          setRecentQuizzes(directAnswers);
+          setCurrentRank(directStats.rank);
+          setTotalScore(directStats.score);
+          setLoading(false);
+          return;
+        }
+
+        // Fallback to API_BASE if direct fetch failed
+        Promise.all([
+          fetch(`${API_BASE}/api/profile/${encodeURIComponent(USERNAME)}/recent-answers${qs}`).then(r => r.ok ? r.json() : []),
+          fetch(`${API_BASE}/api/leaderboard/${currentMonth}`).then(r => r.ok ? r.json() : [])
+        ])
+          .then(([answers, leaderboard]) => {
+            setRecentQuizzes(answers);
+            const userEntry = (leaderboard || []).find(entry => 
+              entry.username === USERNAME || 
+              (entry.displayName && entry.displayName === (user?.preferredName || USERNAME)) ||
+              (user?.fullName && entry.username === user.fullName)
+            );
+            setCurrentRank(userEntry ? leaderboard.indexOf(userEntry) + 1 : null);
+            setTotalScore(userEntry ? userEntry.score : 0);
+            setLoading(false);
+          })
+          .catch(e => {
+            console.error(e);
+            setLoading(false);
+          });
       })
-      .catch(e => {
-        console.error(e);
+      .catch(() => {
         setLoading(false);
       });
-  }, [filterMonth, USERNAME, user?.preferredName]);
+  }, [filterMonth, USERNAME, user?.preferredName, user?.email, user?.fullName]);
 
   return (
     <div className="space-y-6 animate-slideUp">

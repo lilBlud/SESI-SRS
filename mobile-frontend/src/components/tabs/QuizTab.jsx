@@ -21,15 +21,21 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
     try {
       let data = await getQuizQuestionsDirect(currentMonth).catch(() => null);
       if (!data || data.length === 0) {
-        const res = await fetch(`${API_BASE}/api/quiz/${currentMonth}`);
-        data = await res.json();
+        const res = await fetch(`${API_BASE}/api/quiz/${currentMonth}`).catch(() => null);
+        if (res && res.ok) data = await res.json().catch(() => null);
       }
       if (!data || data.length === 0) {
         alert("No questions available for this month yet. Check back later!");
         setState('idle');
         return;
       }
-      setQuestions(data.sort(() => Math.random() - 0.5));
+      const normalized = data.map(q => ({
+        id: q.id ?? q.Id,
+        question: q.question ?? q.Question ?? q.QuestionText ?? '',
+        options: q.options ?? q.Options ?? [q.OptionA, q.OptionB, q.OptionC, q.OptionD].filter(Boolean),
+        correctIndex: q.correctIndex ?? q.CorrectIndex ?? 0
+      }));
+      setQuestions(normalized.sort(() => Math.random() - 0.5));
       setState('active');
       setCurrentQ(0);
       setSelected(null);
@@ -43,8 +49,6 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
       setState('idle');
     }
   };
-
-
 
   const selectAnswer = async (idx) => {
     if (answered) return;
@@ -78,32 +82,29 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
       PointsAwarded: pointsAwarded
     };
 
-    fetch(`${API_BASE}/api/submit-answer`, {
+    // Primary: Save directly to Supabase UserAnswers
+    try {
+      await supabase.from('UserAnswers').insert([{
+        ...payload,
+        DateAnswered: new Date().toISOString()
+      }]);
+    } catch (dbErr) {
+      console.warn("Direct Supabase insert failed, trying API fallback:", dbErr);
+      fetch(`${API_BASE}/api/submit-answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }
+
+    // Record streak (best-effort)
+    fetch(`${API_BASE}/api/streak/record`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("API status " + res.status);
-        fetch(`${API_BASE}/api/streak/record`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: USERNAME })
-        }).then(r => r.ok && r.json()).then(data => {
-          if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
-        }).catch(() => { });
-      })
-      .catch(async () => {
-        // Fallback to direct Supabase insert
-        try {
-          await supabase.from('UserAnswers').insert([{
-            ...payload,
-            DateAnswered: new Date().toISOString()
-          }]);
-        } catch (dbErr) {
-          console.error("Supabase direct insert fallback error:", dbErr);
-        }
-      });
+      body: JSON.stringify({ username: USERNAME })
+    }).then(r => r.ok && r.json()).then(data => {
+      if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
+    }).catch(() => { });
   };
 
   const nextQuestion = () => {

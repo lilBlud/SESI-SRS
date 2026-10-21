@@ -81,6 +81,30 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
   };
 
   const fetchQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('QuizQuestions')
+        .select('*')
+        .eq('Month', selectedMonth);
+      if (!error && data) {
+        const formatted = data.map(q => ({
+          id: q.Id ?? q.id,
+          month: q.Month ?? q.month,
+          questionText: q.QuestionText ?? q.questionText,
+          optionA: q.OptionA ?? q.optionA,
+          optionB: q.OptionB ?? q.optionB,
+          optionC: q.OptionC ?? q.optionC,
+          optionD: q.OptionD ?? q.optionD,
+          correctOption: q.CorrectOption ?? q.correctOption ?? 'A'
+        }));
+        setQuestions(formatted);
+        setQCount(formatted.length);
+        return;
+      }
+    } catch (sbErr) {
+      console.warn("Direct fetch questions error in AdminTab:", sbErr);
+    }
+
     const res = await fetch(`${API_BASE}/api/admin/questions/${selectedMonth}`).catch(() => null);
     if (res && res.ok) { const d = await res.json(); setQuestions(d.questions); setQCount(d.count); }
   };
@@ -116,15 +140,53 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
   // ─── Quiz Actions ───
   const addQuestion = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_BASE}/api/admin/questions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month: selectedMonth, questionText: qText, optionA: optA, optionB: optB, optionC: optC, optionD: optD, correctOption: correct }) });
-    if (res.ok) { setQMsg('✅ Question added!'); fetchQuestions(); setQText(''); setOptA(''); setOptB(''); setOptC(''); setOptD(''); setCorrect('A'); }
-    else { const err = await res.json(); setQMsg(`❌ ${err.error}`); }
+    const payload = {
+      Month: selectedMonth,
+      QuestionText: qText,
+      OptionA: optA,
+      OptionB: optB,
+      OptionC: optC,
+      OptionD: optD,
+      CorrectOption: correct
+    };
+
+    let directSuccess = false;
+    try {
+      const { error } = await supabase.from('QuizQuestions').insert([payload]);
+      if (!error) directSuccess = true;
+    } catch (err) {
+      console.warn("Direct Supabase addQuestion failed:", err);
+    }
+
+    if (directSuccess) {
+      setQMsg('✅ Question added!');
+      fetchQuestions();
+      setQText(''); setOptA(''); setOptB(''); setOptC(''); setOptD(''); setCorrect('A');
+    } else {
+      const res = await fetch(`${API_BASE}/api/admin/questions`, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ month: selectedMonth, questionText: qText, optionA: optA, optionB: optB, optionC: optC, optionD: optD, correctOption: correct }) 
+      }).catch(() => null);
+      if (res && res.ok) { 
+        setQMsg('✅ Question added!'); 
+        fetchQuestions(); 
+        setQText(''); setOptA(''); setOptB(''); setOptC(''); setOptD(''); setCorrect('A'); 
+      } else { 
+        setQMsg(`❌ Failed to add question`); 
+      }
+    }
     setTimeout(() => setQMsg(''), 3000);
   };
 
   const deleteQuestion = async (id) => {
     if (!confirm('Delete this question?')) return;
-    await fetch(`${API_BASE}/api/admin/questions/${id}`, { method: 'DELETE' });
+    try {
+      await supabase.from('QuizQuestions').delete().eq('Id', id);
+    } catch (err) {
+      console.warn("Direct Supabase deleteQuestion failed:", err);
+    }
+    await fetch(`${API_BASE}/api/admin/questions/${id}`, { method: 'DELETE' }).catch(() => null);
     fetchQuestions();
   };
 
