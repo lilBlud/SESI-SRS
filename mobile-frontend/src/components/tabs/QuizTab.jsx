@@ -200,9 +200,6 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
                 </div>
               </div>
             </div>
-            <span className="text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0 border border-emerald-300 dark:border-emerald-700">
-              Recorded
-            </span>
           </div>
         )}
 
