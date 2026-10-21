@@ -91,7 +91,48 @@ export async function getQuizQuestionsDirect(month) {
 }
 
 /**
- * Fetch monthly leaderboard directly from Supabase UserAnswers.
+ * Calculate consecutive day streak from an array of activity date timestamps.
+ * Standardized to Malaysia UTC+8 timezone.
+ */
+export function calculateStreakFromDates(dates) {
+  if (!dates || dates.length === 0) return 0;
+  const uniqueDates = [...new Set(dates.map(d => {
+    const dt = new Date(d);
+    const myTime = new Date(dt.getTime() + (8 * 3600 * 1000));
+    return myTime.toISOString().slice(0, 10);
+  }))].sort().reverse();
+
+  if (uniqueDates.length === 0) return 0;
+
+  const now = new Date();
+  const nowMy = new Date(now.getTime() + (8 * 3600 * 1000));
+  const todayStr = nowMy.toISOString().slice(0, 10);
+
+  const yesterday = new Date(nowMy.getTime() - (24 * 3600 * 1000));
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+  // If latest activity date is older than yesterday, streak is broken
+  if (uniqueDates[0] < yesterdayStr) return 0;
+
+  let streak = 0;
+  let curr = new Date(uniqueDates[0] + 'T00:00:00Z');
+
+  for (const dateStr of uniqueDates) {
+    const expectedStr = curr.toISOString().slice(0, 10);
+    if (dateStr === expectedStr) {
+      streak++;
+      curr = new Date(curr.getTime() - (24 * 3600 * 1000));
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+/**
+ * Fetch monthly leaderboard directly from Supabase UserAnswers,
+ * enriched with user streaks from UserActivities.
  */
 export async function getLeaderboardDirect(month) {
   const { data, error } = await supabase
@@ -108,14 +149,64 @@ export async function getLeaderboardDirect(month) {
     const key = (a.PreferredName ?? a.preferredName ?? '').trim() || (a.Username ?? a.username ?? 'Anonymous');
     if (!groups[key]) {
       groups[key] = {
-        username: key,
+        username: a.Username ?? key,
         displayName: key,
         score: 0,
         division: a.Division ?? a.division ?? 'General',
-        dateTaken: a.DateAnswered ?? a.dateAnswered ?? ''
+        dateTaken: a.DateAnswered ?? a.dateAnswered ?? '',
+        streak: 0
       };
     }
     groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
+  }
+
+  // Enrich with user streaks from UserActivities
+  try {
+    const [actRes, staffRes] = await Promise.all([
+      supabase.from('UserActivities').select('Username, ActivityDate'),
+      supabase.from('StaffUsers').select('FullName, PreferredName, Email')
+    ]);
+
+    const actData = actRes.data || [];
+    const staffData = staffRes.data || [];
+
+    const userDates = {};
+    for (const act of actData) {
+      const u = (act.Username || '').trim().toLowerCase();
+      if (!u) continue;
+      if (!userDates[u]) userDates[u] = [];
+      userDates[u].push(act.ActivityDate);
+    }
+
+    for (const entry of Object.values(groups)) {
+      const uName = (entry.username || '').trim().toLowerCase();
+      const dName = (entry.displayName || '').trim().toLowerCase();
+
+      const matchedStaff = staffData.find(s => 
+        (s.FullName && s.FullName.trim().toLowerCase() === uName) ||
+        (s.PreferredName && s.PreferredName.trim().toLowerCase() === dName) ||
+        (s.PreferredName && s.PreferredName.trim().toLowerCase() === uName) ||
+        (s.FullName && s.FullName.trim().toLowerCase() === dName)
+      );
+
+      const aliases = [uName, dName];
+      if (matchedStaff) {
+        if (matchedStaff.FullName) aliases.push(matchedStaff.FullName.trim().toLowerCase());
+        if (matchedStaff.PreferredName) aliases.push(matchedStaff.PreferredName.trim().toLowerCase());
+        if (matchedStaff.Email) aliases.push(matchedStaff.Email.trim().toLowerCase());
+      }
+
+      const allDates = [];
+      for (const alias of new Set(aliases)) {
+        if (userDates[alias]) {
+          allDates.push(...userDates[alias]);
+        }
+      }
+
+      entry.streak = calculateStreakFromDates(allDates);
+    }
+  } catch (err) {
+    console.warn("Could not calculate streaks for leaderboard entries:", err);
   }
 
   return Object.values(groups)
@@ -136,6 +227,83 @@ function extractUserTargets(userOrIdentifiers) {
     ].map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
   } else {
     return [String(userOrIdentifiers || '').trim().toLowerCase()].filter(Boolean);
+  }
+}
+
+/**
+ * Fetch a specific user's consecutive day streak directly from Supabase.
+ */
+export async function getUserStreakDirect(userOrIdentifiers) {
+  const targets = extractUserTargets(userOrIdentifiers);
+  if (targets.length === 0) return { streak: 0, dates: [] };
+
+  try {
+    const { data, error } = await supabase
+      .from('UserActivities')
+      .select('Username, ActivityDate')
+      .order('ActivityDate', { ascending: false });
+
+    if (error || !data) return { streak: 0, dates: [] };
+
+    const matched = data.filter(a => {
+      const u = String(a.Username ?? a.username ?? '').trim().toLowerCase();
+      return targets.includes(u);
+    });
+
+    const dates = matched.map(m => m.ActivityDate ?? m.activityDate);
+    const streak = calculateStreakFromDates(dates);
+    return { streak, dates };
+  } catch (e) {
+    console.warn("getUserStreakDirect error:", e);
+    return { streak: 0, dates: [] };
+  }
+}
+
+/**
+ * Record a user daily reading activity directly to Supabase.
+ */
+export async function recordUserActivityDirect(userOrUsername) {
+  const targets = extractUserTargets(userOrUsername);
+  const primaryName = typeof userOrUsername === 'object'
+    ? (userOrUsername?.fullName || userOrUsername?.preferredName || userOrUsername?.username || 'User')
+    : String(userOrUsername || 'User');
+
+  if (!primaryName) return { streak: 0, recorded: false };
+
+  const now = new Date();
+  const nowMy = new Date(now.getTime() + (8 * 3600 * 1000));
+  const todayDateOnly = nowMy.toISOString().slice(0, 10);
+  const todayTimestamp = todayDateOnly + 'T00:00:00+00:00';
+
+  try {
+    // Check if user already recorded today
+    const { data: existing } = await supabase
+      .from('UserActivities')
+      .select('Id, Username, ActivityDate')
+      .gte('ActivityDate', todayDateOnly + 'T00:00:00')
+      .lte('ActivityDate', todayDateOnly + 'T23:59:59');
+
+    const alreadyDone = (existing || []).some(a => {
+      const u = String(a.Username || '').trim().toLowerCase();
+      return targets.includes(u) || u === primaryName.trim().toLowerCase();
+    });
+
+    let newlyRecorded = false;
+    if (!alreadyDone) {
+      const { error: insErr } = await supabase
+        .from('UserActivities')
+        .insert([{
+          Username: primaryName,
+          ActivityDate: todayTimestamp
+        }]);
+      if (!insErr) newlyRecorded = true;
+    }
+
+    const { streak } = await getUserStreakDirect(userOrUsername);
+    return { streak, recorded: newlyRecorded };
+  } catch (err) {
+    console.warn("recordUserActivityDirect error:", err);
+    return { streak: 0, recorded: false };
   }
 }
 

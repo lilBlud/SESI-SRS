@@ -3,7 +3,7 @@ import { AdminTab, HomeTab, GlossaryTab, QuizTab, ProfileTab } from './component
 import LoginPage from './components/pages/LoginPage';
 import PasscodeGate from './components/pages/PasscodeGate';
 import { API_BASE } from './utils/constants.js';
-import { getGlossaryDirect, getUserProfileDirect } from './utils/supabaseClient.js';
+import { getGlossaryDirect, getUserProfileDirect, getUserStreakDirect } from './utils/supabaseClient.js';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { useBookmarks } from './hooks/useBookmarks';
 
@@ -103,13 +103,23 @@ function App() {
 
   // Fetch streak on mount and whenever user logs in
   useEffect(() => {
-    if (USERNAME) {
-      fetch(`${API_BASE}/api/streak/${encodeURIComponent(USERNAME)}`)
-        .then(r => r.ok ? r.json() : { streak: 0 })
-        .then(d => setStreak(d.streak || 0))
-        .catch(() => { });
+    if (user || USERNAME) {
+      getUserStreakDirect(user || USERNAME)
+        .then(res => {
+          if (res && typeof res.streak === 'number') {
+            setStreak(res.streak);
+          }
+        })
+        .catch(() => {
+          if (USERNAME) {
+            fetch(`${API_BASE}/api/streak/${encodeURIComponent(USERNAME)}`)
+              .then(r => r.ok ? r.json() : { streak: 0 })
+              .then(d => setStreak(d.streak || 0))
+              .catch(() => { });
+          }
+        });
     }
-  }, [USERNAME]);
+  }, [user, USERNAME]);
 
   // Sync latest user profile (including avatar if updated)
   useEffect(() => {
@@ -337,7 +347,7 @@ function App() {
       </header>
 
       <main className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20">
-        {activeTab === 'home' && <HomeTab user={user} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
+        {activeTab === 'home' && <HomeTab user={user} streak={streak} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
         {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}

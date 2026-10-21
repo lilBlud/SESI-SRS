@@ -7,6 +7,7 @@ import { getInfographicsDirect, getLeaderboardDirect } from '../../utils/supabas
 function LeaderboardAvatar({
   entry,
   user,
+  currentStreak = 0,
   sizeClass = "w-10 h-10",
   textClass = "text-[14px]",
   bgClass = "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800",
@@ -27,15 +28,54 @@ function LeaderboardAvatar({
   const pic = !imgErr && (entry?.profilePicture || (isMe ? user?.profilePicture : null));
   const initials = (entry?.displayName || entry?.username || '??').substring(0, 2).toUpperCase();
 
+  const streakCount = typeof entry?.streak === 'number'
+    ? entry.streak
+    : (isMe && typeof currentStreak === 'number' ? currentStreak : 0);
+
   if (isPodium) {
     return (
+      <div className={`relative inline-flex items-center justify-center z-10 -mb-5 shrink-0 animate-bounce-slow ${delayClass}`}>
+        <div
+          className={`${sizeClass} rounded-full flex items-center justify-center font-black ${textClass} shadow-lg border-2 border-white dark:border-slate-900 ${bgClass} ${shadowClass} overflow-hidden p-0.5`}
+        >
+          {pic ? (
+            <img
+              src={pic}
+              alt={entry.displayName || entry.username}
+              className="w-full h-full object-cover rounded-full"
+              onError={() => setImgErr(true)}
+            />
+          ) : (
+            <span>{initials}</span>
+          )}
+        </div>
+
+        {/* Small Streak Icon on Top-Right */}
+        <div
+          className={`absolute -top-1.5 -right-2.5 rounded-full px-1.5 py-[1px] text-[9.5px] font-black flex items-center gap-0.5 shadow-md border-2 border-white dark:border-slate-900 z-30 pointer-events-none select-none ${
+            streakCount > 0
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-orange-500/30'
+              : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+          }`}
+          title={`${streakCount}-day streak`}
+        >
+          <span className="text-[10px] leading-none">🔥</span>
+          <span className="leading-none text-[9.5px] font-black">{streakCount}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Row / List item avatar
+  return (
+    <div className="relative inline-flex items-center justify-center shrink-0">
       <div
-        className={`${sizeClass} rounded-full flex items-center justify-center font-black ${textClass} shadow-lg relative z-10 -mb-5 border-2 border-white dark:border-slate-900 ${bgClass} ${shadowClass} animate-bounce-slow ${delayClass} overflow-hidden p-0.5 shrink-0`}
+        className={`${sizeClass} rounded-full flex items-center justify-center font-black ${textClass} shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden ${bgClass} shadow-xs p-0.5`}
       >
         {pic ? (
           <img
             src={pic}
-            alt={entry.displayName || entry.username}
+            alt={entry?.displayName || entry?.username}
             className="w-full h-full object-cover rounded-full"
             onError={() => setImgErr(true)}
           />
@@ -43,29 +83,24 @@ function LeaderboardAvatar({
           <span>{initials}</span>
         )}
       </div>
-    );
-  }
 
-  // Row / List item avatar
-  return (
-    <div
-      className={`${sizeClass} rounded-full flex items-center justify-center font-black ${textClass} shrink-0 border border-slate-200 dark:border-slate-700 overflow-hidden ${bgClass} shadow-xs p-0.5`}
-    >
-      {pic ? (
-        <img
-          src={pic}
-          alt={entry?.displayName || entry?.username}
-          className="w-full h-full object-cover rounded-full"
-          onError={() => setImgErr(true)}
-        />
-      ) : (
-        <span>{initials}</span>
-      )}
+      {/* Small Streak Icon on Top-Right */}
+      <div
+        className={`absolute -top-1 -right-1.5 rounded-full px-1 py-[0.5px] text-[8px] font-black flex items-center gap-0.5 shadow-xs border border-white dark:border-slate-900 z-20 pointer-events-none select-none ${
+          streakCount > 0
+            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-orange-500/20'
+            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+        }`}
+        title={`${streakCount}-day streak`}
+      >
+        <span className="text-[8px] leading-none">🔥</span>
+        <span className="leading-none text-[8px] font-black">{streakCount}</span>
+      </div>
     </div>
   );
 }
 
-export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser, visitorStats, triggerInstallPrompt }) {
+export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossaryCat, isDark, bookmarkActions, onUpdateUser, visitorStats, triggerInstallPrompt }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions;
   const [posts, setPosts] = useState([]);
   const [postCat, setPostCat] = useState('All');
@@ -90,14 +125,14 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
     const applyPodium = (data) => {
       if (!data || data.length < 3) {
         data = [
-          { username: "Cameron", displayName: "Cameron", score: 4201, division: "Sales Division" },
-          { username: "Ka", displayName: "Ka", score: 3912, division: "HR Division" },
-          { username: "Evelien", displayName: "Evelien", score: 2926, division: "IT Division" },
-          { username: "QuizWiz", displayName: "QuizWiz", score: 2800, division: "Marketing" },
-          { username: "CoolCat", displayName: "CoolCat", score: 2500, division: "Finance" },
-          { username: "Ahmad", displayName: "Ahmad", score: 1920, division: "Strategic Planning" },
-          { username: "Sarah", displayName: "Sarah", score: 1850, division: "Operations" },
-          { username: "John", displayName: "John", score: 1500, division: "HR Division" }
+          { username: "Cameron", displayName: "Cameron", score: 4201, division: "Sales Division", streak: 5 },
+          { username: "Ka", displayName: "Ka", score: 3912, division: "HR Division", streak: 3 },
+          { username: "Evelien", displayName: "Evelien", score: 2926, division: "IT Division", streak: 4 },
+          { username: "QuizWiz", displayName: "QuizWiz", score: 2800, division: "Marketing", streak: 2 },
+          { username: "CoolCat", displayName: "CoolCat", score: 2500, division: "Finance", streak: 6 },
+          { username: "Ahmad", displayName: "Ahmad", score: 1920, division: "Strategic Planning", streak: 7 },
+          { username: "Sarah", displayName: "Sarah", score: 1850, division: "Operations", streak: 1 },
+          { username: "John", displayName: "John", score: 1500, division: "HR Division", streak: 2 }
         ];
       }
       setLeaderboard(data);
@@ -391,6 +426,7 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                       <LeaderboardAvatar
                         entry={leaderboard[1]}
                         user={user}
+                        currentStreak={streak}
                         sizeClass="w-10 h-10"
                         textClass="text-[14px] text-slate-800"
                         bgClass="bg-gradient-to-br from-slate-200 to-slate-400"
@@ -416,6 +452,7 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                       <LeaderboardAvatar
                         entry={leaderboard[0]}
                         user={user}
+                        currentStreak={streak}
                         sizeClass="w-12 h-12"
                         textClass="text-[16px] text-white"
                         bgClass="bg-gradient-to-br from-yellow-300 to-amber-500"
@@ -439,6 +476,7 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                       <LeaderboardAvatar
                         entry={leaderboard[2]}
                         user={user}
+                        currentStreak={streak}
                         sizeClass="w-10 h-10"
                         textClass="text-[14px] text-white"
                         bgClass="bg-gradient-to-br from-orange-300 to-orange-500"
@@ -467,6 +505,7 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                         <LeaderboardAvatar
                           entry={entry}
                           user={user}
+                          currentStreak={streak}
                           sizeClass="w-7 h-7"
                           textClass="text-[10px] text-slate-700 dark:text-slate-200"
                           bgClass="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600"
@@ -699,6 +738,7 @@ export function HomeTab({ user, glossary, setActiveTab, setActiveGlossaryCat, is
                     <LeaderboardAvatar
                       entry={entry}
                       user={user}
+                      currentStreak={streak}
                       sizeClass="w-9 h-9"
                       textClass="text-[11px] font-black text-slate-700 dark:text-slate-200"
                       bgClass={

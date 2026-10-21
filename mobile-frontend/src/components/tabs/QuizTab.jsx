@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE, currentMonth } from '../../utils/constants';
-import { getQuizQuestionsDirect, getUserMonthlyQuizStatusDirect, supabase } from '../../utils/supabaseClient';
+import { getQuizQuestionsDirect, getUserMonthlyQuizStatusDirect, recordUserActivityDirect, supabase } from '../../utils/supabaseClient';
 
 export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
   const [state, setState] = useState('idle'); // idle | loading | active | review | leaderboard
@@ -126,14 +126,20 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
       }
     }
 
-    // Record streak (best-effort)
-    fetch(`${API_BASE}/api/streak/record`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: USERNAME })
-    }).then(r => r.ok && r.json()).then(data => {
-      if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
-    }).catch(() => { });
+    // Record streak directly to Supabase with API fallback
+    recordUserActivityDirect(user || USERNAME)
+      .then(res => {
+        if (res && onStreakUpdate) onStreakUpdate(res.streak, res.recorded);
+      })
+      .catch(() => {
+        fetch(`${API_BASE}/api/streak/record`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: USERNAME })
+        }).then(r => r.ok && r.json()).then(data => {
+          if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
+        }).catch(() => { });
+      });
   };
 
   const nextQuestion = () => {

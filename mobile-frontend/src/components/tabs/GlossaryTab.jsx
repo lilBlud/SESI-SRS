@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { CATEGORIES, API_BASE, getColor, getCatMeta } from '../../utils/constants';
 import { CorporatePerformanceChart } from '../ui';
+import { recordUserActivityDirect } from '../../utils/supabaseClient';
 
 export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat, setActiveGlossaryCat, bookmarkActions }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions || { isBookmarked: () => false, toggleBookmark: () => { } };
@@ -51,37 +52,49 @@ export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat,
     }
     setExpandedId(termId);
 
-    // Record daily activity for streak
+    // Record daily activity for streak directly to Supabase
     try {
-      const res = await fetch(`${API_BASE}/api/streak/record`, {
+      const res = await recordUserActivityDirect(user || USERNAME);
+      if (res && onStreakUpdate) {
+        onStreakUpdate(res.streak, res.recorded);
+      }
+    } catch {
+      fetch(`${API_BASE}/api/streak/record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: USERNAME })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
-      }
-    } catch (e) { /* silently fail */ }
-  }, [expandedId, onStreakUpdate]);
+      })
+        .then(r => r.ok && r.json())
+        .then(data => {
+          if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
+        })
+        .catch(() => { });
+    }
+  }, [expandedId, onStreakUpdate, user, USERNAME]);
 
   // Record read for flashcard flip too
   const handleFlashcardFlip = useCallback(async () => {
     setFlipped(!flipped);
     if (!flipped) {
       try {
-        const res = await fetch(`${API_BASE}/api/streak/record`, {
+        const res = await recordUserActivityDirect(user || USERNAME);
+        if (res && onStreakUpdate) {
+          onStreakUpdate(res.streak, res.recorded);
+        }
+      } catch {
+        fetch(`${API_BASE}/api/streak/record`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: USERNAME })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
-        }
-      } catch (e) { /* silently fail */ }
+        })
+          .then(r => r.ok && r.json())
+          .then(data => {
+            if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
+          })
+          .catch(() => { });
+      }
     }
-  }, [flipped, onStreakUpdate]);
+  }, [flipped, onStreakUpdate, user, USERNAME]);
 
   return (
     <div className="space-y-5 animate-fadeIn pb-10 relative">
