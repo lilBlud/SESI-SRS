@@ -52,15 +52,15 @@ function LeaderboardAvatar({
 
         {/* Small Streak Icon on Top-Right */}
         <div
-          className={`absolute -top-1.5 -right-2.5 rounded-full px-1.5 py-[1px] text-[9.5px] font-black flex items-center gap-0.5 shadow-md border-2 border-white dark:border-slate-900 z-30 pointer-events-none select-none ${
+          className={`absolute top-0.5 -right-2 rounded-full px-1.5 py-[0.5px] text-[9px] font-black flex items-center gap-0.5 shadow-md border-2 border-white dark:border-slate-900 z-30 pointer-events-none select-none ${
             streakCount > 0
               ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-orange-500/30'
               : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
           }`}
           title={`${streakCount}-day streak`}
         >
-          <span className="text-[10px] leading-none">🔥</span>
-          <span className="leading-none text-[9.5px] font-black">{streakCount}</span>
+          <span className="text-[9px] leading-none">🔥</span>
+          <span className="leading-none text-[9px] font-black">{streakCount}</span>
         </div>
       </div>
     );
@@ -420,7 +420,7 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
                 <div className="w-full">
                   {leaderboard.length > 1 && (
                     <div className="flex flex-col items-center justify-end relative">
-                      <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
+                      <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-2.5 truncate">
                         {(leaderboard[1].displayName || leaderboard[1].username).split(' ')[0]}
                       </div>
                       <LeaderboardAvatar
@@ -446,7 +446,7 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
                   {leaderboard.length > 0 && (
                     <div className="flex flex-col items-center justify-end relative">
                       <div className="absolute -top-5 text-lg animate-bounce z-20 drop-shadow-md">👑</div>
-                      <div className="text-[13px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
+                      <div className="text-[13px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-2.5 truncate">
                         {(leaderboard[0].displayName || leaderboard[0].username).split(' ')[0]}
                       </div>
                       <LeaderboardAvatar
@@ -470,7 +470,7 @@ export function HomeTab({ user, streak, glossary, setActiveTab, setActiveGlossar
                 <div className="w-full">
                   {leaderboard.length > 2 && (
                     <div className="flex flex-col items-center justify-end relative">
-                      <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-1 truncate">
+                      <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-2.5 truncate">
                         {(leaderboard[2].displayName || leaderboard[2].username).split(' ')[0]}
                       </div>
                       <LeaderboardAvatar
