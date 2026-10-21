@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { LeaderboardAvatar } from '../ui';
+import { extractUserTargets } from '../../utils/supabaseClient';
 
 const DEFAULT_MEDALS = ['🥇', '🥈', '🥉'];
 
@@ -15,6 +16,7 @@ export function FullLeaderboardModal({
 }) {
   if (!isOpen) return null;
 
+  const userTargets = extractUserTargets(user);
   const currentDisplayName = user?.preferredName || user?.fullName || user?.username || user?.email || "User";
   const realFullName = user?.fullName || user?.username || user?.email || "User";
 
@@ -90,15 +92,9 @@ export function FullLeaderboardModal({
           </div>
 
           {leaderboard.map((entry, idx) => {
-            const isMe = user && (
-              (entry.username && (
-                entry.username.toLowerCase() === (user.fullName || '').toLowerCase() || 
-                entry.username.toLowerCase() === (user.email || '').toLowerCase()
-              )) ||
-              (entry.displayName && (
-                entry.displayName.toLowerCase() === (user.preferredName || '').toLowerCase() ||
-                entry.displayName.toLowerCase() === (user.fullName || '').toLowerCase()
-              ))
+            const isMe = user && userTargets.length > 0 && (
+              (entry.username && userTargets.includes(entry.username.trim().toLowerCase())) ||
+              (entry.displayName && userTargets.includes(entry.displayName.trim().toLowerCase()))
             );
             const displayName = entry.displayName || entry.username;
             return (

@@ -461,7 +461,7 @@ export async function getUserProfileDirect(usernameOrEmail) {
   const target = usernameOrEmail.trim().toLowerCase();
   const { data, error } = await supabase
     .from('StaffUsers')
-    .select('*');
+    .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture');
 
   if (error || !data) return null;
 
@@ -489,7 +489,9 @@ export async function getUserProfileDirect(usernameOrEmail) {
 export async function updateProfilePictureDirect(usernameOrEmail, profilePicture) {
   if (!usernameOrEmail) throw new Error("Username required");
   const target = usernameOrEmail.trim().toLowerCase();
-  const { data: allUsers, error: fetchErr } = await supabase.from('StaffUsers').select('*');
+  const { data: allUsers, error: fetchErr } = await supabase
+    .from('StaffUsers')
+    .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture');
   if (fetchErr) throw fetchErr;
 
   const match = (allUsers || []).find(u => 
@@ -516,7 +518,9 @@ export async function updatePreferredNameDirect(usernameOrEmail, preferredName) 
   const trimmed = (preferredName || '').trim().slice(0, 10);
   const target = usernameOrEmail.trim().toLowerCase();
 
-  const { data: allUsers } = await supabase.from('StaffUsers').select('*');
+  const { data: allUsers } = await supabase
+    .from('StaffUsers')
+    .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture');
   const match = (allUsers || []).find(u => 
     (u.Email && u.Email.toLowerCase() === target) || 
     (u.FullName && u.FullName.toLowerCase() === target)
@@ -529,11 +533,14 @@ export async function updatePreferredNameDirect(usernameOrEmail, preferredName) 
       .eq('Id', match.Id ?? match.id);
   }
 
-  // Update in UserAnswers
-  await supabase
-    .from('UserAnswers')
-    .update({ PreferredName: trimmed })
-    .eq('Username', usernameOrEmail);
+  // Update in UserAnswers across all aliases
+  const targetUsernames = [usernameOrEmail, match?.FullName, match?.Email].filter(Boolean);
+  for (const tu of new Set(targetUsernames)) {
+    await supabase
+      .from('UserAnswers')
+      .update({ PreferredName: trimmed })
+      .eq('Username', tu);
+  }
 
   return { success: true, preferredName: trimmed };
 }

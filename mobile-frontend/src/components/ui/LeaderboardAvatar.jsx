@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { extractUserTargets } from '../../utils/supabaseClient';
 
 export function LeaderboardAvatar({
   entry,
@@ -13,15 +14,10 @@ export function LeaderboardAvatar({
 }) {
   const [imgErr, setImgErr] = useState(false);
 
-  const isMe = entry && user && (
-    (entry.username && (
-      entry.username.toLowerCase() === (user.fullName || '').toLowerCase() || 
-      entry.username.toLowerCase() === (user.email || '').toLowerCase()
-    )) ||
-    (entry.displayName && (
-      entry.displayName.toLowerCase() === (user.preferredName || '').toLowerCase() ||
-      entry.displayName.toLowerCase() === (user.fullName || '').toLowerCase()
-    ))
+  const userTargets = extractUserTargets(user);
+  const isMe = entry && userTargets.length > 0 && (
+    (entry.username && userTargets.includes(entry.username.trim().toLowerCase())) ||
+    (entry.displayName && userTargets.includes(entry.displayName.trim().toLowerCase()))
   );
 
   const pic = !imgErr && (entry?.profilePicture || (isMe ? user?.profilePicture : null));
