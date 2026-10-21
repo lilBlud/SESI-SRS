@@ -184,43 +184,14 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
           {streak >= 7 && <div className="ml-auto text-[11px] bg-orange-500 text-white px-2 py-1 rounded-full font-bold">🏆 Week!</div>}
         </div>
 
-        {/* Official Score Status (if already taken) */}
-        {quizStatus.hasAttempted && (
-          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-4 flex items-center justify-between text-left shadow-xs">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-lg shadow-sm shrink-0">
-                ✓
-              </div>
-              <div className="min-w-0">
-                <div className="text-[14px] font-black text-emerald-950 dark:text-emerald-200 truncate">
-                  Monthly Quiz Completed
-                </div>
-                <div className="text-[12px] text-emerald-700 dark:text-emerald-400 font-semibold">
-                  Official Score: <span className="font-black text-emerald-600 dark:text-emerald-300">+{quizStatus.recordedScore} pts</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="space-y-3">
           <button
             onClick={startQuiz}
-            className={`w-full text-white rounded-2xl p-5 shadow-lg text-left active:scale-[0.98] transition-all flex items-center justify-between ${
-              quizStatus.hasAttempted
-                ? 'bg-gradient-to-r from-slate-700 to-slate-800 shadow-slate-900/20'
-                : 'bg-gradient-to-r from-emerald-600 to-teal-600 shadow-emerald-500/25'
-            }`}
+            className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl p-5 shadow-lg shadow-emerald-500/25 text-left active:scale-[0.98] transition-all flex items-center justify-between"
           >
             <div>
-              <span className="text-[16px] font-bold">
-                {quizStatus.hasAttempted ? 'Retake in Practice Mode' : 'Start Monthly Quiz'}
-              </span>
-              <p className={`text-[13px] mt-1 ${quizStatus.hasAttempted ? 'text-slate-300' : 'text-emerald-100'}`}>
-                {quizStatus.hasAttempted
-                  ? 'Practice questions to refresh your knowledge (0 pts)'
-                  : 'Test your knowledge & earn leaderboard points'}
-              </p>
+              <span className="text-[16px] font-bold">Start Monthly Quiz</span>
+              <p className="text-[13px] text-emerald-100 mt-1">Test your knowledge for this month</p>
             </div>
             <svg className="w-6 h-6 shrink-0 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
           </button>
