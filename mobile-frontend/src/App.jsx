@@ -3,7 +3,7 @@ import { AdminTab, HomeTab, GlossaryTab, QuizTab, ProfileTab } from './component
 import LoginPage from './components/pages/LoginPage';
 import PasscodeGate from './components/pages/PasscodeGate';
 import { API_BASE } from './utils/constants.js';
-import { getGlossaryDirect, getUserProfileDirect, getUserStreakDirect } from './utils/supabaseClient.js';
+import { getGlossaryDirect, getUserProfileDirect, getUserStreakDirect, recordVisitorDirect, getVisitorStatsDirect } from './utils/supabaseClient.js';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { useBookmarks } from './hooks/useBookmarks';
 
@@ -134,7 +134,13 @@ function App() {
   }, [user?.email, user?.fullName, user?.staffId]);
 
   // Visitor Tracking
-  const [visitorStats, setVisitorStats] = useState({ totalVisits: 0, todayVisits: 0, uniqueVisitors: 0 });
+  const [visitorStats, setVisitorStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sesi_cached_visitor_stats');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return { totalVisits: 0, todayVisits: 0, uniqueVisitors: 0 };
+  });
 
   useEffect(() => {
     let visitorId = localStorage.getItem('sesi_visitor_id');
@@ -143,22 +149,47 @@ function App() {
       try { localStorage.setItem('sesi_visitor_id', visitorId); } catch {}
     }
 
-    fetch(`${API_BASE}/api/visitors/record`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        visitorId,
-        username: user?.fullName || '',
-        division: user?.division || '',
-        path: window.location.pathname
-      })
-    })
-      .then(r => r.ok ? r.json() : null)
+    const payload = {
+      visitorId,
+      username: user?.fullName || user?.preferredName || '',
+      division: user?.division || '',
+      path: window.location.pathname,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+      staffId: user?.id || null
+    };
+
+    const saveStats = (d) => {
+      if (d) {
+        setVisitorStats(d);
+        try {
+          localStorage.setItem('sesi_cached_visitor_stats', JSON.stringify({
+            totalVisits: d.totalVisits ?? 0,
+            todayVisits: d.todayVisits ?? 0,
+            uniqueVisitors: d.uniqueVisitors ?? 0
+          }));
+        } catch {}
+      }
+    };
+
+    // Record directly via Supabase for reliable static hosting (e.g., Cloudflare Pages)
+    recordVisitorDirect(payload)
       .then(d => {
-        if (d) setVisitorStats(d);
+        if (d) saveStats(d);
       })
-      .catch(() => {});
-  }, [user?.fullName, user?.division]);
+      .catch(err => {
+        console.warn("Direct visitor record error, attempting API fallback:", err);
+        if (API_BASE) {
+          fetch(`${API_BASE}/api/visitors/record`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => saveStats(d))
+            .catch(() => {});
+        }
+      });
+  }, [user?.fullName, user?.preferredName, user?.division, user?.id]);
 
   const [hasShownAlreadySaved, setHasShownAlreadySaved] = useState(false);
 
@@ -340,8 +371,18 @@ function App() {
         {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
-        {activeTab === 'admin' && <AdminTab onGlossaryChange={fetchGlossary} visitorStats={visitorStats} onRefreshVisitorStats={() => {
-          fetch(`${API_BASE}/api/visitors/stats`).then(r => r.ok ? r.json() : null).then(d => { if (d) setVisitorStats(d); });
+        {activeTab === 'admin' && <AdminTab onGlossaryChange={fetchGlossary} visitorStats={visitorStats} onRefreshVisitorStats={async () => {
+          try {
+            const stats = await getVisitorStatsDirect();
+            if (stats) {
+              setVisitorStats(stats);
+              try { localStorage.setItem('sesi_cached_visitor_stats', JSON.stringify({ totalVisits: stats.totalVisits, todayVisits: stats.todayVisits, uniqueVisitors: stats.uniqueVisitors })); } catch {}
+            }
+          } catch {
+            if (API_BASE) {
+              fetch(`${API_BASE}/api/visitors/stats`).then(r => r.ok ? r.json() : null).then(d => { if (d) setVisitorStats(d); });
+            }
+          }
         }} />}
       </main>
 

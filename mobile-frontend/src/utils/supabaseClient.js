@@ -649,3 +649,117 @@ export async function signupDirect({ fullName, preferredName, email, password, d
   };
 }
 
+/**
+ * Fetch visitor traffic stats and recent logs directly from Supabase VisitorLogs.
+ * Uses Malaysia (UTC+8) timezone to determine today's date boundary.
+ */
+export async function getVisitorStatsDirect() {
+  const now = new Date();
+  const nowMy = new Date(now.getTime() + (8 * 3600 * 1000));
+  const todayStr = nowMy.toISOString().slice(0, 10);
+  const todayStartUtc = new Date(new Date(todayStr + 'T00:00:00Z').getTime() - (8 * 3600 * 1000)).toISOString();
+
+  const [totalRes, todayRes, recentRes, breakdownRes] = await Promise.all([
+    supabase.from('VisitorLogs').select('*', { count: 'exact', head: true }),
+    supabase.from('VisitorLogs').select('*', { count: 'exact', head: true }).gte('VisitedAt', todayStartUtc),
+    supabase.from('VisitorLogs').select('*').order('VisitedAt', { ascending: false }).limit(20),
+    supabase.from('VisitorLogs').select('VisitorId, Division').limit(10000)
+  ]);
+
+  const totalVisits = totalRes.count ?? 0;
+  const todayVisits = todayRes.count ?? 0;
+
+  let uniqueVisitors = 0;
+  let divisionBreakdown = [];
+
+  if (breakdownRes.data) {
+    const uniqueIds = new Set(breakdownRes.data.map(l => l.VisitorId).filter(Boolean));
+    uniqueVisitors = uniqueIds.size;
+
+    const divCounts = {};
+    for (const log of breakdownRes.data) {
+      const d = (log.Division || '').trim();
+      if (!d) continue;
+      divCounts[d] = (divCounts[d] || 0) + 1;
+    }
+    divisionBreakdown = Object.entries(divCounts)
+      .map(([division, count]) => ({ division, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+  }
+
+  const recentVisits = (recentRes.data || []).map(v => ({
+    id: v.Id ?? v.id,
+    visitorId: v.VisitorId ?? v.visitorId ?? '',
+    username: (v.Username ?? v.username ?? '').trim() || 'Anonymous Visitor',
+    division: (v.Division ?? v.division ?? '').trim() || 'General',
+    visitedAt: v.VisitedAt ?? v.visitedAt ?? new Date().toISOString()
+  }));
+
+  return {
+    totalVisits,
+    todayVisits,
+    uniqueVisitors: uniqueVisitors || totalVisits,
+    divisionBreakdown,
+    recentVisits
+  };
+}
+
+/**
+ * Record a platform visit directly into Supabase VisitorLogs.
+ * Throttled to 1 visit per visitorId per 15 minutes unless updating an anonymous visit with user info.
+ */
+export async function recordVisitorDirect({ visitorId, username, division, path, userAgent, staffId } = {}) {
+  if (!visitorId) return await getVisitorStatsDirect();
+
+  try {
+    const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const cleanUsername = (username || '').trim();
+    const cleanDivision = (division || '').trim();
+
+    const { data: recent, error: selErr } = await supabase
+      .from('VisitorLogs')
+      .select('Id, Username, Division')
+      .eq('VisitorId', visitorId)
+      .gte('VisitedAt', cutoff)
+      .order('VisitedAt', { ascending: false })
+      .limit(1);
+
+    if (selErr) {
+      console.warn("Visitor check error:", selErr);
+    }
+
+    const hasRecent = recent && recent.length > 0;
+
+    if (hasRecent) {
+      const existing = recent[0];
+      if (cleanUsername && (!existing.Username || existing.Username === 'Anonymous Visitor')) {
+        await supabase
+          .from('VisitorLogs')
+          .update({
+            Username: cleanUsername,
+            Division: cleanDivision || existing.Division || 'General',
+            staff_id: staffId || null
+          })
+          .eq('Id', existing.Id);
+      }
+    } else {
+      await supabase
+        .from('VisitorLogs')
+        .insert([{
+          VisitorId: visitorId,
+          Username: cleanUsername,
+          Division: cleanDivision || 'General',
+          Path: path || '/',
+          UserAgent: userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : ''),
+          VisitedAt: new Date().toISOString(),
+          staff_id: staffId || null
+        }]);
+    }
+  } catch (err) {
+    console.warn("recordVisitorDirect error:", err);
+  }
+
+  return await getVisitorStatsDirect();
+}
+

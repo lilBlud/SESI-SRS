@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CorporatePerformanceChart, getYAxisUnit } from '../ui';
-import { DEFAULT_HISTORICAL_METRICS } from '../../data/historicalPerformanceData';
-import { getInfographicsDirect, getGlossaryDirect, supabase } from '../../utils/supabaseClient';
+import { getInfographicsDirect, getGlossaryDirect, getVisitorStatsDirect, supabase } from '../../utils/supabaseClient';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 const currentMonth = new Date().toISOString().slice(0, 7);
@@ -66,6 +65,17 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
 
   const fetchTraffic = async () => {
     setLoadingTraffic(true);
+    try {
+      const directStats = await getVisitorStatsDirect();
+      if (directStats) {
+        setTrafficData(directStats);
+        if (onRefreshVisitorStats) onRefreshVisitorStats();
+        return;
+      }
+    } catch (e) {
+      console.warn("Direct fetch traffic failed in AdminTab:", e);
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/visitors/stats?t=${Date.now()}`);
       if (res.ok) {
@@ -677,6 +687,7 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
             onClick={() => {
               setActiveSection(s.id);
               setShowForm(false);
+              if (s.id === 'traffic') fetchTraffic();
             }} 
             className={`py-2 px-1 rounded-xl text-center transition-all flex flex-col items-center justify-center min-h-[46px] ${
               activeSection === s.id 
@@ -787,9 +798,20 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
                 <h3 className="text-[14px] font-black text-slate-900 dark:text-white">🕒 Recent Visitor Logs</h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">Real-time log of latest platform visits</p>
               </div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                Latest {trafficData?.recentVisits?.length || 0}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                  Latest {trafficData?.recentVisits?.length || 0}
+                </span>
+                <button
+                  type="button"
+                  onClick={fetchTraffic}
+                  disabled={loadingTraffic}
+                  className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition-all disabled:opacity-50"
+                  title="Refresh visitor logs"
+                >
+                  {loadingTraffic ? '...' : '🔄'}
+                </button>
+              </div>
             </div>
 
             <div className="divide-y divide-slate-100 dark:divide-slate-700/60 max-h-80 overflow-y-auto">
