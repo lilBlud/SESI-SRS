@@ -1,0 +1,386 @@
+import subprocess
+import os
+
+def build_streamlined_flow():
+    HEADER_BLUE = "#012060" # Exact corporate navy blue sampled from user snippet
+    BORDER_BLACK = "#000000"
+    RED_ACCENT = "#C00000"
+    BLUE_EDGE = "#418AB3"
+    GREEN_ACCENT = "#1E8449"
+    
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-10-21T06:40:00.000Z" agent="Antigravity" version="24.0.0" type="device">
+  <diagram id="sesi-streamlined-flow" name="1. SESI SRS App Process Flow">
+    <mxGraphModel dx="1200" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1140" pageHeight="1260" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ========================================== -->
+        <!-- HEADER: LOGO & TITLE BANNER                -->
+        <!-- ========================================== -->
+        
+        <!-- Sabah Electricity Logo banner -->
+        <mxCell id="logo_banner" value="&lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;&gt;&lt;tr&gt;&lt;td valign=&quot;middle&quot; style=&quot;padding-right:8px;&quot;&gt;&lt;svg width=&quot;42&quot; height=&quot;32&quot; viewBox=&quot;0 0 100 75&quot;&gt;&lt;path d=&quot;M10 65 L40 18 L58 42 L72 12 L95 65 Z&quot; fill=&quot;#1E8449&quot;/&gt;&lt;path d=&quot;M32 65 L50 38 L65 65 Z&quot; fill=&quot;#1B4F72&quot;/&gt;&lt;/svg&gt;&lt;/td&gt;&lt;td align=&quot;left&quot; valign=&quot;middle&quot;&gt;&lt;b style=&quot;font-size:14px;color:#1B4F72;font-family:Segoe UI,Arial;&quot;&gt;Sabah Electricity&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:8px;color:#5D6D7E;font-family:Segoe UI,Arial;&quot;&gt;Re-energizing Our Future&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="40" y="15" width="200" height="42" as="geometry" />
+        </mxCell>
+
+        <!-- Title Banner -->
+        <mxCell id="title_banner" value="1. Process Flow SESI SRS — Mobile Application Workflow" style="rounded=1;arcSize=25;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.5;fontStyle=1;fontSize=13;fontFamily=Segoe UI, Arial, sans-serif;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="260" y="15" width="820" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- TABLE STRUCTURE: HEADERS & FRAME           -->
+        <!-- ========================================== -->
+
+        <!-- Roles Column Header (#012060 navy blue matching user snippet) -->
+        <mxCell id="header_roles" value="&lt;b&gt;ROLES&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor={HEADER_BLUE};strokeColor={BORDER_BLACK};strokeWidth=1.5;fontColor=#FFFFFF;fontStyle=1;fontSize=12;fontFamily=Segoe UI, Arial, sans-serif;" vertex="1" parent="1">
+          <mxGeometry x="40" y="72" width="200" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Process Column Header (#012060 navy blue matching user snippet) -->
+        <mxCell id="header_process" value="&lt;b&gt;PROCESS&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor={HEADER_BLUE};strokeColor={BORDER_BLACK};strokeWidth=1.5;fontColor=#FFFFFF;fontStyle=1;fontSize=12;fontFamily=Segoe UI, Arial, sans-serif;" vertex="1" parent="1">
+          <mxGeometry x="240" y="72" width="840" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Outer Frame Lines (Solid Black 1.5px) -->
+        <mxCell id="frame_top" value="" style="edgeStyle=none;html=1;endArrow=none;strokeColor={BORDER_BLACK};strokeWidth=1.5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="40" y="72" as="sourcePoint" /><mxPoint x="1080" y="72" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="frame_bottom" value="" style="edgeStyle=none;html=1;endArrow=none;strokeColor={BORDER_BLACK};strokeWidth=1.5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="40" y="1220" as="sourcePoint" /><mxPoint x="1080" y="1220" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="frame_left" value="" style="edgeStyle=none;html=1;endArrow=none;strokeColor={BORDER_BLACK};strokeWidth=1.5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="40" y="72" as="sourcePoint" /><mxPoint x="40" y="1220" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="frame_right" value="" style="edgeStyle=none;html=1;endArrow=none;strokeColor={BORDER_BLACK};strokeWidth=1.5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1080" y="72" as="sourcePoint" /><mxPoint x="1080" y="1220" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="col_divider" value="" style="edgeStyle=none;html=1;endArrow=none;strokeColor={BORDER_BLACK};strokeWidth=1.5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="240" y="72" as="sourcePoint" /><mxPoint x="240" y="1220" as="targetPoint" /></mxGeometry>
+        </mxCell>
+
+        <!-- Single Swimlane Divider: STAFF USER vs SYSTEM & BACKEND at y=700 -->
+        <mxCell id="row_divider_1" value="" style="edgeStyle=none;html=1;endArrow=none;strokeColor={BORDER_BLACK};strokeWidth=1.5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="40" y="700" as="sourcePoint" /><mxPoint x="1080" y="700" as="targetPoint" /></mxGeometry>
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- ROLES LABELS (2 STREAMLINED SWIMLANES)     -->
+        <!-- ========================================== -->
+
+        <!-- Role 1: STAFF USER (INITIATOR) -->
+        <mxCell id="role_initiator" value="&lt;div align=&quot;center&quot;&gt;&lt;b&gt;&lt;u&gt;STAFF USER&lt;/u&gt;&lt;/b&gt;&lt;br&gt;&lt;b&gt;(INITIATOR)&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;1. ALL SESB EMPLOYEES&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;2. DIVISIONAL STAFF -&lt;/b&gt;&lt;br&gt;• IDD&lt;br&gt;• Distribution&lt;br&gt;• Generation&lt;br&gt;• Transmission&lt;br&gt;&lt;br&gt;&lt;i style=&quot;font-size:9px;color:#555;&quot;&gt;Actions: AD Login, Take Quizzes, Open Dictionary, Bookmark &amp;amp; Export PDF&lt;/i&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontFamily=Segoe UI, Arial, sans-serif;fontSize=11;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="45" y="270" width="190" height="240" as="geometry" />
+        </mxCell>
+
+        <!-- Role 2: SESI APP SYSTEM & BACKEND -->
+        <mxCell id="role_system" value="&lt;div align=&quot;center&quot;&gt;&lt;b&gt;&lt;u&gt;SESI APP SYSTEM&lt;/u&gt;&lt;/b&gt;&lt;br&gt;&lt;b&gt;&amp;amp; BACKEND&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;1. ACTIVE DIRECTORY -&lt;/b&gt;&lt;br&gt;(SESB SSO Authenticator)&lt;br&gt;&lt;br&gt;&lt;b&gt;2. SCORING &amp;amp; STREAK ENGINE -&lt;/b&gt;&lt;br&gt;(Real-Time Calculation)&lt;br&gt;&lt;br&gt;&lt;b&gt;3. SUPABASE DATABASE -&lt;/b&gt;&lt;br&gt;(Scores, Ranks &amp;amp; Bookmarks)&lt;br&gt;&lt;br&gt;&lt;b&gt;4. PDF GENERATOR -&lt;/b&gt;&lt;br&gt;(Document Export Service)&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="45" y="830" width="190" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- SWIMLANE 1: STAFF USER (INTERACTION)       -->
+        <!-- ========================================== -->
+
+        <!-- (1) START -->
+        <mxCell id="node_start" value="(1)&lt;br&gt;&lt;b&gt;START&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=11;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="610" y="115" width="90" height="38" as="geometry" />
+        </mxCell>
+
+        <!-- (2) Active Directory Login -->
+        <mxCell id="node_ad_login" value="&lt;b&gt;(2)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Active Directory Login&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#333333&quot;&gt;(Enter Staff ID &amp;amp; SESB AD Password)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="555" y="175" width="200" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- (2)(a) AD Verification Diamond -->
+        <mxCell id="node_ad_check" value="&lt;b&gt;(2)(a)&lt;/b&gt;&lt;br&gt;AD Auth&lt;br&gt;Valid?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="585" y="245" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Reject Box (Invalid AD Login) -->
+        <mxCell id="node_reject" value="&lt;b&gt;Auth Failed&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot;&gt;Retry AD Login&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FADBD8;strokeColor=#78281F;strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="270" y="253" width="100" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- Main Dashboard Navigation (Feature Selection) -->
+        <mxCell id="node_dashboard_hub" value="&lt;b&gt;SESI App Home Dashboard&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#555555&quot;&gt;Select: Take Monthly Quiz or Open Dictionary&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#EAEDED;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="545" y="335" width="220" height="42" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- PATH A: QUIZ WORKFLOW (LEFT TRACK)         -->
+        <!-- ========================================== -->
+
+        <!-- (3)(a) Select Monthly Module -->
+        <mxCell id="node_select_module" value="&lt;b&gt;(3)(a)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Select Monthly Module&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#555555&quot;&gt;(Corporate Risk / Safety Topic)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="370" y="420" width="170" height="48" as="geometry" />
+        </mxCell>
+
+        <!-- (4)(a) Answer Timed Questions (A-D) -->
+        <mxCell id="node_answer_quiz" value="&lt;b&gt;(4)(a)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Answer Timed Questions&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#555555&quot;&gt;(Options A–D, 15s Countdown)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="370" y="495" width="170" height="48" as="geometry" />
+        </mxCell>
+
+        <!-- (5)(a) First Scored Attempt? Diamond -->
+        <mxCell id="node_first_attempt" value="&lt;b&gt;(5)(a)&lt;/b&gt;&lt;br&gt;First Scored&lt;br&gt;Attempt?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="375" y="565" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Practice Mode Box (Unranked revision) -->
+        <mxCell id="node_practice_mode" value="&lt;b&gt;Practice Mode&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px;&quot; color=&quot;#555555&quot;&gt;(Unranked Practice)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=9;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="255" y="573" width="95" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- Scoring Factors Callout Box -->
+        <mxCell id="box_scoring_callout" value="&lt;div align=&quot;left&quot;&gt;&lt;b&gt;&lt;u&gt;Scoring Factors:&lt;/u&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;1. Accuracy (+100/Q)&lt;br&gt;2. Speed Bonus (&amp;lt;15s)&lt;br&gt;3. Daily Streak (+20)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D5D8DC;strokeColor=#BDC3C7;strokeWidth=1;fontFamily=Segoe UI, Arial, sans-serif;fontSize=9;fontColor=#000000;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="255" y="420" width="95" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- (6)(a) Submit Completed Quiz -->
+        <mxCell id="node_submit_quiz" value="&lt;b&gt;(6)(a)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Submit Quiz Answers&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px;&quot; color=&quot;#555555&quot;&gt;(Sends Responses &amp;amp; Duration)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="375" y="642" width="160" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- PATH B: DICTIONARY WORKFLOW (RIGHT TRACK)  -->
+        <!-- ========================================== -->
+
+        <!-- (3)(b) Open Dictionary & Directory -->
+        <mxCell id="node_open_dict" value="&lt;b&gt;(3)(b)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Open SESI Dictionary&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#555555&quot;&gt;Browse Terms &amp;amp; KPI Cards&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="785" y="420" width="180" height="48" as="geometry" />
+        </mxCell>
+
+        <!-- (4)(b) Search, Filter & View Term Details -->
+        <mxCell id="node_view_term" value="&lt;b&gt;(4)(b)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Search &amp;amp; View Term&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#555555&quot;&gt;(Definitions, Formulas, Scope)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="785" y="495" width="180" height="48" as="geometry" />
+        </mxCell>
+
+        <!-- (5)(b) Action Choice: Bookmark or Export PDF? -->
+        <mxCell id="node_dict_action_choice" value="&lt;b&gt;(5)(b)&lt;/b&gt;&lt;br&gt;Bookmark Term&lt;br&gt;or Export PDF?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="785" y="565" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- (6)(b)(i) Bookmark Dictionary Term -->
+        <mxCell id="node_bookmark_term" value="&lt;b&gt;(6)(b)(i)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Bookmark Term&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px;&quot; color=&quot;#555555&quot;&gt;(Save to User Profile)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="690" y="642" width="145" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- (6)(b)(ii) Export to PDF Request -->
+        <mxCell id="node_export_pdf" value="&lt;b&gt;(6)(b)(ii)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Export to PDF&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px;&quot; color=&quot;#555555&quot;&gt;(Single Term or Bookmarks)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="880" y="642" width="150" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- SWIMLANE 2: SYSTEM & BACKEND (AUTOMATED)   -->
+        <!-- ========================================== -->
+
+        <!-- (7) Automated Scoring Engine -->
+        <mxCell id="node_scoring_engine" value="&lt;b&gt;(7)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Automated Scoring Engine&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#196F3D&quot;&gt;• Score = Correct Ans × 100&lt;br&gt;• Speed Bonus = max(0, 15s - avg)&lt;br&gt;• Daily Streak Counter (+1 Day)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="350" y="740" width="210" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- (8) Commit to Database (Supabase) -->
+        <mxCell id="node_commit_db" value="&lt;b&gt;(8)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Commit to Database (Supabase)&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#555555&quot;&gt;Store scores, response times, streaks &amp;amp; bookmarks&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="350" y="835" width="210" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- (9) SCORE APPEARS ON DASHBOARD -->
+        <mxCell id="node_dashboard_score" value="&lt;b&gt;(9)&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color:#0B5345;&quot;&gt;Score Appears on Dashboard!&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#154360&quot;&gt;• Real-Time Scorecard &amp;amp; Badges&lt;br&gt;• Rank Updated on Leaderboard&lt;br&gt;• Division Standings Refreshed&lt;/font&gt;" style="rounded=1;arcSize=18;whiteSpace=wrap;html=1;fillColor=#D4EFDF;strokeColor=#196F3D;strokeWidth=1.5;fontFamily=Segoe UI, Arial, sans-serif;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="345" y="915" width="220" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Bookmark Stored in Profile Output -->
+        <mxCell id="node_bm_stored" value="&lt;b&gt;Bookmark Synced&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#555555&quot;&gt;Saved to Supabase user_bookmarks &amp;amp; Profile Tab&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=9;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="675" y="745" width="175" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- PDF Document Generation Service & Download Output -->
+        <mxCell id="node_pdf_output" value="&lt;b&gt;PDF Generated &amp;amp; Downloaded&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot; color=&quot;#154360&quot;&gt;• Auto-renders with Sabah Electricity Header&lt;br&gt;• Printable Terms &amp;amp; Formulas&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F8F5;strokeColor=#117A65;strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=9;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="870" y="745" width="170" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- FINISH Oval -->
+        <mxCell id="node_finish" value="&lt;b&gt;FINISH&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.5;fontFamily=Segoe UI, Arial, sans-serif;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="677" y="1020" width="120" height="42" as="geometry" />
+        </mxCell>
+
+        <!-- Bottom Data Captured Box -->
+        <mxCell id="box_data_captured" value="&lt;b&gt;Data Captured &amp;amp; Stored In SESI Database (Supabase)&lt;/b&gt;&lt;br&gt;&lt;i&gt;• SESB Active Directory User Profiles &amp;amp; Division Mappings&lt;br&gt;• Quiz Question Logs, Timing Records &amp;amp; Daily Streaks&lt;br&gt;• Live Leaderboard Ranks &amp;amp; Divisional Aggregate Scores&lt;br&gt;• Bookmarked Terminology, KPI Cards &amp;amp; Export Logs&lt;/i&gt;" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=4 2;fillColor=#FFFFFF;strokeColor={BORDER_BLACK};strokeWidth=1.2;fontFamily=Segoe UI, Arial, sans-serif;fontSize=9;fontStyle=0;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="470" y="1115" width="500" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- CONNECTORS / FLOW EDGES                    -->
+        <!-- ========================================== -->
+
+        <!-- (1) START -> (2) Active Directory Login -->
+        <mxCell id="edge_start_to_ad" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_start" target="node_ad_login">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (2) AD Login -> (2)(a) AD Auth Valid? -->
+        <mxCell id="edge_ad_to_check" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_ad_login" target="node_ad_check">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (2)(a) AD Auth Valid? -> Reject Box [Label: No (Red)] -->
+        <mxCell id="edge_ad_fail" value="&lt;b&gt;&lt;font color=&quot;{RED_ACCENT}&quot;&gt;No&lt;/font&gt;&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={RED_ACCENT};strokeWidth=1.5;exitX=0;exitY=0.5;entryX=1;entryY=0.5;verticalAlign=bottom;fontSize=10;" edge="1" parent="1" source="node_ad_check" target="node_reject">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Reject Box loop back to (2) AD Login -->
+        <mxCell id="edge_reject_to_ad" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={RED_ACCENT};strokeWidth=1.2;exitX=0.5;exitY=0;entryX=0;entryY=0.5;" edge="1" parent="1" source="node_reject" target="node_ad_login">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="198" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- (2)(a) AD Auth Valid? -> Dashboard Hub [Label: Yes (Green)] -->
+        <mxCell id="edge_ad_success" value="&lt;b&gt;&lt;font color=&quot;{GREEN_ACCENT}&quot;&gt;Yes (AD Valid)&lt;/font&gt;&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;align=left;fontSize=10;" edge="1" parent="1" source="node_ad_check" target="node_dashboard_hub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Dashboard Hub -> (3)(a) Select Quiz Module (Path A) -->
+        <mxCell id="edge_hub_to_quiz" value="&lt;font color=&quot;#154360&quot;&gt;&lt;b&gt;Take Quiz&lt;/b&gt;&lt;/font&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0;exitY=0.5;entryX=0.5;entryY=0;verticalAlign=bottom;fontSize=10;" edge="1" parent="1" source="node_dashboard_hub" target="node_select_module">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="455" y="356" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Dashboard Hub -> (3)(b) Open Dictionary (Path B) -->
+        <mxCell id="edge_hub_to_dict" value="&lt;font color=&quot;#145A32&quot;&gt;&lt;b&gt;Open Dictionary&lt;/b&gt;&lt;/font&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=1;exitY=0.5;entryX=0.5;entryY=0;verticalAlign=bottom;fontSize=10;" edge="1" parent="1" source="node_dashboard_hub" target="node_open_dict">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="875" y="356" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- =================== PATH A CONNECTORS =================== -->
+
+        <!-- (3)(a) Select Module -> (4)(a) Answer Questions -->
+        <mxCell id="edge_quiz_module_to_ans" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_select_module" target="node_answer_quiz">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (4)(a) Answer Questions -> (5)(a) First Scored Attempt? -->
+        <mxCell id="edge_quiz_ans_to_attempt" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_answer_quiz" target="node_first_attempt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (5)(a) First Scored Attempt? -> Practice Mode [Label: No] -->
+        <mxCell id="edge_attempt_to_practice" value="&lt;b&gt;&lt;font color=&quot;{RED_ACCENT}&quot;&gt;No&lt;/font&gt;&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;verticalAlign=bottom;fontSize=10;" edge="1" parent="1" source="node_first_attempt" target="node_practice_mode">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Practice Mode to FINISH (Dashed Bypass Line routed safely at x=245) -->
+        <mxCell id="edge_practice_to_finish" value="&lt;font color=&quot;#555555&quot;&gt;Review Only&lt;/font&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;dashPattern=6 4;strokeColor={BLUE_EDGE};strokeWidth=1.2;exitX=0;exitY=0.5;entryX=0;entryY=0.5;fontSize=9;" edge="1" parent="1" source="node_practice_mode" target="node_finish">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="245" y="595" />
+              <mxPoint x="245" y="1041" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- (5)(a) First Scored Attempt? -> (6)(a) Submit Quiz [Label: Yes (Ranked)] -->
+        <mxCell id="edge_attempt_to_submit" value="&lt;b&gt;&lt;font color=&quot;{GREEN_ACCENT}&quot;&gt;Yes&lt;/font&gt;&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;align=left;fontSize=10;" edge="1" parent="1" source="node_first_attempt" target="node_submit_quiz">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (6)(a) Submit Quiz -> (7) Automated Scoring Engine (Swimlane 2) -->
+        <mxCell id="edge_submit_to_score" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_submit_quiz" target="node_scoring_engine">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (7) Scoring Engine -> (8) Commit to Database -->
+        <mxCell id="edge_score_to_commit" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_scoring_engine" target="node_commit_db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (8) Commit to Database -> (9) SCORE APPEARS ON DASHBOARD! -->
+        <mxCell id="edge_commit_to_dashboard" value="&lt;b&gt;&lt;font color=&quot;#0B5345&quot;&gt;Instant Sync&lt;/font&gt;&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#196F3D;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;align=left;fontSize=10;" edge="1" parent="1" source="node_commit_db" target="node_dashboard_score">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (9) Dashboard Score -> FINISH -->
+        <mxCell id="edge_dashboard_to_finish" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;dashPattern=6 4;strokeColor={BLUE_EDGE};strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_dashboard_score" target="node_finish">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="737" y="948" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- =================== PATH B CONNECTORS =================== -->
+
+        <!-- (3)(b) Open Dictionary -> (4)(b) Search & View Term -->
+        <mxCell id="edge_dict_to_view" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_open_dict" target="node_view_term">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (4)(b) View Term -> (5)(b) Action Choice -->
+        <mxCell id="edge_view_to_choice" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_view_term" target="node_dict_action_choice">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (5)(b) Choice -> (6)(b)(i) Bookmark Term -->
+        <mxCell id="edge_choice_to_bm" value="&lt;font color=&quot;#154360&quot;&gt;&lt;b&gt;Bookmark&lt;/b&gt;&lt;/font&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0;exitY=0.5;entryX=0.5;entryY=0;verticalAlign=bottom;fontSize=10;" edge="1" parent="1" source="node_dict_action_choice" target="node_bookmark_term">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="762" y="595" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- (5)(b) Choice -> (6)(b)(ii) Export to PDF -->
+        <mxCell id="edge_choice_to_export" value="&lt;font color=&quot;#145A32&quot;&gt;&lt;b&gt;Export PDF&lt;/b&gt;&lt;/font&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=1;exitY=0.5;entryX=0.5;entryY=0;verticalAlign=bottom;fontSize=10;" edge="1" parent="1" source="node_dict_action_choice" target="node_export_pdf">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="955" y="595" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- (6)(b)(i) Bookmark Term -> Bookmark Synced (Swimlane 2) -->
+        <mxCell id="edge_bm_to_sync" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_bookmark_term" target="node_bm_stored">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- (6)(b)(ii) Export to PDF -> PDF Document Generation Service (Swimlane 2) -->
+        <mxCell id="edge_export_to_pdf_svc" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={BORDER_BLACK};strokeWidth=1.2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_export_pdf" target="node_pdf_output">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Bookmark Synced -> FINISH -->
+        <mxCell id="edge_bm_to_finish" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;dashPattern=6 4;strokeColor={BLUE_EDGE};strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="node_bm_stored" target="node_finish">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PDF Output -> FINISH -->
+        <mxCell id="edge_pdf_to_finish" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;dashPattern=6 4;strokeColor={BLUE_EDGE};strokeWidth=1.5;exitX=0.5;exitY=1;entryX=1;entryY=0.5;" edge="1" parent="1" source="node_pdf_output" target="node_finish">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="955" y="1041" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
+"""
+    target_path = r"c:\Users\User\OneDrive\Desktop\SESI SRS\SESI_App_Flow.drawio"
+    with open(target_path, "w", encoding="utf-8") as f:
+        f.write(xml.strip())
+    print("Generated streamlined 2-tier flow in SESI_App_Flow.drawio")
+
+if __name__ == "__main__":
+    build_streamlined_flow()

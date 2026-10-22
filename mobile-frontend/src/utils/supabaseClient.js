@@ -654,55 +654,66 @@ export async function signupDirect({ fullName, preferredName, email, password, d
  * Uses Malaysia (UTC+8) timezone to determine today's date boundary.
  */
 export async function getVisitorStatsDirect() {
-  const now = new Date();
-  const nowMy = new Date(now.getTime() + (8 * 3600 * 1000));
-  const todayStr = nowMy.toISOString().slice(0, 10);
-  const todayStartUtc = new Date(new Date(todayStr + 'T00:00:00Z').getTime() - (8 * 3600 * 1000)).toISOString();
+  try {
+    const now = new Date();
+    const nowMy = new Date(now.getTime() + (8 * 3600 * 1000));
+    const todayStr = nowMy.toISOString().slice(0, 10);
+    const todayStartUtc = new Date(new Date(todayStr + 'T00:00:00Z').getTime() - (8 * 3600 * 1000)).toISOString();
 
-  const [totalRes, todayRes, recentRes, breakdownRes] = await Promise.all([
-    supabase.from('VisitorLogs').select('*', { count: 'exact', head: true }),
-    supabase.from('VisitorLogs').select('*', { count: 'exact', head: true }).gte('VisitedAt', todayStartUtc),
-    supabase.from('VisitorLogs').select('*').order('VisitedAt', { ascending: false }).limit(20),
-    supabase.from('VisitorLogs').select('VisitorId, Division').limit(10000)
-  ]);
+    const [totalRes, todayRes, recentRes, breakdownRes] = await Promise.all([
+      supabase.from('VisitorLogs').select('*', { count: 'exact', head: true }),
+      supabase.from('VisitorLogs').select('*', { count: 'exact', head: true }).gte('VisitedAt', todayStartUtc),
+      supabase.from('VisitorLogs').select('*').order('VisitedAt', { ascending: false }).limit(20),
+      supabase.from('VisitorLogs').select('VisitorId, Division').limit(10000)
+    ]);
 
-  const totalVisits = totalRes.count ?? 0;
-  const todayVisits = todayRes.count ?? 0;
+    const totalVisits = totalRes.count ?? 0;
+    const todayVisits = todayRes.count ?? 0;
 
-  let uniqueVisitors = 0;
-  let divisionBreakdown = [];
+    let uniqueVisitors = 0;
+    let divisionBreakdown = [];
 
-  if (breakdownRes.data) {
-    const uniqueIds = new Set(breakdownRes.data.map(l => l.VisitorId).filter(Boolean));
-    uniqueVisitors = uniqueIds.size;
+    if (breakdownRes.data) {
+      const uniqueIds = new Set(breakdownRes.data.map(l => l.VisitorId).filter(Boolean));
+      uniqueVisitors = uniqueIds.size;
 
-    const divCounts = {};
-    for (const log of breakdownRes.data) {
-      const d = (log.Division || '').trim();
-      if (!d) continue;
-      divCounts[d] = (divCounts[d] || 0) + 1;
+      const divCounts = {};
+      for (const log of breakdownRes.data) {
+        const d = (log.Division || '').trim();
+        if (!d) continue;
+        divCounts[d] = (divCounts[d] || 0) + 1;
+      }
+      divisionBreakdown = Object.entries(divCounts)
+        .map(([division, count]) => ({ division, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8);
     }
-    divisionBreakdown = Object.entries(divCounts)
-      .map(([division, count]) => ({ division, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
+
+    const recentVisits = (recentRes.data || []).map(v => ({
+      id: v.Id ?? v.id,
+      visitorId: v.VisitorId ?? v.visitorId ?? '',
+      username: (v.Username ?? v.username ?? '').trim() || 'Anonymous Visitor',
+      division: (v.Division ?? v.division ?? '').trim() || 'General',
+      visitedAt: v.VisitedAt ?? v.visitedAt ?? new Date().toISOString()
+    }));
+
+    return {
+      totalVisits,
+      todayVisits,
+      uniqueVisitors: uniqueVisitors || totalVisits,
+      divisionBreakdown,
+      recentVisits
+    };
+  } catch (err) {
+    console.warn("getVisitorStatsDirect error:", err);
+    return {
+      totalVisits: 0,
+      todayVisits: 0,
+      uniqueVisitors: 0,
+      divisionBreakdown: [],
+      recentVisits: []
+    };
   }
-
-  const recentVisits = (recentRes.data || []).map(v => ({
-    id: v.Id ?? v.id,
-    visitorId: v.VisitorId ?? v.visitorId ?? '',
-    username: (v.Username ?? v.username ?? '').trim() || 'Anonymous Visitor',
-    division: (v.Division ?? v.division ?? '').trim() || 'General',
-    visitedAt: v.VisitedAt ?? v.visitedAt ?? new Date().toISOString()
-  }));
-
-  return {
-    totalVisits,
-    todayVisits,
-    uniqueVisitors: uniqueVisitors || totalVisits,
-    divisionBreakdown,
-    recentVisits
-  };
 }
 
 /**
