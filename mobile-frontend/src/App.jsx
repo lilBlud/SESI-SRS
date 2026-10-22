@@ -22,7 +22,7 @@ function App() {
       const saved = localStorage.getItem('sesi_user');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.fullName === 'Demo User' || parsed.staffId === 'DEMO-001' || parsed.email === 'demo@sesb.com.my') {
+        if (!parsed.division || parsed.division === 'General' || parsed.fullName === 'Demo User' || parsed.staffId === 'DEMO-001' || parsed.email === 'demo@sesb.com.my') {
           parsed.division = 'IDD';
           try { localStorage.setItem('sesi_user', JSON.stringify(parsed)); } catch { }
         }
@@ -109,7 +109,7 @@ function App() {
     }
   }, [user]);
 
-  // Sync latest user profile (including avatar and preferredName if updated)
+  // Sync latest user profile (including avatar, preferredName, and division if updated)
   useEffect(() => {
     if (user?.email || user?.fullName || user?.staffId) {
       const u = user.email || user.fullName || user.staffId;
@@ -123,6 +123,9 @@ function App() {
             if (data.preferredName !== undefined && data.preferredName !== user.preferredName) {
               updates.preferredName = data.preferredName;
             }
+            if (data.division && data.division !== user.division) {
+              updates.division = data.division;
+            }
             if (Object.keys(updates).length > 0) {
               handleUpdateUser(updates);
             }
@@ -132,7 +135,7 @@ function App() {
           console.warn("Direct profile sync failed:", err);
         });
     }
-  }, [user?.email, user?.fullName, user?.staffId]);
+  }, [user?.email, user?.fullName, user?.staffId, user?.division, user?.profilePicture, user?.preferredName]);
 
   // Visitor Tracking
   const { visitorStats, refreshVisitorStats } = useVisitorTracking(user);

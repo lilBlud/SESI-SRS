@@ -517,12 +517,11 @@ export async function updateProfilePictureDirect(usernameOrEmail, profilePicture
 }
 
 /**
- * Update preferred display name directly in Supabase StaffUsers and UserAnswers.
+ * Update user profile information (preferred name and/or division) directly in Supabase StaffUsers, UserAnswers, and VisitorLogs.
  */
-export async function updatePreferredNameDirect(userOrUsernameOrEmail, preferredName) {
-  if (!userOrUsernameOrEmail) throw new Error("Username required");
-  const trimmed = (preferredName || '').trim().slice(0, 10);
-  
+export async function updateUserProfileInfoDirect(userOrUsernameOrEmail, { preferredName, division } = {}) {
+  if (!userOrUsernameOrEmail) throw new Error("User required");
+
   let target = '';
   let targetId = null;
   if (typeof userOrUsernameOrEmail === 'object' && userOrUsernameOrEmail !== null) {
@@ -544,10 +543,18 @@ export async function updatePreferredNameDirect(userOrUsernameOrEmail, preferred
     (String(u.Id) === target)
   );
 
-  if (match) {
+  const updates = {};
+  if (preferredName !== undefined) {
+    updates.PreferredName = (preferredName || '').trim().slice(0, 10);
+  }
+  if (division !== undefined) {
+    updates.Division = (division || '').trim();
+  }
+
+  if (match && Object.keys(updates).length > 0) {
     await supabase
       .from('StaffUsers')
-      .update({ PreferredName: trimmed })
+      .update(updates)
       .eq('Id', match.Id ?? match.id);
   }
 
@@ -562,13 +569,35 @@ export async function updatePreferredNameDirect(userOrUsernameOrEmail, preferred
   ].filter(Boolean);
 
   for (const tu of new Set(targetUsernames)) {
-    await supabase
-      .from('UserAnswers')
-      .update({ PreferredName: trimmed })
-      .eq('Username', tu);
+    const ansUpdates = {};
+    if (updates.PreferredName !== undefined) ansUpdates.PreferredName = updates.PreferredName;
+    if (updates.Division !== undefined) ansUpdates.Division = updates.Division;
+    if (Object.keys(ansUpdates).length > 0) {
+      await supabase
+        .from('UserAnswers')
+        .update(ansUpdates)
+        .eq('Username', tu);
+    }
   }
 
-  return { success: true, preferredName: trimmed };
+  // Sync VisitorLogs for this user
+  if (updates.Division) {
+    for (const tu of new Set(targetUsernames)) {
+      await supabase
+        .from('VisitorLogs')
+        .update({ Division: updates.Division })
+        .eq('Username', tu);
+    }
+  }
+
+  return { success: true, ...updates };
+}
+
+/**
+ * Update preferred display name directly in Supabase StaffUsers and UserAnswers.
+ */
+export async function updatePreferredNameDirect(userOrUsernameOrEmail, preferredName) {
+  return updateUserProfileInfoDirect(userOrUsernameOrEmail, { preferredName });
 }
 
 /**
@@ -726,7 +755,10 @@ export async function recordVisitorDirect({ visitorId, username, division, path,
   try {
     const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     const cleanUsername = (username || '').trim();
-    const cleanDivision = (division || '').trim();
+    let cleanDivision = (division || '').trim();
+    if ((!cleanDivision || cleanDivision.toLowerCase() === 'general') && cleanUsername) {
+      cleanDivision = 'IDD';
+    }
 
     const { data: recent, error: selErr } = await supabase
       .from('VisitorLogs')
@@ -744,12 +776,18 @@ export async function recordVisitorDirect({ visitorId, username, division, path,
 
     if (hasRecent) {
       const existing = recent[0];
-      if (cleanUsername && (!existing.Username || existing.Username === 'Anonymous Visitor')) {
+      const needsUpdate = cleanUsername && (
+        !existing.Username || 
+        existing.Username === 'Anonymous Visitor' || 
+        (cleanDivision && existing.Division !== cleanDivision)
+      );
+
+      if (needsUpdate) {
         await supabase
           .from('VisitorLogs')
           .update({
             Username: cleanUsername,
-            Division: cleanDivision || existing.Division || 'General',
+            Division: cleanDivision || existing.Division || 'IDD',
             staff_id: staffId || null
           })
           .eq('Id', existing.Id);
@@ -760,7 +798,7 @@ export async function recordVisitorDirect({ visitorId, username, division, path,
         .insert([{
           VisitorId: visitorId,
           Username: cleanUsername,
-          Division: cleanDivision || 'General',
+          Division: cleanDivision || (cleanUsername ? 'IDD' : 'General'),
           Path: path || '/',
           UserAgent: userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : ''),
           VisitedAt: new Date().toISOString(),

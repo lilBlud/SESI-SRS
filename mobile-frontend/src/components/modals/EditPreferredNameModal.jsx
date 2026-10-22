@@ -1,21 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
+const SESB_DIVISIONS = [
+  "IDD",
+  "Information & Digital",
+  "Chief Executive Officer (CEO) Office",
+  "Strategy & Sustainability",
+  "Corporate Services",
+  "Corporate Communication",
+  "Single Buyer",
+  "Grid System Operator",
+  "Major Project",
+  "Operating",
+  "Generation",
+  "Transmission",
+  "Distribution",
+  "Retail",
+  "Finance",
+  "Human Resources",
+  "Procurement"
+];
+
 export function EditPreferredNameModal({
   isOpen,
   onClose,
   currentName = '',
+  currentDivision = 'IDD',
   fullName = '',
   onSave
 }) {
   const [tempName, setTempName] = useState(currentName);
+  const [tempDivision, setTempDivision] = useState(currentDivision || 'IDD');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setTempName(currentName || '');
+      setTempDivision(currentDivision || 'IDD');
     }
-  }, [isOpen, currentName]);
+  }, [isOpen, currentName, currentDivision]);
 
   if (!isOpen) return null;
 
@@ -24,11 +47,14 @@ export function EditPreferredNameModal({
     if (!tempName.trim()) return;
     setSaving(true);
     try {
-      await onSave(tempName.trim());
+      await onSave({
+        preferredName: tempName.trim(),
+        division: tempDivision || 'IDD'
+      });
       onClose();
     } catch (err) {
-      console.error("Failed to save preferred name:", err);
-      alert("Failed to save preferred name. Please try again.");
+      console.error("Failed to save profile info:", err);
+      alert("Failed to save changes. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -40,9 +66,9 @@ export function EditPreferredNameModal({
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-xl font-black mb-4 shadow-lg shadow-emerald-500/20">
           ✏️
         </div>
-        <h3 className="text-[19px] font-black text-slate-900 dark:text-white">Preferred Name</h3>
+        <h3 className="text-[19px] font-black text-slate-900 dark:text-white">Edit Profile Details</h3>
         <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-          Set a shorter nickname or preferred name to show on the leaderboard and podium.
+          Update your leaderboard display nickname and assigned organizational division.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -65,6 +91,30 @@ export function EditPreferredNameModal({
             </div>
           </div>
 
+          <div>
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+              Division
+            </label>
+            <div className="relative">
+              <select
+                value={tempDivision}
+                onChange={(e) => setTempDivision(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-10 shadow-inner"
+              >
+                {SESB_DIVISIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-2 pt-2">
             <button
               type="button"
@@ -78,7 +128,7 @@ export function EditPreferredNameModal({
               disabled={saving || !tempName.trim()}
               className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-[13px] rounded-xl shadow-lg shadow-emerald-500/25 transition-all active:scale-95 disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Save Name"}
+              {saving ? "Saving..." : "Save Details"}
             </button>
           </div>
         </form>

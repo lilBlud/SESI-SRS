@@ -50,7 +50,7 @@ export function useVisitorTracking(user) {
     const payload = {
       visitorId,
       username: user?.fullName || user?.preferredName || '',
-      division: user?.division || '',
+      division: user?.division || (user?.fullName ? 'IDD' : ''),
       path: typeof window !== 'undefined' ? window.location.pathname : '/',
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
       staffId: user?.id || null

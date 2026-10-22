@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { currentMonth, getColor, getCatMeta } from '../../utils/constants';
 import { 
   updateProfilePictureDirect, 
-  updatePreferredNameDirect,
+  updateUserProfileInfoDirect,
   getUserRecentAnswersDirect,
   getUserActiveMonthsDirect,
   getUserScoreAndRankDirect,
@@ -78,10 +78,11 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
     }
   };
 
-  const handleSavePreferredName = async (newName) => {
+  const handleSaveProfileDetails = async (data) => {
+    const payload = typeof data === 'string' ? { preferredName: data } : data;
     const usernameTarget = user || user?.email || user?.fullName || USERNAME;
-    await updatePreferredNameDirect(usernameTarget, newName);
-    if (onUpdateUser) onUpdateUser({ preferredName: newName });
+    await updateUserProfileInfoDirect(usernameTarget, payload);
+    if (onUpdateUser) onUpdateUser(payload);
     const userIdentifiers = extractUserTargets(user || usernameTarget);
     getUserScoreAndRankDirect(userIdentifiers, currentMonth).then(stats => {
       if (stats) {
@@ -795,13 +796,14 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
         );
       })(), document.body)}
 
-      {/* Edit Preferred Name Modal */}
+      {/* Edit Profile Details Modal */}
       <EditPreferredNameModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         currentName={user?.preferredName || ''}
+        currentDivision={user?.division || 'IDD'}
         fullName={user?.fullName || USERNAME}
-        onSave={handleSavePreferredName}
+        onSave={handleSaveProfileDetails}
       />
 
       {/* Profile Photo Options Modal */}
