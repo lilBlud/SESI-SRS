@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { recordVisitorDirect, getVisitorStatsDirect } from '../utils/supabaseClient';
 
 const STATS_STORAGE_KEY = 'sesi_cached_visitor_stats';
@@ -20,6 +20,8 @@ export function useVisitorTracking(user) {
       return DEFAULT_STATS;
     }
   });
+
+  const lastRecordedKeyRef = useRef('');
 
   const saveStats = useCallback((stats) => {
     if (!stats) return;
@@ -47,10 +49,19 @@ export function useVisitorTracking(user) {
       } catch {}
     }
 
+    const cleanUsername = user?.fullName || user?.preferredName || '';
+    const cleanDivision = user?.division || (user?.fullName ? 'IDD' : '');
+    const currentKey = `${visitorId}:${cleanUsername}:${cleanDivision}`;
+
+    if (lastRecordedKeyRef.current === currentKey) {
+      return;
+    }
+    lastRecordedKeyRef.current = currentKey;
+
     const payload = {
       visitorId,
-      username: user?.fullName || user?.preferredName || '',
-      division: user?.division || (user?.fullName ? 'IDD' : ''),
+      username: cleanUsername,
+      division: cleanDivision,
       path: typeof window !== 'undefined' ? window.location.pathname : '/',
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
       staffId: user?.id || null

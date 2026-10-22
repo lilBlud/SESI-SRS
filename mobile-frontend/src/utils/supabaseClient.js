@@ -745,6 +745,10 @@ export async function getVisitorStatsDirect() {
   }
 }
 
+// In-memory mutex and short-term throttle to prevent concurrent double-mount race conditions
+let activeRecordPromise = null;
+let lastRecordedSession = { visitorId: '', username: '', timestamp: 0 };
+
 /**
  * Record a platform visit directly into Supabase VisitorLogs.
  * Throttled to 1 visit per visitorId per 15 minutes unless updating an anonymous visit with user info.
@@ -752,63 +756,92 @@ export async function getVisitorStatsDirect() {
 export async function recordVisitorDirect({ visitorId, username, division, path, userAgent, staffId } = {}) {
   if (!visitorId) return await getVisitorStatsDirect();
 
-  try {
-    const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-    const cleanUsername = (username || '').trim();
-    let cleanDivision = (division || '').trim();
-    if ((!cleanDivision || cleanDivision.toLowerCase() === 'general') && cleanUsername) {
-      cleanDivision = 'IDD';
-    }
-
-    const { data: recent, error: selErr } = await supabase
-      .from('VisitorLogs')
-      .select('Id, Username, Division')
-      .eq('VisitorId', visitorId)
-      .gte('VisitedAt', cutoff)
-      .order('VisitedAt', { ascending: false })
-      .limit(1);
-
-    if (selErr) {
-      console.warn("Visitor check error:", selErr);
-    }
-
-    const hasRecent = recent && recent.length > 0;
-
-    if (hasRecent) {
-      const existing = recent[0];
-      const needsUpdate = cleanUsername && (
-        !existing.Username || 
-        existing.Username === 'Anonymous Visitor' || 
-        (cleanDivision && existing.Division !== cleanDivision)
-      );
-
-      if (needsUpdate) {
-        await supabase
-          .from('VisitorLogs')
-          .update({
-            Username: cleanUsername,
-            Division: cleanDivision || existing.Division || 'IDD',
-            staff_id: staffId || null
-          })
-          .eq('Id', existing.Id);
-      }
-    } else {
-      await supabase
-        .from('VisitorLogs')
-        .insert([{
-          VisitorId: visitorId,
-          Username: cleanUsername,
-          Division: cleanDivision || (cleanUsername ? 'IDD' : 'General'),
-          Path: path || '/',
-          UserAgent: userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : ''),
-          VisitedAt: new Date().toISOString(),
-          staff_id: staffId || null
-        }]);
-    }
-  } catch (err) {
-    console.warn("recordVisitorDirect error:", err);
+  // If a recording operation is currently in-flight, await it to prevent race conditions
+  if (activeRecordPromise) {
+    try {
+      await activeRecordPromise;
+    } catch {}
   }
 
-  return await getVisitorStatsDirect();
+  // De-duplicate if the exact same visitor was recorded within the last 60 seconds
+  const now = Date.now();
+  const cleanUsername = (username || '').trim();
+  if (
+    lastRecordedSession.visitorId === visitorId &&
+    lastRecordedSession.username === cleanUsername &&
+    (now - lastRecordedSession.timestamp) < 60000
+  ) {
+    return await getVisitorStatsDirect();
+  }
+
+  activeRecordPromise = (async () => {
+    try {
+      const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      let cleanDivision = (division || '').trim();
+      if ((!cleanDivision || cleanDivision.toLowerCase() === 'general') && cleanUsername) {
+        cleanDivision = 'IDD';
+      }
+
+      const { data: recent, error: selErr } = await supabase
+        .from('VisitorLogs')
+        .select('Id, Username, Division')
+        .eq('VisitorId', visitorId)
+        .gte('VisitedAt', cutoff)
+        .order('VisitedAt', { ascending: false })
+        .limit(1);
+
+      if (selErr) {
+        console.warn("Visitor check error:", selErr);
+      }
+
+      const hasRecent = recent && recent.length > 0;
+
+      if (hasRecent) {
+        const existing = recent[0];
+        const needsUpdate = cleanUsername && (
+          !existing.Username || 
+          existing.Username === 'Anonymous Visitor' || 
+          (cleanDivision && existing.Division !== cleanDivision)
+        );
+
+        if (needsUpdate) {
+          await supabase
+            .from('VisitorLogs')
+            .update({
+              Username: cleanUsername,
+              Division: cleanDivision || existing.Division || 'IDD',
+              staff_id: staffId || null
+            })
+            .eq('Id', existing.Id);
+        }
+      } else {
+        await supabase
+          .from('VisitorLogs')
+          .insert([{
+            VisitorId: visitorId,
+            Username: cleanUsername,
+            Division: cleanDivision || (cleanUsername ? 'IDD' : 'General'),
+            Path: path || '/',
+            UserAgent: userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : ''),
+            VisitedAt: new Date().toISOString(),
+            staff_id: staffId || null
+          }]);
+      }
+
+      lastRecordedSession = {
+        visitorId,
+        username: cleanUsername,
+        timestamp: Date.now()
+      };
+    } catch (err) {
+      console.warn("recordVisitorDirect error:", err);
+    } finally {
+      activeRecordPromise = null;
+    }
+
+    return await getVisitorStatsDirect();
+  })();
+
+  return await activeRecordPromise;
 }
 
