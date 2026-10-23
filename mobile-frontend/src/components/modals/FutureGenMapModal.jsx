@@ -10,7 +10,7 @@ import {
   SABAH_MAP_DATA
 } from '../../utils/futureGenData';
 
-export function FutureGenMapModal({ isOpen, onClose }) {
+export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
   const [activeTab, setActiveTab] = useState('map'); // 'map' | 'pipeline' | 'bridging'
   const [selectedProjectId, setSelectedProjectId] = useState('rancha'); // default to Rancha or first project
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
@@ -34,59 +34,67 @@ export function FutureGenMapModal({ isOpen, onClose }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex justify-center bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-[120] flex justify-center bg-slate-950/70 backdrop-blur-sm animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[480px] h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-950 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
+        className="w-full max-w-[430px] h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header Bar */}
-        <div className="bg-gradient-to-r from-rose-700 via-rose-600 to-indigo-900 px-4 pb-3.5 pt-[max(env(safe-area-inset-top),20px)] shadow-md z-20 relative shrink-0">
+        {/* Hardware Accelerated HD Background Image - Matches App Theme */}
+        <img
+          src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
+          alt="Background"
+          className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none opacity-40 dark:opacity-20"
+        />
+        {isDark && <div className="absolute inset-0 bg-slate-950/40 -z-10 pointer-events-none" />}
+
+        {/* Header Bar - Clean styling matching main app interface */}
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 pb-3 pt-[max(env(safe-area-inset-top),16px)] shadow-xs z-20 relative shrink-0">
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={onClose}
-              className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all shrink-0"
+              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-all shrink-0 border border-slate-200/60 dark:border-slate-700/60"
               aria-label="Back to Dictionary"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
 
             <div className="flex-1 text-center min-w-0">
               <div className="flex items-center justify-center gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-rose-100 backdrop-blur-sm">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60">
                   BDV Strategic Pipeline
                 </span>
               </div>
-              <h1 className="text-[17px] font-black text-white leading-tight mt-0.5 truncate">
+              <h1 className="text-[16px] font-black text-slate-900 dark:text-white leading-tight mt-0.5 truncate">
                 Future Generation Map
               </h1>
-              <p className="text-[11px] text-rose-100/90 font-medium truncate">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
                 Security of Supply · ~1.2 GW Future Pipeline
               </p>
             </div>
 
             <button
               onClick={onClose}
-              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white transition-all shrink-0"
+              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-all shrink-0 border border-slate-200/60 dark:border-slate-700/60"
               aria-label="Close modal"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* View Mode Switcher */}
-          <div className="mt-3 flex items-center p-1 bg-black/25 rounded-xl backdrop-blur-sm">
+          {/* View Mode Switcher - Clean Segmented Control */}
+          <div className="mt-2.5 flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
             <button
               onClick={() => setActiveTab('map')}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'map'
-                  ? 'bg-white text-rose-700 shadow-sm'
-                  : 'text-white/80 hover:text-white'
+                  ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
               }`}
             >
               <span>🗺️</span>
@@ -96,19 +104,19 @@ export function FutureGenMapModal({ isOpen, onClose }) {
               onClick={() => setActiveTab('pipeline')}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'pipeline'
-                  ? 'bg-white text-rose-700 shadow-sm'
-                  : 'text-white/80 hover:text-white'
+                  ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
               }`}
             >
               <span>📋</span>
-              <span>Pipeline (6 Projects)</span>
+              <span>Pipeline (6)</span>
             </button>
             <button
               onClick={() => setActiveTab('bridging')}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'bridging'
-                  ? 'bg-white text-rose-700 shadow-sm'
-                  : 'text-white/80 hover:text-white'
+                  ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
               }`}
             >
               <span>⚡</span>

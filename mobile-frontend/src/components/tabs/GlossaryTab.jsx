@@ -4,7 +4,7 @@ import { CorporatePerformanceChart } from '../ui';
 import { recordUserActivityDirect } from '../../utils/supabaseClient';
 import { FutureGenMapModal } from '../modals';
 
-export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat, setActiveGlossaryCat, bookmarkActions }) {
+export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat, setActiveGlossaryCat, bookmarkActions, isDark = false }) {
   const { isBookmarked, toggleBookmark } = bookmarkActions || { isBookmarked: () => false, toggleBookmark: () => { } };
   const [search, setSearch] = useState('');
   // Use the global activeGlossaryCat as our filter category, defaulting to 'All'
@@ -464,6 +464,7 @@ export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat,
       <FutureGenMapModal
         isOpen={isFutureGenMapOpen}
         onClose={() => setIsFutureGenMapOpen(false)}
+        isDark={isDark}
       />
     </div>
   );

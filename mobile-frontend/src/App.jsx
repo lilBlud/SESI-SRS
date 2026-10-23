@@ -317,7 +317,7 @@ function App() {
 
       <main className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20">
         {activeTab === 'home' && <HomeTab user={user} streak={streak} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
-        {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} />}
+        {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
         {activeTab === 'admin' && (
