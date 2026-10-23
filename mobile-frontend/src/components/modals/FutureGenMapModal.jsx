@@ -63,17 +63,9 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
             </button>
 
             <div className="flex-1 text-center min-w-0">
-              <div className="flex items-center justify-center gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60">
-                  BDV Strategic Pipeline
-                </span>
-              </div>
-              <h1 className="text-[16px] font-black text-slate-900 dark:text-white leading-tight mt-0.5 truncate">
+              <h1 className="text-[16px] font-black text-slate-900 dark:text-white leading-tight truncate">
                 Future Generation Map
               </h1>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
-                Security of Supply · ~1.2 GW Future Pipeline
-              </p>
             </div>
 
             <button
