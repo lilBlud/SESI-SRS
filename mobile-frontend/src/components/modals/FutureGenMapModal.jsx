@@ -207,11 +207,11 @@ export function FutureGenMapModal({ isOpen, onClose }) {
               </div>
             </div>
 
-            {/* Sabah SVG Interactive Map Canvas */}
-            <div className="flex-1 relative bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950 p-2 overflow-hidden flex items-center justify-center">
+            {/* Sabah SVG Interactive Map Canvas - Fixed height prevents resizing when switching pins */}
+            <div className="h-[265px] shrink-0 relative bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950 px-2 py-1 overflow-hidden flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800">
               <svg
-                viewBox="0 0 520 390"
-                className="w-full h-full max-h-[360px] drop-shadow-md select-none"
+                viewBox="70 15 400 330"
+                className="w-full h-full drop-shadow-md select-none"
               >
                 <defs>
                   {/* Subtle Filter for Pins */}
@@ -233,7 +233,7 @@ export function FutureGenMapModal({ isOpen, onClose }) {
                 </defs>
 
                 {/* Compass & Title Watermark */}
-                <g opacity="0.65" transform="translate(450, 40)">
+                <g opacity="0.65" transform="translate(440, 42)">
                   <circle cx="0" cy="0" r="16" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" className="text-slate-400 dark:text-slate-600" />
                   <path d="M 0,-14 L 3,-4 L 0,0 L -3,-4 Z" fill="#ef4444" />
                   <path d="M 0,14 L 3,4 L 0,0 L -3,4 Z" fill="currentColor" className="text-slate-400 dark:text-slate-600" />
@@ -498,14 +498,14 @@ export function FutureGenMapModal({ isOpen, onClose }) {
               </svg>
 
               {/* Tap Pin Hint */}
-              <div className="absolute top-2 left-2 bg-white/85 dark:bg-slate-800/85 backdrop-blur-md rounded-lg px-2 py-1 text-[9px] font-bold text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700 shadow-sm flex items-center gap-1 pointer-events-none">
+              <div className="absolute top-1.5 left-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-lg px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700 shadow-sm flex items-center gap-1 pointer-events-none">
                 <span className="animate-pulse">📍</span>
                 <span>Tap any pin for project breakdown</span>
               </div>
             </div>
 
-            {/* Slide-Up Bottom Sheet Panel (Project Detail) */}
-            <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-8px_25px_rgba(0,0,0,0.12)] px-4 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] z-20 shrink-0 transition-all duration-300">
+            {/* Project Breakdown Panel - Flexible scroll area with rock-solid fixed map above */}
+            <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-slate-900 shadow-[0_-8px_25px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] z-20 custom-scrollbar flex flex-col justify-start">
               {/* Drawer Handle & Navigation */}
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-1.5">
