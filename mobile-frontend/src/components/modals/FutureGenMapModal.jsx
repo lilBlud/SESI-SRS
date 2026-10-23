@@ -34,11 +34,11 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex justify-center bg-slate-950/70 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-[120] flex justify-center bg-slate-950/70 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[430px] h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
+        className="w-full max-w-[430px] h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 text-slate-900 dark:text-slate-100 antialiased"
         onClick={e => e.stopPropagation()}
       >
         {/* Hardware Accelerated HD Background Image - Matches App Theme */}
@@ -49,8 +49,8 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
         />
         {isDark && <div className="absolute inset-0 bg-slate-950/40 -z-10 pointer-events-none" />}
 
-        {/* Header Bar - Clean styling matching main app interface */}
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 pb-3 pt-[max(env(safe-area-inset-top),16px)] shadow-xs z-20 relative shrink-0">
+        {/* Header Bar - Solid, crisp styling with no blur filters to prevent iOS WebKit font blurring */}
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 pb-3 pt-[max(env(safe-area-inset-top),16px)] shadow-xs z-20 relative shrink-0 antialiased">
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={onClose}
@@ -216,6 +216,15 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   </clipPath>
                 </defs>
 
+                {/* Sarawak Enclave Landmass (Northern Sarawak / Lawas) */}
+                <path
+                  d={SABAH_MAP_DATA.sarawakPath}
+                  fill={isDark ? "#1E293B" : "#DDE7DF"}
+                  stroke="#FFFFFF"
+                  strokeWidth="1.4"
+                  strokeLinejoin="round"
+                />
+
                 {/* Dual-Color Landmass Base (GeoJSON Shape) */}
                 <g clipPath="url(#sabahOutline)">
                   {/* East Coast Base: Soft Pastel Blue */}
@@ -284,14 +293,14 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   EAST COAST
                 </text>
                 <text
-                  x="48"
-                  y="325"
+                  x="46"
+                  y="316"
                   textAnchor="middle"
-                  fontSize="9"
+                  fontSize="8.5"
                   fontWeight="800"
-                  fill="#94A3B8"
-                  opacity="0.75"
-                  letterSpacing="0.5"
+                  fill={isDark ? "#94A3B8" : "#64748B"}
+                  opacity="0.85"
+                  letterSpacing="0.8"
                 >
                   SARAWAK
                 </text>
@@ -512,17 +521,6 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   <text x="11" y="6.5" fontSize="6.5" fontWeight="600" fill="#64748B">Existing plant</text>
                 </g>
 
-                {/* Attribution Footnote */}
-                <text
-                  x="20"
-                  y="357"
-                  fontSize="5.5"
-                  fontWeight="500"
-                  fill="#64748B"
-                  opacity="0.8"
-                >
-                  Grid shown schematically. Source: Capacity Planning, Single Buyer. Boundaries: geoBoundaries (CC BY 4.0)
-                </text>
 
                 {/* Interactive Project Pins (1 to 7) */}
                 {[
@@ -587,7 +585,7 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
               </svg>
 
               {/* Tap Pin Hint */}
-              <div className="absolute top-1.5 left-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-lg px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700 shadow-sm flex items-center gap-1 pointer-events-none">
+              <div className="absolute top-1.5 left-2 bg-white dark:bg-slate-800 rounded-lg px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700 shadow-sm flex items-center gap-1 pointer-events-none">
                 <span className="animate-pulse">📍</span>
                 <span>Tap any pin for project breakdown</span>
               </div>
