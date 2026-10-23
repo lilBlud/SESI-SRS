@@ -540,29 +540,33 @@ export function FutureGenMapModal({ isOpen, onClose }) {
                     <g
                       key={`pin-${idx}`}
                       transform={`translate(${pin.x}, ${pin.y})`}
-                      className="cursor-pointer transition-transform hover:scale-110 active:scale-95"
+                      className="cursor-pointer group"
                       onClick={() => {
                         setSelectedProjectId(pin.id);
                         setIsBottomSheetExpanded(true);
                       }}
                     >
+                      {/* Stable hit area (transparent) prevents mouseenter/mouseleave oscillation */}
+                      <circle cx="0" cy="0" r="18" fill="transparent" />
+
                       {/* Selection Pulsing Ring */}
                       {isSelected && (
-                        <>
+                        <g className="pointer-events-none">
                           <circle cx="0" cy="0" r="16" fill={pin.color} opacity="0.3" className="animate-ping" />
                           <circle cx="0" cy="0" r="14" fill="none" stroke="#FFFFFF" strokeWidth="2.5" />
-                        </>
+                        </g>
                       )}
 
                       {/* Main Pin Circle */}
                       <circle
                         cx="0"
                         cy="0"
-                        r={isSelected ? 11.5 : 10}
+                        r={isSelected ? 12 : 10}
                         fill={pin.color}
                         stroke="#FFFFFF"
-                        strokeWidth="2"
+                        strokeWidth={isSelected ? 2.5 : 2}
                         filter="url(#pinShadow)"
+                        className="transition-all duration-150 group-hover:brightness-125 group-hover:stroke-slate-100 pointer-events-none"
                       />
 
                       {/* Pin Number */}
@@ -573,7 +577,7 @@ export function FutureGenMapModal({ isOpen, onClose }) {
                         fontSize={isSelected ? '10' : '9'}
                         fontWeight="900"
                         fill="#FFFFFF"
-                        className="pointer-events-none"
+                        className="pointer-events-none select-none"
                       >
                         {pin.num}
                       </text>
