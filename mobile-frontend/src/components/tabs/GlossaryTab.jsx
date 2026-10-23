@@ -33,8 +33,8 @@ export function GlossaryTab({ user, glossary, onStreakUpdate, activeGlossaryCat,
     return matchSearch && matchCat;
   });
 
-  // Pinned Future Generation Map card visibility: always top of BDV, or in All when relevant
-  const showFutureGenCard = (cat === 'BDV' || (cat === 'All' && (!search || 'future generation map bdv sabah pipeline energy 1189mw rancha oriole acacia sequioa tecoma shorea mengaris'.toLowerCase().includes(search.toLowerCase()))));
+  // Pinned Future Generation Map card visibility: ONLY when BDV category is selected
+  const showFutureGenCard = cat === 'BDV';
 
   // Count per category
   const catCounts = {};
