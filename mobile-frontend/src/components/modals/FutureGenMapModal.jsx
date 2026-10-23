@@ -7,7 +7,8 @@ import {
   PIPELINE_STAGES,
   WATCH_ITEMS,
   FUEL_TYPE_CONFIG,
-  SABAH_MAP_DATA
+  SABAH_MAP_DATA,
+  SABAH_DISTRICTS
 } from '../../utils/futureGenData';
 
 export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
@@ -221,19 +222,35 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   d={SABAH_MAP_DATA.sarawakPath}
                   fill={isDark ? "#1E293B" : "#DDE7DF"}
                   stroke="#FFFFFF"
-                  strokeWidth="1.4"
+                  strokeWidth="1.2"
                   strokeLinejoin="round"
                 />
 
-                {/* Dual-Color Landmass Base (GeoJSON Shape) */}
-                <g clipPath="url(#sabahOutline)">
-                  {/* East Coast Base: Soft Pastel Blue */}
-                  <rect x="0" y="0" width="500" height="400" fill="#CFE4FA" />
-                  {/* West Coast Overlay: Soft Pastel Green */}
-                  <path d={SABAH_MAP_DATA.westClipPolygon} fill="#CCEBD4" />
+                {/* Individual Sabah District Polygons - Following exact lines of each area */}
+                <g id="sabah-districts">
+                  {SABAH_DISTRICTS.map((d) => (
+                    <path
+                      key={d.id}
+                      d={d.path}
+                      fill={isDark ? d.darkFill : d.fill}
+                      stroke="#FFFFFF"
+                      strokeWidth="1.0"
+                      strokeLinejoin="round"
+                    />
+                  ))}
+                  {/* Labuan Island */}
+                  <ellipse
+                    cx={SABAH_MAP_DATA.labuan.cx}
+                    cy={SABAH_MAP_DATA.labuan.cy}
+                    rx={SABAH_MAP_DATA.labuan.rx}
+                    ry={SABAH_MAP_DATA.labuan.ry}
+                    fill={isDark ? "#1E2E24" : "#BFE4CB"}
+                    stroke="#FFFFFF"
+                    strokeWidth="1.2"
+                  />
                 </g>
 
-                {/* Crisp White Coastline Stroke */}
+                {/* Crisp White Outer Coastline Stroke */}
                 <path
                   d={SABAH_MAP_DATA.mainlandPath}
                   fill="none"
@@ -241,35 +258,10 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   strokeWidth="1.6"
                   strokeLinejoin="round"
                 />
-                <path
-                  d={SABAH_MAP_DATA.banggiPath}
-                  fill="none"
-                  stroke="#FFFFFF"
-                  strokeWidth="1.2"
-                />
-                <ellipse
-                  cx={SABAH_MAP_DATA.labuan.cx}
-                  cy={SABAH_MAP_DATA.labuan.cy}
-                  rx={SABAH_MAP_DATA.labuan.rx}
-                  ry={SABAH_MAP_DATA.labuan.ry}
-                  fill="none"
-                  stroke="#FFFFFF"
-                  strokeWidth="1.2"
-                />
-
-                {/* West / East Regional Boundary Dashed Line */}
-                <path
-                  d={SABAH_MAP_DATA.dividerPath}
-                  fill="none"
-                  stroke="#94A3B8"
-                  strokeWidth="1.2"
-                  strokeDasharray="3 3"
-                  opacity="0.75"
-                />
 
                 {/* Watermark Region Titles */}
                 <text
-                  x="195"
+                  x="180"
                   y="82"
                   textAnchor="middle"
                   fontSize="11"
@@ -281,7 +273,7 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   WEST COAST
                 </text>
                 <text
-                  x="300"
+                  x="295"
                   y="85"
                   textAnchor="middle"
                   fontSize="11"
@@ -305,54 +297,10 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   SARAWAK
                 </text>
 
-                {/* Transmission Lines - 132 kV (Green) */}
-                {/* Northern branch: Kudat -> Kota Belud -> Kota Kinabalu */}
+                {/* Transmission Lines - 132 kV (Green Lines) */}
+                {/* Kudat -> Kota Belud -> Kota Kinabalu -> Kolombong Junction */}
                 <path
-                  d="M 205.2,64.5 L 161.1,121.3 L 123.3,160.9"
-                  fill="none"
-                  stroke="#16A34A"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                {/* Western branch: KK -> Papar -> Beaufort -> Upper Padas -> Lawas */}
-                <path
-                  d="M 123.3,160.9 L 108.2,187.3 L 88.3,228.5 L 78.1,278.4 L 51.6,281.6"
-                  fill="none"
-                  stroke="#16A34A"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                {/* Interior branch: Papar -> Keningau -> Tenom -> Upper Padas */}
-                <path
-                  d="M 108.2,187.3 L 132.8,228.9 L 109.3,251.8 L 78.1,278.4"
-                  fill="none"
-                  stroke="#16A34A"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                {/* Undersea / feeder link to Labuan */}
-                <path
-                  d="M 88.3,228.5 L 43.7,235.4"
-                  fill="none"
-                  stroke="#16A34A"
-                  strokeWidth="1.6"
-                  strokeDasharray="3 2"
-                  strokeLinecap="round"
-                />
-                {/* Sandakan -> Segaliud */}
-                <path
-                  d="M 336.3,174.8 L 306.6,192.6"
-                  fill="none"
-                  stroke="#16A34A"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                {/* Kunak -> Semporna -> Tawau */}
-                <path
-                  d="M 354.4,299.4 L 392.8,321.0 L 315.8,346.3"
+                  d="M 205.2,64.5 L 161.1,121.3 L 123.3,160.9 L 136.0,168.0"
                   fill="none"
                   stroke="#16A34A"
                   strokeWidth="2"
@@ -360,10 +308,104 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   strokeLinejoin="round"
                 />
 
-                {/* Transmission Line - 275 kV (Red Backbone) */}
-                {/* KK -> Ranau -> Sapi Nangoh -> Segaliud -> Lahad Datu -> Kunak -> Tawau */}
+                {/* Kolombong Junction -> Keningau (North-South vertical trunk) */}
                 <path
-                  d="M 123.3,160.9 L 186.2,164.2 L 267.6,173.1 L 306.6,192.6 L 362.6,262.7 L 354.4,299.4 L 315.8,346.3"
+                  d="M 136.0,168.0 L 132.8,228.9"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {/* Papar -> Beaufort -> Sipitang */}
+                <path
+                  d="M 108.2,187.3 L 88.3,228.5 L 70.0,255.0"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {/* Feeder to Labuan */}
+                <path
+                  d="M 88.3,228.5 L 43.7,235.4"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+
+                {/* Beaufort -> Keningau */}
+                <path
+                  d="M 88.3,228.5 L 132.8,228.9"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {/* Keningau -> Tenom -> Upper Padas */}
+                <path
+                  d="M 132.8,228.9 L 109.3,251.8 L 85.0,278.4"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {/* Keningau -> Existing Plant [G] */}
+                <path
+                  d="M 132.8,228.9 L 148.0,248.0"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+
+                {/* Segaliud -> Sandakan */}
+                <path
+                  d="M 306.6,192.6 L 336.3,174.8"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {/* Lahad Datu -> Kunak -> Tawau & Semporna */}
+                <path
+                  d="M 362.6,262.7 L 354.4,299.4 L 325.0,336.0 L 315.8,346.3"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M 354.4,299.4 L 392.8,321.0 L 325.0,336.0"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {/* Lahad Datu cluster feeder */}
+                <path
+                  d="M 362.6,262.7 L 370.0,268.0 L 383.0,273.0"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+
+                {/* Transmission Line - 275 kV (Red Backbone: Papar -> Kolombong Junction -> Sapi Nangoh -> Segaliud -> Lahad Datu) */}
+                <path
+                  d="M 108.2,187.3 L 136.0,168.0 L 267.6,173.1 L 306.6,192.6 L 362.6,262.7"
                   fill="none"
                   stroke="#DC2626"
                   strokeWidth="2.6"
@@ -373,7 +415,26 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
 
                 {/* Future Link: Southern Madani Link Ph. 1A (Red Dashed) */}
                 <path
-                  d="M 78.1,278.4 C 115,310 180,345 240,344 C 275,343 298,345 315.8,346.3"
+                  d="M 70.0,255.0 L 51.6,281.6"
+                  fill="none"
+                  stroke="#DC2626"
+                  strokeWidth="2.2"
+                  strokeDasharray="5 4"
+                  strokeLinecap="round"
+                />
+                <text
+                  x="64"
+                  y="295"
+                  fontSize="6.5"
+                  fontWeight="700"
+                  fill="#B91C1C"
+                >
+                  Southern Madani Link Ph. 1A
+                </text>
+
+                {/* Future Link: Southern Link (future) - Tenom to Tawau */}
+                <path
+                  d="M 109.3,251.8 C 145,295 180,335 240,336 L 290,336 L 315.8,346.3"
                   fill="none"
                   stroke="#DC2626"
                   strokeWidth="2.2"
@@ -389,16 +450,6 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   fill="#DC2626"
                 >
                   Southern Link (future)
-                </text>
-                <text
-                  x="150"
-                  y="325"
-                  textAnchor="middle"
-                  fontSize="7.5"
-                  fontWeight="700"
-                  fill="#B91C1C"
-                >
-                  Southern Madani Link Ph. 1A
                 </text>
 
                 {/* Central ~340 MW Power Flow Arrow */}
@@ -461,7 +512,7 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
 
                 {/* Town Nodes (18 towns) */}
                 {[
-                  { name: 'Kudat', x: 205.2, y: 64.5, dx: -6, dy: 3, anchor: 'end' },
+                  { name: 'Kudat', x: 205.2, y: 64.5, dx: 7, dy: 3, anchor: 'start' },
                   { name: 'Kota Belud', x: 161.1, y: 121.3, dx: -6, dy: 3, anchor: 'end' },
                   { name: 'Kota Kinabalu', x: 123.3, y: 160.9, dx: -6, dy: 3, anchor: 'end' },
                   { name: 'Ranau', x: 186.2, y: 164.2, dx: 0, dy: -6, anchor: 'middle' },
@@ -469,7 +520,7 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                   { name: 'Beaufort', x: 88.3, y: 228.5, dx: 7, dy: 3, anchor: 'start' },
                   { name: 'Labuan', x: 34.7, y: 235.4, dx: 0, dy: 18, anchor: 'middle' },
                   { name: 'Lawas', x: 51.6, y: 281.6, dx: -6, dy: 3, anchor: 'end' },
-                  { name: 'Upper Padas', x: 78.1, y: 278.4, dx: 0, dy: 10, anchor: 'middle' },
+                  { name: 'Upper Padas', x: 85.0, y: 278.4, dx: 0, dy: 10, anchor: 'middle' },
                   { name: 'Keningau', x: 132.8, y: 228.9, dx: 6, dy: 3, anchor: 'start' },
                   { name: 'Tenom', x: 109.3, y: 251.8, dx: 6, dy: 3, anchor: 'start' },
                   { name: 'Sapi Nangoh', x: 267.6, y: 173.1, dx: 0, dy: 10, anchor: 'middle' },
@@ -525,11 +576,11 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                 {/* Interactive Project Pins (1 to 7) */}
                 {[
                   { id: 'mengaris', num: 1, x: 179.1, y: 100.1, color: '#D97706' },
-                  { id: 'tecoma', num: 2, x: 130.2, y: 148.1, color: '#0F172A' },
-                  { id: 'acacia', num: 3, x: 114.3, y: 203.7, color: '#0F172A' },
+                  { id: 'tecoma', num: 2, x: 138.0, y: 142.0, color: '#0F172A' },
+                  { id: 'acacia', num: 3, x: 98.0, y: 208.0, color: '#0F172A' },
                   { id: 'rancha', num: 4, x: 34.7, y: 235.4, color: '#0F172A' },
-                  { id: 'oriole', num: 5, x: 78.1, y: 278.4, color: '#2563EB' },
-                  { id: 'sequioa', num: 6, x: 106.8, y: 281.6, color: '#2563EB' },
+                  { id: 'oriole', num: 5, x: 70.0, y: 255.0, color: '#2563EB' },
+                  { id: 'sequioa', num: 6, x: 116.0, y: 268.0, color: '#2563EB' },
                   { id: 'shorea', num: 7, x: 336.3, y: 174.8, color: '#059669' },
                   { id: 'shorea', num: 7, x: 315.8, y: 346.3, color: '#059669' },
                 ].map((pin, idx) => {
