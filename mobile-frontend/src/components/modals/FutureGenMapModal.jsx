@@ -6,7 +6,8 @@ import {
   BRIDGING_CAPACITY,
   PIPELINE_STAGES,
   WATCH_ITEMS,
-  FUEL_TYPE_CONFIG
+  FUEL_TYPE_CONFIG,
+  SABAH_MAP_DATA
 } from '../../utils/futureGenData';
 
 export function FutureGenMapModal({ isOpen, onClose }) {
@@ -186,160 +187,166 @@ export function FutureGenMapModal({ isOpen, onClose }) {
               </div>
             </div>
 
-            {/* Map Legend */}
-            <div className="px-3 py-1 flex items-center justify-between text-[10px] font-semibold text-slate-600 dark:text-slate-300 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-1 bg-red-500 rounded-sm"></span> 275 kV
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-1 bg-emerald-500 rounded-sm"></span> 132 kV
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-3 border-b-2 border-dashed border-rose-500"></span> Future
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-slate-900"></span> Gas</span>
-                <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Solar</span>
-                <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Hydro</span>
-                <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-emerald-600"></span> Conv.</span>
-              </div>
-            </div>
-
             {/* Sabah SVG Interactive Map Canvas - Fixed height prevents resizing when switching pins */}
-            <div className="h-[265px] shrink-0 relative bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950 px-2 py-1 overflow-hidden flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800">
+            <div className="h-[310px] shrink-0 relative bg-[#EEF3F7] dark:bg-slate-900 px-1 py-1 overflow-hidden flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800">
               <svg
-                viewBox="70 15 400 330"
-                className="w-full h-full drop-shadow-md select-none"
+                viewBox={SABAH_MAP_DATA.viewBox}
+                className="w-full h-full select-none"
+                style={{ maxHeight: '100%' }}
               >
                 <defs>
-                  {/* Subtle Filter for Pins */}
-                  <filter id="pinShadow" x="-20%" y="-20%" width="150%" height="150%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#000000" floodOpacity="0.35" />
+                  {/* Subtle Filter for Pins & Badges */}
+                  <filter id="pinShadow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodColor="#000000" floodOpacity="0.3" />
                   </filter>
-                  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  <filter id="badgeShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.2" />
                   </filter>
-                  <linearGradient id="westGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#86efac" stopOpacity="0.45" />
-                    <stop offset="100%" stopColor="#4ade80" stopOpacity="0.30" />
-                  </linearGradient>
-                  <linearGradient id="eastGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.45" />
-                    <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.30" />
-                  </linearGradient>
+
+                  {/* Exact Sabah GeoJSON Boundary ClipPath */}
+                  <clipPath id="sabahOutline">
+                    <path d={SABAH_MAP_DATA.mainlandPath} />
+                    <path d={SABAH_MAP_DATA.banggiPath} />
+                    <ellipse
+                      cx={SABAH_MAP_DATA.labuan.cx}
+                      cy={SABAH_MAP_DATA.labuan.cy}
+                      rx={SABAH_MAP_DATA.labuan.rx}
+                      ry={SABAH_MAP_DATA.labuan.ry}
+                    />
+                  </clipPath>
                 </defs>
 
-                {/* Compass & Title Watermark */}
-                <g opacity="0.65" transform="translate(440, 42)">
-                  <circle cx="0" cy="0" r="16" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" className="text-slate-400 dark:text-slate-600" />
-                  <path d="M 0,-14 L 3,-4 L 0,0 L -3,-4 Z" fill="#ef4444" />
-                  <path d="M 0,14 L 3,4 L 0,0 L -3,4 Z" fill="currentColor" className="text-slate-400 dark:text-slate-600" />
-                  <text x="0" y="-17" textAnchor="middle" fontSize="9" fontWeight="900" fill="#ef4444">N</text>
+                {/* Dual-Color Landmass Base (GeoJSON Shape) */}
+                <g clipPath="url(#sabahOutline)">
+                  {/* East Coast Base: Soft Pastel Blue */}
+                  <rect x="0" y="0" width="500" height="400" fill="#CFE4FA" />
+                  {/* West Coast Overlay: Soft Pastel Green */}
+                  <path d={SABAH_MAP_DATA.westClipPolygon} fill="#CCEBD4" />
                 </g>
 
-                {/* West Coast Region Landmass */}
+                {/* Crisp White Coastline Stroke */}
                 <path
-                  d="M 235,35 
-                     L 220,70 L 200,105 L 190,125 L 175,155 L 160,185 L 148,220 L 132,255 L 125,270 
-                     L 135,295 L 160,310 L 180,315 L 210,318 L 240,320 
-                     L 260,260 L 255,190 L 250,130 L 245,75 Z"
-                  fill="url(#westGrad)"
-                  stroke="#10b981"
-                  strokeWidth="1.5"
-                  className="transition-colors hover:brightness-105"
-                />
-
-                {/* East Coast Region Landmass */}
-                <path
-                  d="M 235,35 
-                     L 245,75 L 250,130 L 255,190 L 260,260 L 240,320 
-                     L 280,320 L 340,320 L 375,320 L 390,325 L 405,305 L 435,310 L 445,290 
-                     L 420,265 L 410,245 L 450,230 L 435,200 L 395,185 L 380,170 L 350,150 
-                     L 300,110 L 265,95 L 250,60 Z"
-                  fill="url(#eastGrad)"
-                  stroke="#3b82f6"
-                  strokeWidth="1.5"
-                  className="transition-colors hover:brightness-105"
-                />
-
-                {/* Labuan Island */}
-                <ellipse
-                  cx="106"
-                  cy="238"
-                  rx="10"
-                  ry="14"
-                  fill="#86efac"
-                  fillOpacity="0.5"
-                  stroke="#10b981"
-                  strokeWidth="1.5"
-                />
-                <text x="106" y="258" textAnchor="middle" fontSize="8" fontWeight="800" className="fill-slate-600 dark:fill-slate-300">
-                  Labuan
-                </text>
-
-                {/* Region Watermark Labels */}
-                <text x="180" y="85" fontSize="13" fontWeight="900" letterSpacing="1" fill="#047857" opacity="0.6">
-                  WEST COAST
-                </text>
-                <text x="320" y="95" fontSize="13" fontWeight="900" letterSpacing="1" fill="#1d4ed8" opacity="0.6">
-                  EAST COAST
-                </text>
-
-                {/* Region Boundary Line (West / East Split) */}
-                <path
-                  d="M 235,35 L 245,75 L 250,130 L 255,190 L 260,260 L 240,320"
+                  d={SABAH_MAP_DATA.mainlandPath}
                   fill="none"
-                  stroke="#64748b"
+                  stroke="#FFFFFF"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d={SABAH_MAP_DATA.banggiPath}
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth="1.2"
+                />
+                <ellipse
+                  cx={SABAH_MAP_DATA.labuan.cx}
+                  cy={SABAH_MAP_DATA.labuan.cy}
+                  rx={SABAH_MAP_DATA.labuan.rx}
+                  ry={SABAH_MAP_DATA.labuan.ry}
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth="1.2"
+                />
+
+                {/* West / East Regional Boundary Dashed Line */}
+                <path
+                  d={SABAH_MAP_DATA.dividerPath}
+                  fill="none"
+                  stroke="#94A3B8"
                   strokeWidth="1.2"
                   strokeDasharray="3 3"
-                  opacity="0.6"
+                  opacity="0.75"
                 />
 
+                {/* Watermark Region Titles */}
+                <text
+                  x="195"
+                  y="82"
+                  textAnchor="middle"
+                  fontSize="11"
+                  fontWeight="800"
+                  fill="#15803D"
+                  opacity="0.85"
+                  letterSpacing="1"
+                >
+                  WEST COAST
+                </text>
+                <text
+                  x="300"
+                  y="85"
+                  textAnchor="middle"
+                  fontSize="11"
+                  fontWeight="800"
+                  fill="#1D4ED8"
+                  opacity="0.85"
+                  letterSpacing="1"
+                >
+                  EAST COAST
+                </text>
+                <text
+                  x="48"
+                  y="325"
+                  textAnchor="middle"
+                  fontSize="9"
+                  fontWeight="800"
+                  fill="#94A3B8"
+                  opacity="0.75"
+                  letterSpacing="0.5"
+                >
+                  SARAWAK
+                </text>
+
                 {/* Transmission Lines - 132 kV (Green) */}
-                {/* Kudat to Kota Belud to KK */}
+                {/* Northern branch: Kudat -> Kota Belud -> Kota Kinabalu */}
                 <path
-                  d="M 235,55 L 195,120 L 170,155"
+                  d="M 205.2,64.5 L 161.1,121.3 L 123.3,160.9"
                   fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2.2"
+                  stroke="#16A34A"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* KK to Papar to Beaufort to Sipitang/Lawas */}
+                {/* Western branch: KK -> Papar -> Beaufort -> Upper Padas -> Lawas */}
                 <path
-                  d="M 170,155 L 160,185 L 145,225 L 145,275 L 130,290"
+                  d="M 123.3,160.9 L 108.2,187.3 L 88.3,228.5 L 78.1,278.4 L 51.6,281.6"
                   fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2.2"
+                  stroke="#16A34A"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* Papar to Keningau to Tenom to Upper Padas */}
+                {/* Interior branch: Papar -> Keningau -> Tenom -> Upper Padas */}
                 <path
-                  d="M 160,185 L 205,225 L 185,255 L 155,268"
+                  d="M 108.2,187.3 L 132.8,228.9 L 109.3,251.8 L 78.1,278.4"
                   fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2.2"
+                  stroke="#16A34A"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* Sandakan to Segaliud */}
+                {/* Undersea / feeder link to Labuan */}
                 <path
-                  d="M 375,165 L 330,185"
+                  d="M 88.3,228.5 L 43.7,235.4"
                   fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2.2"
+                  stroke="#16A34A"
+                  strokeWidth="1.6"
+                  strokeDasharray="3 2"
                   strokeLinecap="round"
                 />
-                {/* Kunak to Semporna to Tawau */}
+                {/* Sandakan -> Segaliud */}
                 <path
-                  d="M 400,270 L 430,290 L 385,305"
+                  d="M 336.3,174.8 L 306.6,192.6"
                   fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2.2"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                {/* Kunak -> Semporna -> Tawau */}
+                <path
+                  d="M 354.4,299.4 L 392.8,321.0 L 315.8,346.3"
+                  fill="none"
+                  stroke="#16A34A"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -347,108 +354,186 @@ export function FutureGenMapModal({ isOpen, onClose }) {
                 {/* Transmission Line - 275 kV (Red Backbone) */}
                 {/* KK -> Ranau -> Sapi Nangoh -> Segaliud -> Lahad Datu -> Kunak -> Tawau */}
                 <path
-                  d="M 170,155 L 240,150 L 285,165 L 330,185 L 395,235 L 400,270 L 385,305"
+                  d="M 123.3,160.9 L 186.2,164.2 L 267.6,173.1 L 306.6,192.6 L 362.6,262.7 L 354.4,299.4 L 315.8,346.3"
                   fill="none"
-                  stroke="#ef4444"
-                  strokeWidth="2.8"
+                  stroke="#DC2626"
+                  strokeWidth="2.6"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
 
-                {/* Future Transmission Line - Southern Madani Link Ph. 1A (Red Dashed) */}
+                {/* Future Link: Southern Madani Link Ph. 1A (Red Dashed) */}
                 <path
-                  d="M 155,268 Q 240,335 385,305"
+                  d="M 78.1,278.4 C 115,310 180,345 240,344 C 275,343 298,345 315.8,346.3"
                   fill="none"
-                  stroke="#f43f5e"
-                  strokeWidth="2.4"
+                  stroke="#DC2626"
+                  strokeWidth="2.2"
                   strokeDasharray="5 4"
                   strokeLinecap="round"
                 />
-                <text x="250" y="302" fontSize="7.5" fontWeight="800" fill="#f43f5e" textAnchor="middle">
-                  Southern Madani Link Ph. 1A (future)
+                <text
+                  x="235"
+                  y="318"
+                  textAnchor="middle"
+                  fontSize="7.5"
+                  fontWeight="700"
+                  fill="#DC2626"
+                >
+                  Southern Link (future)
+                </text>
+                <text
+                  x="150"
+                  y="325"
+                  textAnchor="middle"
+                  fontSize="7.5"
+                  fontWeight="700"
+                  fill="#B91C1C"
+                >
+                  Southern Madani Link Ph. 1A
                 </text>
 
-                {/* West to East Transfer Arrow (~340 MW) */}
-                <g transform="translate(262, 175)">
-                  <rect x="-3" y="-10" width="60" height="18" rx="5" fill="#ffffff" stroke="#94a3b8" strokeWidth="1" filter="url(#pinShadow)" />
-                  <path d="M 43,-5 L 52,0 L 43,5 Z" fill="#2563eb" />
-                  <text x="22" y="3" textAnchor="middle" fontSize="9" fontWeight="900" fill="#1e3a8a">
-                    ~340 MW →
+                {/* Central ~340 MW Power Flow Arrow */}
+                <g transform="translate(225, 172)">
+                  <polygon
+                    points="0,-6 28,-6 28,-11 42,0 28,11 28,6 0,6"
+                    fill="#FFFFFF"
+                    stroke="#334155"
+                    strokeWidth="1.2"
+                    filter="url(#pinShadow)"
+                  />
+                  <text
+                    x="16"
+                    y="3"
+                    textAnchor="middle"
+                    fontSize="7.5"
+                    fontWeight="900"
+                    fill="#0F172A"
+                  >
+                    ~340 MW
                   </text>
                 </g>
 
                 {/* Offshore Mutiara Gas Cluster */}
-                <g transform="translate(390, 125)">
-                  <polygon points="0,-7 7,0 0,7 -7,0" fill="#f97316" stroke="#c2410c" strokeWidth="1" />
-                  <text x="10" y="3" fontSize="7.5" fontWeight="800" fill="#c2410c" className="dark:fill-orange-400">
-                    Mutiara Gas ~40 mmscfd (2029)
+                <g transform="translate(348, 126)">
+                  <polygon points="0,-7 7,0 0,7 -7,0" fill="#EA580C" stroke="#C2410C" strokeWidth="1" />
+                  <text x="11" y="-1" fontSize="7.5" fontWeight="800" fill="#C2410C">
+                    Mutiara gas cluster
+                  </text>
+                  <text x="11" y="8" fontSize="6.5" fontWeight="600" fill="#C2410C">
+                    ~40 mmscfd, 2029
                   </text>
                 </g>
 
-                {/* Major Grid Town Nodes */}
+                {/* Map Top-Right Legend Box */}
+                <g transform="translate(265, 18)">
+                  {/* Line 1: Links */}
+                  <line x1="0" y1="5" x2="16" y2="5" stroke="#DC2626" strokeWidth="2.2" />
+                  <text x="20" y="8" fontSize="7.5" fontWeight="600" fill="#334155">275 kV</text>
+
+                  <line x1="60" y1="5" x2="76" y2="5" stroke="#16A34A" strokeWidth="2" />
+                  <text x="80" y="8" fontSize="7.5" fontWeight="600" fill="#334155">132 kV</text>
+
+                  <line x1="120" y1="5" x2="136" y2="5" stroke="#DC2626" strokeWidth="2" strokeDasharray="3 2" />
+                  <text x="140" y="8" fontSize="7.5" fontWeight="600" fill="#334155">Future link</text>
+
+                  {/* Line 2: Fuels */}
+                  <circle cx="8" cy="20" r="4" fill="#0F172A" />
+                  <text x="16" y="23" fontSize="7.5" fontWeight="600" fill="#334155">Gas</text>
+
+                  <circle cx="48" cy="20" r="4" fill="#D97706" />
+                  <text x="56" y="23" fontSize="7.5" fontWeight="600" fill="#334155">Solar</text>
+
+                  <circle cx="88" cy="20" r="4" fill="#2563EB" />
+                  <text x="96" y="23" fontSize="7.5" fontWeight="600" fill="#334155">Hydro</text>
+
+                  <circle cx="130" cy="20" r="4" fill="#059669" />
+                  <text x="138" y="23" fontSize="7.5" fontWeight="600" fill="#334155">Conversion</text>
+                </g>
+
+                {/* Town Nodes (18 towns) */}
                 {[
-                  { name: 'Kudat', x: 235, y: 55, labelPos: 'right' },
-                  { name: 'Kota Belud', x: 195, y: 120, labelPos: 'left' },
-                  { name: 'Kota Kinabalu', x: 170, y: 155, labelPos: 'left' },
-                  { name: 'Ranau', x: 240, y: 150, labelPos: 'top' },
-                  { name: 'Papar', x: 160, y: 185, labelPos: 'left' },
-                  { name: 'Beaufort', x: 145, y: 225, labelPos: 'left' },
-                  { name: 'Keningau', x: 205, y: 225, labelPos: 'right' },
-                  { name: 'Tenom', x: 185, y: 255, labelPos: 'right' },
-                  { name: 'Upper Padas', x: 155, y: 268, labelPos: 'left' },
-                  { name: 'Sapi Nangoh', x: 285, y: 165, labelPos: 'bottom' },
-                  { name: 'Segaliud', x: 330, y: 185, labelPos: 'bottom' },
-                  { name: 'Sandakan', x: 375, y: 165, labelPos: 'right' },
-                  { name: 'Lahad Datu', x: 395, y: 235, labelPos: 'right' },
-                  { name: 'Kunak', x: 400, y: 270, labelPos: 'right' },
-                  { name: 'Semporna', x: 430, y: 290, labelPos: 'right' },
-                  { name: 'Tawau', x: 385, y: 305, labelPos: 'bottom' },
-                ].map((town, idx) => (
-                  <g key={idx} transform={`translate(${town.x}, ${town.y})`}>
-                    <circle cx="0" cy="0" r="3.2" fill="#ffffff" stroke="#1e293b" strokeWidth="1.5" />
+                  { name: 'Kudat', x: 205.2, y: 64.5, dx: -6, dy: 3, anchor: 'end' },
+                  { name: 'Kota Belud', x: 161.1, y: 121.3, dx: -6, dy: 3, anchor: 'end' },
+                  { name: 'Kota Kinabalu', x: 123.3, y: 160.9, dx: -6, dy: 3, anchor: 'end' },
+                  { name: 'Ranau', x: 186.2, y: 164.2, dx: 0, dy: -6, anchor: 'middle' },
+                  { name: 'Papar', x: 108.2, y: 187.3, dx: -6, dy: 3, anchor: 'end' },
+                  { name: 'Beaufort', x: 88.3, y: 228.5, dx: 7, dy: 3, anchor: 'start' },
+                  { name: 'Labuan', x: 34.7, y: 235.4, dx: 0, dy: 18, anchor: 'middle' },
+                  { name: 'Lawas', x: 51.6, y: 281.6, dx: -6, dy: 3, anchor: 'end' },
+                  { name: 'Upper Padas', x: 78.1, y: 278.4, dx: 0, dy: 10, anchor: 'middle' },
+                  { name: 'Keningau', x: 132.8, y: 228.9, dx: 6, dy: 3, anchor: 'start' },
+                  { name: 'Tenom', x: 109.3, y: 251.8, dx: 6, dy: 3, anchor: 'start' },
+                  { name: 'Sapi Nangoh', x: 267.6, y: 173.1, dx: 0, dy: 10, anchor: 'middle' },
+                  { name: 'Segaliud', x: 306.6, y: 192.6, dx: 0, dy: 10, anchor: 'middle' },
+                  { name: 'Sandakan', x: 336.3, y: 174.8, dx: 14, dy: 2, anchor: 'start' },
+                  { name: 'Lahad Datu', x: 362.6, y: 262.7, dx: 7, dy: 3, anchor: 'start' },
+                  { name: 'Kunak', x: 354.4, y: 299.4, dx: 7, dy: 3, anchor: 'start' },
+                  { name: 'Semporna', x: 392.8, y: 321.0, dx: 7, dy: 3, anchor: 'start' },
+                  { name: 'Tawau', x: 315.8, y: 346.3, dx: 0, dy: 14, anchor: 'middle' },
+                ].map((t, idx) => (
+                  <g key={`town-${idx}`}>
+                    <circle cx={t.x} cy={t.y} r="3" fill="#FFFFFF" stroke="#334155" strokeWidth="1.2" />
                     <text
-                      x={town.labelPos === 'left' ? -6 : town.labelPos === 'right' ? 6 : 0}
-                      y={town.labelPos === 'top' ? -6 : town.labelPos === 'bottom' ? 10 : 3}
-                      textAnchor={town.labelPos === 'left' ? 'end' : town.labelPos === 'right' ? 'start' : 'middle'}
-                      fontSize="7.5"
-                      fontWeight="700"
+                      x={t.x + t.dx}
+                      y={t.y + t.dy}
+                      textAnchor={t.anchor}
+                      fontSize="7"
+                      fontWeight="600"
                       className="fill-slate-700 dark:fill-slate-300 pointer-events-none select-none"
                     >
-                      {town.name}
+                      {t.name}
                     </text>
                   </g>
                 ))}
 
-                {/* Existing Generation Nodes ('G' badge) */}
+                {/* Existing Plant Badges [G] */}
                 {[
-                  { x: 247, y: 62 },
-                  { x: 175, y: 135 },
-                  { x: 106, y: 250 },
-                  { x: 215, y: 235 },
-                  { x: 390, y: 175 },
-                  { x: 412, y: 245 },
-                  { x: 415, y: 275 },
-                  { x: 370, y: 310 }
+                  { x: 216, y: 60 },
+                  { x: 132, y: 147 },
+                  { x: 21, y: 245 },
+                  { x: 144, y: 228 },
+                  { x: 348, y: 182 },
+                  { x: 375, y: 262 },
+                  { x: 366, y: 302 },
+                  { x: 298, y: 350 },
                 ].map((gNode, idx) => (
                   <g key={`g-${idx}`} transform={`translate(${gNode.x}, ${gNode.y})`}>
-                    <rect x="-4.5" y="-4.5" width="9" height="9" rx="2" fill="#64748b" />
-                    <text x="0" y="2.5" textAnchor="middle" fontSize="6.5" fontWeight="900" fill="#ffffff">
+                    <rect width="8" height="8" rx="1.5" fill="#64748B" />
+                    <text x="4" y="6" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#FFFFFF">
                       G
                     </text>
                   </g>
                 ))}
 
+                {/* Existing Plant Legend (bottom right) */}
+                <g transform="translate(372, 345)">
+                  <rect width="8" height="8" rx="1.5" fill="#64748B" />
+                  <text x="4" y="6" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#FFFFFF">G</text>
+                  <text x="11" y="6.5" fontSize="6.5" fontWeight="600" fill="#64748B">Existing plant</text>
+                </g>
+
+                {/* Attribution Footnote */}
+                <text
+                  x="20"
+                  y="357"
+                  fontSize="5.5"
+                  fontWeight="500"
+                  fill="#64748B"
+                  opacity="0.8"
+                >
+                  Grid shown schematically. Source: Capacity Planning, Single Buyer. Boundaries: geoBoundaries (CC BY 4.0)
+                </text>
+
                 {/* Interactive Project Pins (1 to 7) */}
                 {[
-                  { id: 'mengaris', num: 1, x: 210, y: 105, color: '#f59e0b', label: 'Mengaris 15MW' },
-                  { id: 'tecoma', num: 2, x: 185, y: 142, color: '#0f172a', label: 'Tecoma 300MW' },
-                  { id: 'acacia', num: 3, x: 155, y: 202, color: '#0f172a', label: 'Acacia 100MW' },
-                  { id: 'rancha', num: 4, x: 96, y: 228, color: '#0f172a', label: 'Rancha 120MW' },
-                  { id: 'oriole', num: 5, x: 140, y: 258, color: '#2563eb', label: 'Oriole 162MW' },
-                  { id: 'sequioa', num: 6, x: 180, y: 278, color: '#2563eb', label: 'Sequioa 427MW' },
-                  { id: 'shorea', num: 7, x: 370, y: 148, color: '#059669', label: 'Shorea 80MW' },
-                  // Shorea also has Tawau conversion unit
-                  { id: 'shorea', num: 7, x: 395, y: 295, color: '#059669', label: 'Shorea (Tawau)' }
+                  { id: 'mengaris', num: 1, x: 179.1, y: 100.1, color: '#D97706' },
+                  { id: 'tecoma', num: 2, x: 130.2, y: 148.1, color: '#0F172A' },
+                  { id: 'acacia', num: 3, x: 114.3, y: 203.7, color: '#0F172A' },
+                  { id: 'rancha', num: 4, x: 34.7, y: 235.4, color: '#0F172A' },
+                  { id: 'oriole', num: 5, x: 78.1, y: 278.4, color: '#2563EB' },
+                  { id: 'sequioa', num: 6, x: 106.8, y: 281.6, color: '#2563EB' },
+                  { id: 'shorea', num: 7, x: 336.3, y: 174.8, color: '#059669' },
+                  { id: 'shorea', num: 7, x: 315.8, y: 346.3, color: '#059669' },
                 ].map((pin, idx) => {
                   const isSelected = selectedProjectId === pin.id;
                   return (
@@ -464,8 +549,8 @@ export function FutureGenMapModal({ isOpen, onClose }) {
                       {/* Selection Pulsing Ring */}
                       {isSelected && (
                         <>
-                          <circle cx="0" cy="0" r="18" fill={pin.color} opacity="0.3" className="animate-ping" />
-                          <circle cx="0" cy="0" r="15" fill="none" stroke="#ffffff" strokeWidth="2.5" />
+                          <circle cx="0" cy="0" r="16" fill={pin.color} opacity="0.3" className="animate-ping" />
+                          <circle cx="0" cy="0" r="14" fill="none" stroke="#FFFFFF" strokeWidth="2.5" />
                         </>
                       )}
 
@@ -475,7 +560,7 @@ export function FutureGenMapModal({ isOpen, onClose }) {
                         cy="0"
                         r={isSelected ? 11.5 : 10}
                         fill={pin.color}
-                        stroke="#ffffff"
+                        stroke="#FFFFFF"
                         strokeWidth="2"
                         filter="url(#pinShadow)"
                       />
@@ -483,11 +568,11 @@ export function FutureGenMapModal({ isOpen, onClose }) {
                       {/* Pin Number */}
                       <text
                         x="0"
-                        y="3.8"
+                        y="3.5"
                         textAnchor="middle"
                         fontSize={isSelected ? '10' : '9'}
                         fontWeight="900"
-                        fill="#ffffff"
+                        fill="#FFFFFF"
                         className="pointer-events-none"
                       >
                         {pin.num}
