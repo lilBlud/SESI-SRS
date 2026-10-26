@@ -38,25 +38,28 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   const fetchTraffic = useCallback(async () => {
     setLoadingTraffic(true);
     try {
-      const directStats = await getVisitorStatsDirect();
-      if (directStats) {
-        setTrafficData(directStats);
-        if (onRefreshVisitorStats) onRefreshVisitorStats();
-        return;
+      let data = null;
+      try {
+        data = await getVisitorStatsDirect();
+      } catch (e) {
+        console.warn('Direct fetch traffic failed in AdminTab:', e);
       }
-    } catch (e) {
-      console.warn('Direct fetch traffic failed in AdminTab:', e);
-    }
 
-    try {
-      const res = await fetch(`${API_BASE}/api/visitors/stats?t=${Date.now()}`);
-      if (res.ok) {
-        const d = await res.json();
-        setTrafficData(d);
+      if (!data) {
+        try {
+          const res = await fetch(`${API_BASE}/api/visitors/stats?t=${Date.now()}`);
+          if (res.ok) {
+            data = await res.json();
+          }
+        } catch (e) {
+          console.error('Failed to fetch traffic stats fallback:', e);
+        }
+      }
+
+      if (data) {
+        setTrafficData(data);
         if (onRefreshVisitorStats) onRefreshVisitorStats();
       }
-    } catch (e) {
-      console.error('Failed to fetch traffic stats fallback:', e);
     } finally {
       setLoadingTraffic(false);
     }
@@ -65,23 +68,27 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
     try {
-      const direct = await getAllUsersDirect();
-      if (direct && direct.length >= 0) {
-        setUsers(direct);
-        return;
+      let list = null;
+      try {
+        list = await getAllUsersDirect();
+      } catch (err) {
+        console.warn("Direct fetch users error in AdminTab:", err);
       }
-    } catch (err) {
-      console.warn("Direct fetch users error in AdminTab:", err);
-    }
 
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/users`);
-      if (res && res.ok) {
-        const list = await res.json();
+      if (!list) {
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/users`);
+          if (res && res.ok) {
+            list = await res.json();
+          }
+        } catch (apiErr) {
+          console.warn("API fetch users error in AdminTab:", apiErr);
+        }
+      }
+
+      if (list && Array.isArray(list)) {
         setUsers(list);
       }
-    } catch (apiErr) {
-      console.warn("API fetch users error in AdminTab:", apiErr);
     } finally {
       setLoadingUsers(false);
     }
