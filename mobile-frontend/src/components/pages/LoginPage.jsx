@@ -21,7 +21,7 @@ export default function LoginPage({ onLogin }) {
       email: 'demo@sesb.com.my',
       division: 'IDD',
       staffId: 'DEMO-001',
-      role: 'Admin'
+      role: 'Staff'
     };
     if (onLogin) {
       onLogin(demoUser);

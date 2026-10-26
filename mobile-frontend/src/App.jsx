@@ -24,6 +24,9 @@ function App() {
         const parsed = JSON.parse(saved);
         if (!parsed.division || parsed.division === 'General' || parsed.fullName === 'Demo User' || parsed.staffId === 'DEMO-001' || parsed.email === 'demo@sesb.com.my') {
           parsed.division = 'IDD';
+          if (parsed.email === 'demo@sesb.com.my' || parsed.fullName === 'Demo User') {
+            parsed.role = 'Staff';
+          }
           try { localStorage.setItem('sesi_user', JSON.stringify(parsed)); } catch { }
         }
         return parsed;
