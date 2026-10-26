@@ -126,6 +126,9 @@ function App() {
             if (data.division && data.division !== user.division) {
               updates.division = data.division;
             }
+            if (data.role && data.role !== user.role) {
+              updates.role = data.role;
+            }
             if (Object.keys(updates).length > 0) {
               handleUpdateUser(updates);
             }
@@ -135,7 +138,7 @@ function App() {
           console.warn("Direct profile sync failed:", err);
         });
     }
-  }, [user?.email, user?.fullName, user?.staffId, user?.division, user?.profilePicture, user?.preferredName]);
+  }, [user?.email, user?.fullName, user?.staffId, user?.division, user?.profilePicture, user?.preferredName, user?.role]);
 
   // Visitor Tracking
   const { visitorStats, refreshVisitorStats } = useVisitorTracking(user);
@@ -278,16 +281,18 @@ function App() {
             {/* Settings/Theme Pill Group */}
             <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 border border-slate-200 dark:border-slate-700 shrink-0">
 
-              {/* Admin Button */}
-              <button
-                onClick={() => setActiveTab('admin')}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all relative"
-                aria-label="Admin settings"
-              >
-                <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                {/* Small indicator dot to make it pop */}
-                <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full border-[1.5px] border-slate-100 dark:border-slate-800"></div>
-              </button>
+              {/* Admin Button - only visible if user is Admin */}
+              {user?.role === 'Admin' && (
+                <button
+                  onClick={() => setActiveTab('admin')}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all relative"
+                  aria-label="Admin settings"
+                  title="Admin Dashboard"
+                >
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full border-[1.5px] border-slate-100 dark:border-slate-800"></div>
+                </button>
+              )}
 
               {/* Dark Mode Toggle */}
               <button
@@ -321,11 +326,33 @@ function App() {
         {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
         {activeTab === 'admin' && (
-          <AdminTab
-            onGlossaryChange={fetchGlossary}
-            visitorStats={visitorStats}
-            onRefreshVisitorStats={refreshVisitorStats}
-          />
+          user?.role === 'Admin' ? (
+            <AdminTab
+              currentUser={user}
+              onClose={() => setActiveTab('home')}
+              onGlossaryChange={fetchGlossary}
+              visitorStats={visitorStats}
+              onRefreshVisitorStats={refreshVisitorStats}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-500 flex items-center justify-center text-3xl shadow-sm">
+                🛡️
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">Admin Privileges Required</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                  Your account does not currently have administrator access. Please contact an existing administrator to grant access.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab('home')}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-600/20 active:scale-95"
+              >
+                Return to Home
+              </button>
+            </div>
+          )
         )}
       </main>
 

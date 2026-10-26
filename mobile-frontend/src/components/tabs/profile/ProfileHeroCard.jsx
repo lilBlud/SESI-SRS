@@ -57,8 +57,14 @@ export function ProfileHeroCard({
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold truncate">{displayName}</h2>
+            {user?.role === 'Admin' && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-950/40 text-emerald-200 border border-emerald-400/30 flex items-center gap-1 shadow-xs">
+                <span>🛡️</span>
+                <span>Admin</span>
+              </span>
+            )}
             <button
               onClick={onOpenEditNameModal}
               className="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs transition-transform active:scale-95 shrink-0"

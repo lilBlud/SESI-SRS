@@ -12,7 +12,13 @@ namespace mobile_backend.Models
         public string Division { get; set; } = string.Empty;
         public string StaffId { get; set; } = string.Empty;
         public string ProfilePicture { get; set; } = string.Empty; // Base64 data URI or image URL
+        public string Role { get; set; } = "Staff"; // "Admin" or "Staff"
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public class UpdateUserRoleRequest
+    {
+        public string Role { get; set; } = "Staff";
     }
 
     public class UserAnswer

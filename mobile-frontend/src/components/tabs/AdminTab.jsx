@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getInfographicsDirect, getGlossaryDirect, getVisitorStatsDirect, supabase } from '../../utils/supabaseClient';
-import AdminLoginView from './admin/AdminLoginView';
+import { 
+  getInfographicsDirect, 
+  getGlossaryDirect, 
+  getVisitorStatsDirect, 
+  getAllUsersDirect, 
+  updateUserRoleDirect, 
+  supabase 
+} from '../../utils/supabaseClient';
 import AdminTrafficSection from './admin/AdminTrafficSection';
+import AdminUsersSection from './admin/AdminUsersSection';
 import AdminQuizSection from './admin/AdminQuizSection';
 import AdminGlossarySection from './admin/AdminGlossarySection';
 import AdminInfographicsSection from './admin/AdminInfographicsSection';
@@ -10,13 +17,15 @@ const API_BASE = import.meta.env.VITE_API_BASE || '';
 const currentMonth = new Date().toISOString().slice(0, 7);
 const defaultMonth = currentMonth < '2026-01' ? '2026-01' : currentMonth;
 
-export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisitorStats }) {
-  const [token, setToken] = useState(() => sessionStorage.getItem('adminToken'));
-  const [activeSection, setActiveSection] = useState('traffic'); // 'traffic' | 'questions' | 'glossary' | 'infographics'
+export default function AdminTab({ currentUser, onClose, onGlossaryChange, visitorStats, onRefreshVisitorStats }) {
+  const [activeSection, setActiveSection] = useState('traffic'); // 'traffic' | 'users' | 'questions' | 'glossary' | 'infographics'
 
   // ─── Domain States ───
   const [trafficData, setTrafficData] = useState(null);
   const [loadingTraffic, setLoadingTraffic] = useState(false);
+
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   const [questions, setQuestions] = useState([]);
   const [qCount, setQCount] = useState(0);
@@ -52,6 +61,62 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
       setLoadingTraffic(false);
     }
   }, [onRefreshVisitorStats]);
+
+  const fetchUsers = useCallback(async () => {
+    setLoadingUsers(true);
+    try {
+      const direct = await getAllUsersDirect();
+      if (direct && direct.length >= 0) {
+        setUsers(direct);
+        return;
+      }
+    } catch (err) {
+      console.warn("Direct fetch users error in AdminTab:", err);
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/users`);
+      if (res && res.ok) {
+        const list = await res.json();
+        setUsers(list);
+      }
+    } catch (apiErr) {
+      console.warn("API fetch users error in AdminTab:", apiErr);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
+
+  const handleUpdateRole = async (targetIdOrEmail, newRole) => {
+    try {
+      await updateUserRoleDirect(targetIdOrEmail, newRole);
+      await fetchUsers();
+    } catch (err) {
+      // Fallback to API if available
+      try {
+        const targetId = typeof targetIdOrEmail === 'number'
+          ? targetIdOrEmail
+          : users.find(u => u.email === targetIdOrEmail)?.id;
+
+        if (targetId) {
+          const res = await fetch(`${API_BASE}/api/admin/users/${targetId}/role`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: newRole })
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to update user role');
+          }
+          await fetchUsers();
+          return;
+        }
+      } catch (apiErr) {
+        throw new Error(apiErr.message || err.message || 'Failed to update user role');
+      }
+      throw err;
+    }
+  };
 
   const fetchQuestions = useCallback(async () => {
     try {
@@ -119,30 +184,20 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
   }, []);
 
   const loadAll = useCallback(() => {
+    fetchUsers();
     fetchQuestions();
     fetchGlossary();
     fetchInfographics();
     fetchTraffic();
-  }, [fetchQuestions, fetchGlossary, fetchInfographics, fetchTraffic]);
+  }, [fetchUsers, fetchQuestions, fetchGlossary, fetchInfographics, fetchTraffic]);
 
   useEffect(() => {
-    if (token) {
-      loadAll();
-    }
-  }, [token, loadAll]);
-
-  const logout = () => {
-    sessionStorage.removeItem('adminToken');
-    setToken(null);
-  };
-
-  // ─── Login Screen ───
-  if (!token) {
-    return <AdminLoginView onLoginSuccess={(newToken) => setToken(newToken)} />;
-  }
+    loadAll();
+  }, [loadAll]);
 
   const sections = [
     { id: 'traffic', label: 'Visitors' },
+    { id: 'users', label: 'Users', count: users.length },
     { id: 'questions', label: 'Quiz', count: qCount },
     { id: 'glossary', label: 'Dictionary', count: glossaryTerms.length },
     { id: 'infographics', label: 'Posts', count: infographics.length }
@@ -153,25 +208,36 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Admin Dashboard</span>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">Manage Content</h1>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
+            <span>🛡️</span> Admin Workspace
+          </span>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">Control Panel</h1>
+          {currentUser && (
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Logged in as <span className="font-semibold text-slate-600 dark:text-slate-300">{currentUser.fullName || currentUser.email}</span> (Administrator)
+            </p>
+          )}
         </div>
-        <button 
-          onClick={logout} 
-          className="px-3 py-1.5 bg-red-50 dark:bg-red-950/30 text-red-500 text-xs font-bold rounded-xl hover:bg-red-100 transition"
-        >
-          Logout
-        </button>
+        {onClose && (
+          <button 
+            onClick={onClose} 
+            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1 active:scale-95"
+          >
+            <span>✕</span>
+            <span>Exit</span>
+          </button>
+        )}
       </div>
 
       {/* Section Tabs */}
-      <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+      <div className="grid grid-cols-5 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
         {sections.map(s => (
           <button 
             key={s.id} 
             onClick={() => {
               setActiveSection(s.id);
               if (s.id === 'traffic') fetchTraffic();
+              if (s.id === 'users') fetchUsers();
             }} 
             className={`py-2 px-1 rounded-xl text-center transition-all flex flex-col items-center justify-center min-h-[46px] ${
               activeSection === s.id 
@@ -179,9 +245,9 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold'
             }`}
           >
-            <div className="text-[12px] sm:text-[13px] leading-tight truncate">{s.label}</div>
+            <div className="text-[11px] sm:text-[12px] leading-tight truncate">{s.label}</div>
             {s.count !== undefined && (
-              <div className={`text-[10px] mt-0.5 ${activeSection === s.id ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
+              <div className={`text-[9px] sm:text-[10px] mt-0.5 ${activeSection === s.id ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
                 ({s.count})
               </div>
             )}
@@ -196,6 +262,17 @@ export default function AdminTab({ onGlossaryChange, visitorStats, onRefreshVisi
           visitorStats={visitorStats}
           loadingTraffic={loadingTraffic}
           onRefreshTraffic={fetchTraffic}
+        />
+      )}
+
+      {/* ════════ USER ROLES & RBAC ════════ */}
+      {activeSection === 'users' && (
+        <AdminUsersSection
+          users={users}
+          currentUser={currentUser}
+          loading={loadingUsers}
+          onUpdateRole={handleUpdateRole}
+          onRefreshUsers={fetchUsers}
         />
       )}
 

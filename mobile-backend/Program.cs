@@ -83,12 +83,13 @@ app.MapPost("/api/auth/signup", async (AuthRequest req, AppDbContext db) =>
         Email = req.Email,
         PasswordHash = req.Password, // For MVP. Real apps should hash this!
         Division = req.Division ?? "",
-        StaffId = req.StaffId ?? ""
+        StaffId = req.StaffId ?? "",
+        Role = "Staff"
     };
     db.StaffUsers.Add(user);
     await db.SaveChangesAsync();
     
-    return Results.Ok(new { id = user.Id, fullName = user.FullName, preferredName = user.PreferredName, email = user.Email, division = user.Division, staffId = user.StaffId, profilePicture = user.ProfilePicture });
+    return Results.Ok(new { id = user.Id, fullName = user.FullName, preferredName = user.PreferredName, email = user.Email, division = user.Division, staffId = user.StaffId, profilePicture = user.ProfilePicture, role = user.Role });
 }).RequireCors("AllowAll");
 
 app.MapMethods("/api/auth/login", new[] { "OPTIONS" }, () => Results.Ok()).RequireCors("AllowAll");
@@ -98,7 +99,7 @@ app.MapPost("/api/auth/login", async (AuthRequest req, AppDbContext db) =>
     if (user == null)
         return Results.Unauthorized();
         
-    return Results.Ok(new { id = user.Id, fullName = user.FullName, preferredName = user.PreferredName, email = user.Email, division = user.Division, staffId = user.StaffId, profilePicture = user.ProfilePicture });
+    return Results.Ok(new { id = user.Id, fullName = user.FullName, preferredName = user.PreferredName, email = user.Email, division = user.Division, staffId = user.StaffId, profilePicture = user.ProfilePicture, role = user.Role });
 }).RequireCors("AllowAll");
 
 // ═══════════════════════════════════════════
@@ -495,6 +496,50 @@ app.MapPost("/api/admin/login", (AdminLoginRequest req) =>
         return Results.Ok(new { token = "fake-jwt-token-for-admin" });
     return Results.Unauthorized();
 }).WithName("AdminLogin");
+
+// ──────── USER MANAGEMENT & RBAC ────────
+
+app.MapGet("/api/admin/users", async (AppDbContext db) =>
+{
+    var users = await db.StaffUsers
+        .OrderBy(u => u.FullName)
+        .Select(u => new {
+            id = u.Id,
+            fullName = u.FullName,
+            preferredName = u.PreferredName,
+            email = u.Email,
+            division = u.Division,
+            staffId = u.StaffId,
+            role = u.Role,
+            profilePicture = u.ProfilePicture,
+            createdAt = u.CreatedAt
+        })
+        .ToListAsync();
+    return Results.Ok(users);
+}).WithName("AdminGetUsers");
+
+app.MapPut("/api/admin/users/{id}/role", async (int id, UpdateUserRoleRequest req, AppDbContext db) =>
+{
+    if (req.Role != "Admin" && req.Role != "Staff")
+        return Results.BadRequest(new { error = "Role must be 'Admin' or 'Staff'" });
+
+    var user = await db.StaffUsers.FindAsync(id);
+    if (user == null) return Results.NotFound(new { error = "User not found" });
+
+    // Safeguard: Check if demoting the last remaining Admin
+    if (user.Role == "Admin" && req.Role == "Staff")
+    {
+        var adminCount = await db.StaffUsers.CountAsync(u => u.Role == "Admin");
+        if (adminCount <= 1)
+        {
+            return Results.BadRequest(new { error = "Cannot demote the last remaining Administrator." });
+        }
+    }
+
+    user.Role = req.Role;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { id = user.Id, role = user.Role, fullName = user.FullName });
+}).WithName("AdminUpdateUserRole");
 
 // ──────── QUIZ QUESTIONS ────────
 

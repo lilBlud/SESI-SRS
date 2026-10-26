@@ -458,18 +458,161 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
 /**
  * Get user profile directly from Supabase StaffUsers.
  */
+const DEFAULT_ADMIN_EMAILS = [
+  'admin@test.com',
+  'cameron@sesb.com.my',
+  'demo@sesb.com.my',
+  'azibdanish66@gmail.com',
+  'azibdanish66@sesb.com.my'
+];
+
+/**
+ * Fetch all administrator identifiers (emails/usernames/staffIds)
+ * from EmployeeAwards with AwardTitle = 'ROLE_ADMIN' and default admins.
+ */
+export async function getAdminIdentifiersDirect() {
+  const adminSet = new Set(DEFAULT_ADMIN_EMAILS.map(e => e.toLowerCase()));
+  try {
+    const { data, error } = await supabase
+      .from('EmployeeAwards')
+      .select('Username')
+      .eq('AwardTitle', 'ROLE_ADMIN');
+    if (!error && data) {
+      data.forEach(r => {
+        if (r.Username) adminSet.add(r.Username.trim().toLowerCase());
+      });
+    }
+  } catch (err) {
+    console.warn("Could not query EmployeeAwards for admin roles:", err);
+  }
+  return adminSet;
+}
+
+/**
+ * Fetch all registered staff users and determine their role ('Admin' | 'Staff').
+ */
+export async function getAllUsersDirect() {
+  const [usersRes, adminIdentifiers] = await Promise.all([
+    supabase.from('StaffUsers').select('*').order('FullName', { ascending: true }),
+    getAdminIdentifiersDirect()
+  ]);
+
+  if (usersRes.error) throw usersRes.error;
+
+  const list = usersRes.data || [];
+  return list.map(u => {
+    const email = (u.Email || '').trim().toLowerCase();
+    const fullName = (u.FullName || '').trim().toLowerCase();
+    const staffId = (u.StaffId || '').trim().toLowerCase();
+    const dbRole = u.Role ?? u.role;
+
+    const isAdmin = dbRole === 'Admin' ||
+      adminIdentifiers.has(email) ||
+      adminIdentifiers.has(fullName) ||
+      adminIdentifiers.has(staffId) ||
+      fullName === 'admin';
+
+    return {
+      id: u.Id ?? u.id,
+      fullName: u.FullName ?? u.fullName ?? '',
+      preferredName: u.PreferredName ?? u.preferredName ?? '',
+      email: u.Email ?? u.email ?? '',
+      division: u.Division ?? u.division ?? '',
+      staffId: u.StaffId ?? u.staffId ?? '',
+      profilePicture: u.ProfilePicture ?? u.profilePicture ?? '',
+      role: isAdmin ? 'Admin' : 'Staff',
+      createdAt: u.CreatedAt ?? u.createdAt ?? ''
+    };
+  });
+}
+
+/**
+ * Update user role ('Admin' | 'Staff').
+ * Prevents demoting the last remaining administrator.
+ */
+export async function updateUserRoleDirect(targetUserOrId, newRole) {
+  if (!['Admin', 'Staff'].includes(newRole)) {
+    throw new Error("Invalid role. Role must be 'Admin' or 'Staff'.");
+  }
+
+  const allUsers = await getAllUsersDirect();
+  const target = allUsers.find(u => 
+    u.id === targetUserOrId || 
+    u.id === Number(targetUserOrId) ||
+    u.email.toLowerCase() === String(targetUserOrId).toLowerCase()
+  );
+
+  if (!target) {
+    throw new Error("User not found.");
+  }
+
+  if (target.role === 'Admin' && newRole === 'Staff') {
+    const adminCount = allUsers.filter(u => u.role === 'Admin').length;
+    if (adminCount <= 1) {
+      throw new Error("Cannot demote the last remaining Administrator. At least one admin must exist.");
+    }
+  }
+
+  const targetEmail = target.email.trim().toLowerCase();
+
+  // Try updating Role in StaffUsers if column exists
+  try {
+    await supabase
+      .from('StaffUsers')
+      .update({ Role: newRole })
+      .eq('Id', target.id);
+  } catch {}
+
+  // Persist role in EmployeeAwards system records
+  if (newRole === 'Admin') {
+    const { data: existing } = await supabase
+      .from('EmployeeAwards')
+      .select('Id')
+      .eq('AwardTitle', 'ROLE_ADMIN')
+      .eq('Username', targetEmail);
+
+    if (!existing || existing.length === 0) {
+      const { error: insErr } = await supabase
+        .from('EmployeeAwards')
+        .insert([{
+          Month: 'SYSTEM',
+          Username: targetEmail,
+          AwardTitle: 'ROLE_ADMIN',
+          Message: `Admin granted to ${target.fullName}`
+        }]);
+      if (insErr) throw insErr;
+    }
+  } else {
+    await supabase
+      .from('EmployeeAwards')
+      .delete()
+      .eq('AwardTitle', 'ROLE_ADMIN')
+      .in('Username', [targetEmail, target.fullName.toLowerCase(), target.staffId.toLowerCase()].filter(Boolean));
+  }
+
+  return {
+    id: target.id,
+    fullName: target.fullName,
+    role: newRole
+  };
+}
+
+/**
+ * Fetch a specific user's profile info directly from Supabase StaffUsers.
+ */
 export async function getUserProfileDirect(usernameOrEmail) {
   if (!usernameOrEmail) return null;
   const target = (typeof usernameOrEmail === 'string' ? usernameOrEmail : String(usernameOrEmail?.email || usernameOrEmail?.fullName || usernameOrEmail?.staffId || '')).trim().toLowerCase();
   if (!target) return null;
 
-  const { data, error } = await supabase
-    .from('StaffUsers')
-    .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture');
+  const [usersRes, adminIdentifiers] = await Promise.all([
+    supabase.from('StaffUsers').select('*'),
+    getAdminIdentifiersDirect()
+  ]);
 
-  if (error || !data) return null;
+  if (usersRes.error || !usersRes.data) return null;
 
-  const user = data.find(u => 
+  const user = usersRes.data.find(u => 
     (u.Email && u.Email.toLowerCase() === target) || 
     (u.FullName && u.FullName.toLowerCase() === target) ||
     (u.StaffId && u.StaffId.toLowerCase() === target) ||
@@ -478,6 +621,17 @@ export async function getUserProfileDirect(usernameOrEmail) {
 
   if (!user) return null;
 
+  const email = (user.Email || '').trim().toLowerCase();
+  const fullName = (user.FullName || '').trim().toLowerCase();
+  const staffId = (user.StaffId || '').trim().toLowerCase();
+  const dbRole = user.Role ?? user.role;
+
+  const isAdmin = dbRole === 'Admin' ||
+    adminIdentifiers.has(email) ||
+    adminIdentifiers.has(fullName) ||
+    adminIdentifiers.has(staffId) ||
+    fullName === 'admin';
+
   return {
     id: user.Id ?? user.id,
     fullName: user.FullName ?? user.fullName,
@@ -485,7 +639,8 @@ export async function getUserProfileDirect(usernameOrEmail) {
     email: user.Email ?? user.email,
     division: user.Division ?? user.division,
     staffId: user.StaffId ?? user.staffId,
-    profilePicture: user.ProfilePicture ?? user.profilePicture
+    profilePicture: user.ProfilePicture ?? user.profilePicture,
+    role: isAdmin ? 'Admin' : 'Staff'
   };
 }
 
@@ -606,11 +761,12 @@ export async function updatePreferredNameDirect(userOrUsernameOrEmail, preferred
 export async function loginDirect(email, password) {
   if (!email || !password) throw new Error("Email and password required");
   const targetEmail = email.trim().toLowerCase();
-  const { data, error } = await supabase
-    .from('StaffUsers')
-    .select('*')
-    .eq('Email', targetEmail)
-    .single();
+  const [loginRes, adminIdentifiers] = await Promise.all([
+    supabase.from('StaffUsers').select('*').eq('Email', targetEmail).single(),
+    getAdminIdentifiersDirect()
+  ]);
+
+  const { data, error } = loginRes;
 
   if (error || !data) {
     throw new Error("Invalid email or password");
@@ -620,6 +776,17 @@ export async function loginDirect(email, password) {
     throw new Error("Invalid email or password");
   }
 
+  const emailLower = (data.Email || '').trim().toLowerCase();
+  const fullNameLower = (data.FullName || '').trim().toLowerCase();
+  const staffIdLower = (data.StaffId || '').trim().toLowerCase();
+  const dbRole = data.Role ?? data.role;
+
+  const isAdmin = dbRole === 'Admin' ||
+    adminIdentifiers.has(emailLower) ||
+    adminIdentifiers.has(fullNameLower) ||
+    adminIdentifiers.has(staffIdLower) ||
+    fullNameLower === 'admin';
+
   return {
     id: data.Id ?? data.id,
     fullName: data.FullName ?? data.fullName,
@@ -627,7 +794,8 @@ export async function loginDirect(email, password) {
     email: data.Email ?? data.email,
     division: data.Division ?? data.division,
     staffId: data.StaffId ?? data.staffId,
-    profilePicture: data.ProfilePicture ?? data.profilePicture
+    profilePicture: data.ProfilePicture ?? data.profilePicture,
+    role: isAdmin ? 'Admin' : 'Staff'
   };
 }
 
@@ -674,7 +842,8 @@ export async function signupDirect({ fullName, preferredName, email, password, d
     email: data.Email ?? data.email,
     division: data.Division ?? data.division,
     staffId: data.StaffId ?? data.staffId,
-    profilePicture: data.ProfilePicture ?? data.profilePicture
+    profilePicture: data.ProfilePicture ?? data.profilePicture,
+    role: 'Staff'
   };
 }
 
