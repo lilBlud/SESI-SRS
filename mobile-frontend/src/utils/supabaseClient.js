@@ -460,8 +460,7 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
  */
 const DEFAULT_ADMIN_EMAILS = [
   'admin@test.com',
-  'azibdanish66@gmail.com',
-  'azibdanish66@sesb.com.my'
+  'azibdanish66@gmail.com'
 ];
 
 /**

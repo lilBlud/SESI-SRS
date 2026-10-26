@@ -28,7 +28,7 @@ namespace mobile_backend.Data
                     ALTER TABLE ""StaffUsers"" ADD COLUMN IF NOT EXISTS ""Role"" text NOT NULL DEFAULT 'Staff';
                     UPDATE ""StaffUsers"" SET ""Division"" = 'IDD' WHERE ""FullName"" = 'Demo User' OR ""StaffId"" = 'DEMO-001';
                     UPDATE ""UserAnswers"" SET ""Division"" = 'IDD' WHERE ""Username"" = 'Demo User' OR ""StaffId"" = 'DEMO-001';
-                    UPDATE ""StaffUsers"" SET ""Role"" = 'Admin' WHERE ""Email"" IN ('admin@test.com', 'cameron@sesb.com.my', 'azibdanish66@gmail.com', 'azibdanish66@sesb.com.my') OR ""FullName"" = 'Admin';
+                    UPDATE ""StaffUsers"" SET ""Role"" = 'Admin' WHERE ""Email"" IN ('admin@test.com', 'azibdanish66@gmail.com') OR ""FullName"" = 'Admin';
                     DELETE FROM ""VisitorLogs"" WHERE ""VisitorId"" LIKE 'v_seed_%';
                 ", conn);
                 cmd.ExecuteNonQuery();
