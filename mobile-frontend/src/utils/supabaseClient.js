@@ -1,4 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { 
+  DEFAULT_ADMIN_EMAILS, 
+  resolveUserRole, 
+  normalizeUser, 
+  matchesUser 
+} from './rbac';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://avlypjdoahothehakchf.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable__T0Lcs6Js5Iy8x3EVnMhsw_6Cj_gcxv';
@@ -456,14 +462,6 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
 }
 
 /**
- * Get user profile directly from Supabase StaffUsers.
- */
-const DEFAULT_ADMIN_EMAILS = [
-  'admin@test.com',
-  'azibdanish66@gmail.com'
-];
-
-/**
  * Fetch administrator and revoked-staff sets
  * from EmployeeAwards with AwardTitle in ('ROLE_ADMIN', 'ROLE_STAFF').
  */
@@ -505,37 +503,16 @@ export async function getAdminIdentifiersDirect() {
  * Fetch all registered staff users and determine their role ('Admin' | 'Staff').
  */
 export async function getAllUsersDirect() {
-  const [usersRes, { adminSet, staffSet }] = await Promise.all([
+  const [usersRes, overrides] = await Promise.all([
     supabase.from('StaffUsers').select('*').order('FullName', { ascending: true }),
     getAdminRoleOverridesDirect()
   ]);
 
   if (usersRes.error) throw usersRes.error;
 
-  const list = usersRes.data || [];
-  return list.map(u => {
-    const email = (u.Email || '').trim().toLowerCase();
-    const fullName = (u.FullName || '').trim().toLowerCase();
-    const staffId = (u.StaffId || '').trim().toLowerCase();
-    const dbRole = u.Role ?? u.role;
-
-    const isExplicitStaff = staffSet.has(email) || staffSet.has(fullName) || staffSet.has(staffId);
-    const isExplicitAdmin = adminSet.has(email) || adminSet.has(fullName) || adminSet.has(staffId);
-
-    const isAdmin = !isExplicitStaff && (dbRole === 'Admin' || isExplicitAdmin);
-
-    return {
-      id: u.Id ?? u.id,
-      fullName: u.FullName ?? u.fullName ?? '',
-      preferredName: u.PreferredName ?? u.preferredName ?? '',
-      email: u.Email ?? u.email ?? '',
-      division: u.Division ?? u.division ?? '',
-      staffId: u.StaffId ?? u.staffId ?? '',
-      profilePicture: u.ProfilePicture ?? u.profilePicture ?? '',
-      role: isAdmin ? 'Admin' : 'Staff',
-      createdAt: u.CreatedAt ?? u.createdAt ?? ''
-    };
-  });
+  return (usersRes.data || []).map(u => 
+    normalizeUser(u, resolveUserRole(u, overrides))
+  );
 }
 
 /**
@@ -548,11 +525,7 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
   }
 
   const allUsers = await getAllUsersDirect();
-  const target = allUsers.find(u => 
-    u.id === targetUserOrId || 
-    u.id === Number(targetUserOrId) ||
-    u.email.toLowerCase() === String(targetUserOrId).toLowerCase()
-  );
+  const target = allUsers.find(u => matchesUser(u, targetUserOrId));
 
   if (!target) {
     throw new Error("User not found.");
@@ -566,8 +539,9 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
   }
 
   const targetEmail = target.email.trim().toLowerCase();
+  const userAliases = [targetEmail, target.fullName.toLowerCase(), target.staffId.toLowerCase()].filter(Boolean);
 
-  // Try updating Role in StaffUsers if column exists
+  // 1. Try updating Role in StaffUsers if column exists
   try {
     await supabase
       .from('StaffUsers')
@@ -575,16 +549,14 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
       .eq('Id', target.id);
   } catch {}
 
-  // Persist role in EmployeeAwards system records
+  // 2. Persist role in EmployeeAwards system records
   if (newRole === 'Admin') {
-    // 1. Remove any ROLE_STAFF override
     await supabase
       .from('EmployeeAwards')
       .delete()
       .eq('AwardTitle', 'ROLE_STAFF')
-      .in('Username', [targetEmail, target.fullName.toLowerCase(), target.staffId.toLowerCase()].filter(Boolean));
+      .in('Username', userAliases);
 
-    // 2. Insert ROLE_ADMIN
     const { data: existing } = await supabase
       .from('EmployeeAwards')
       .select('Id')
@@ -603,14 +575,12 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
       if (insErr) throw insErr;
     }
   } else {
-    // Revoke Admin: Remove all ROLE_ADMIN records
     await supabase
       .from('EmployeeAwards')
       .delete()
       .eq('AwardTitle', 'ROLE_ADMIN')
-      .in('Username', [targetEmail, target.fullName.toLowerCase(), target.staffId.toLowerCase()].filter(Boolean));
+      .in('Username', userAliases);
 
-    // Insert explicit ROLE_STAFF override
     const { data: existingStaff } = await supabase
       .from('EmployeeAwards')
       .select('Id')
@@ -641,45 +611,18 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
  */
 export async function getUserProfileDirect(usernameOrEmail) {
   if (!usernameOrEmail) return null;
-  const target = (typeof usernameOrEmail === 'string' ? usernameOrEmail : String(usernameOrEmail?.email || usernameOrEmail?.fullName || usernameOrEmail?.staffId || '')).trim().toLowerCase();
-  if (!target) return null;
 
-  const [usersRes, { adminSet, staffSet }] = await Promise.all([
+  const [usersRes, overrides] = await Promise.all([
     supabase.from('StaffUsers').select('*'),
     getAdminRoleOverridesDirect()
   ]);
 
   if (usersRes.error || !usersRes.data) return null;
 
-  const user = usersRes.data.find(u => 
-    (u.Email && u.Email.toLowerCase() === target) || 
-    (u.FullName && u.FullName.toLowerCase() === target) ||
-    (u.StaffId && u.StaffId.toLowerCase() === target) ||
-    (String(u.Id) === target)
-  );
-
+  const user = usersRes.data.find(u => matchesUser(u, usernameOrEmail));
   if (!user) return null;
 
-  const email = (user.Email || '').trim().toLowerCase();
-  const fullName = (user.FullName || '').trim().toLowerCase();
-  const staffId = (user.StaffId || '').trim().toLowerCase();
-  const dbRole = user.Role ?? user.role;
-
-  const isExplicitStaff = staffSet.has(email) || staffSet.has(fullName) || staffSet.has(staffId);
-  const isExplicitAdmin = adminSet.has(email) || adminSet.has(fullName) || adminSet.has(staffId);
-
-  const isAdmin = !isExplicitStaff && (dbRole === 'Admin' || isExplicitAdmin);
-
-  return {
-    id: user.Id ?? user.id,
-    fullName: user.FullName ?? user.fullName,
-    preferredName: user.PreferredName ?? user.preferredName,
-    email: user.Email ?? user.email,
-    division: user.Division ?? user.division,
-    staffId: user.StaffId ?? user.staffId,
-    profilePicture: user.ProfilePicture ?? user.profilePicture,
-    role: isAdmin ? 'Admin' : 'Staff'
-  };
+  return normalizeUser(user, resolveUserRole(user, overrides));
 }
 
 /**
@@ -799,7 +742,7 @@ export async function updatePreferredNameDirect(userOrUsernameOrEmail, preferred
 export async function loginDirect(email, password) {
   if (!email || !password) throw new Error("Email and password required");
   const targetEmail = email.trim().toLowerCase();
-  const [loginRes, { adminSet, staffSet }] = await Promise.all([
+  const [loginRes, overrides] = await Promise.all([
     supabase.from('StaffUsers').select('*').eq('Email', targetEmail).single(),
     getAdminRoleOverridesDirect()
   ]);
@@ -814,26 +757,7 @@ export async function loginDirect(email, password) {
     throw new Error("Invalid email or password");
   }
 
-  const emailLower = (data.Email || '').trim().toLowerCase();
-  const fullNameLower = (data.FullName || '').trim().toLowerCase();
-  const staffIdLower = (data.StaffId || '').trim().toLowerCase();
-  const dbRole = data.Role ?? data.role;
-
-  const isExplicitStaff = staffSet.has(emailLower) || staffSet.has(fullNameLower) || staffSet.has(staffIdLower);
-  const isExplicitAdmin = adminSet.has(emailLower) || adminSet.has(fullNameLower) || adminSet.has(staffIdLower);
-
-  const isAdmin = !isExplicitStaff && (dbRole === 'Admin' || isExplicitAdmin);
-
-  return {
-    id: data.Id ?? data.id,
-    fullName: data.FullName ?? data.fullName,
-    preferredName: data.PreferredName ?? data.preferredName,
-    email: data.Email ?? data.email,
-    division: data.Division ?? data.division,
-    staffId: data.StaffId ?? data.staffId,
-    profilePicture: data.ProfilePicture ?? data.profilePicture,
-    role: isAdmin ? 'Admin' : 'Staff'
-  };
+  return normalizeUser(data, resolveUserRole(data, overrides));
 }
 
 /**
@@ -872,16 +796,7 @@ export async function signupDirect({ fullName, preferredName, email, password, d
 
   if (error) throw error;
 
-  return {
-    id: data.Id ?? data.id,
-    fullName: data.FullName ?? data.fullName,
-    preferredName: data.PreferredName ?? data.preferredName,
-    email: data.Email ?? data.email,
-    division: data.Division ?? data.division,
-    staffId: data.StaffId ?? data.staffId,
-    profilePicture: data.ProfilePicture ?? data.profilePicture,
-    role: 'Staff'
-  };
+  return normalizeUser(data, 'Staff');
 }
 
 /**

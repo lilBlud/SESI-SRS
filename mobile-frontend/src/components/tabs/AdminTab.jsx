@@ -7,6 +7,7 @@ import {
   updateUserRoleDirect, 
   supabase 
 } from '../../utils/supabaseClient';
+import { matchesUser } from '../../utils/rbac';
 import AdminTrafficSection from './admin/AdminTrafficSection';
 import AdminUsersSection from './admin/AdminUsersSection';
 import AdminQuizSection from './admin/AdminQuizSection';
@@ -96,12 +97,9 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
 
   const handleUpdateRole = async (targetIdOrEmail, newRole) => {
     // Optimistic update for instant UI feedback
-    setUsers(prev => prev.map(u => {
-      const match = u.id === targetIdOrEmail || 
-                    u.id === Number(targetIdOrEmail) ||
-                    (u.email && u.email.toLowerCase() === String(targetIdOrEmail).toLowerCase());
-      return match ? { ...u, role: newRole } : u;
-    }));
+    setUsers(prev => prev.map(u => 
+      matchesUser(u, targetIdOrEmail) ? { ...u, role: newRole } : u
+    ));
 
     try {
       await updateUserRoleDirect(targetIdOrEmail, newRole);
@@ -110,9 +108,8 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
       await fetchUsers(); // Revert on failure
       // Fallback to API if available
       try {
-        const targetId = typeof targetIdOrEmail === 'number'
-          ? targetIdOrEmail
-          : users.find(u => u.email === targetIdOrEmail)?.id;
+        const targetUser = users.find(u => matchesUser(u, targetIdOrEmail));
+        const targetId = typeof targetIdOrEmail === 'number' ? targetIdOrEmail : targetUser?.id;
 
         if (targetId) {
           const res = await fetch(`${API_BASE}/api/admin/users/${targetId}/role`, {
