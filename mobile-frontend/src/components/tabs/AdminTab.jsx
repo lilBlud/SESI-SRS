@@ -95,10 +95,19 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   }, []);
 
   const handleUpdateRole = async (targetIdOrEmail, newRole) => {
+    // Optimistic update for instant UI feedback
+    setUsers(prev => prev.map(u => {
+      const match = u.id === targetIdOrEmail || 
+                    u.id === Number(targetIdOrEmail) ||
+                    (u.email && u.email.toLowerCase() === String(targetIdOrEmail).toLowerCase());
+      return match ? { ...u, role: newRole } : u;
+    }));
+
     try {
       await updateUserRoleDirect(targetIdOrEmail, newRole);
       await fetchUsers();
     } catch (err) {
+      await fetchUsers(); // Revert on failure
       // Fallback to API if available
       try {
         const targetId = typeof targetIdOrEmail === 'number'
