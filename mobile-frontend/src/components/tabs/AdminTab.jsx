@@ -106,12 +106,18 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
       await fetchUsers();
     } catch (err) {
       await fetchUsers(); // Revert on failure
+
+      // Do NOT trigger API fallback if failure was a validation rule
+      if (err.message && (err.message.includes('Cannot demote') || err.message.includes('Invalid role'))) {
+        throw err;
+      }
+
       // Fallback to API if available
       try {
         const targetUser = users.find(u => matchesUser(u, targetIdOrEmail));
         const targetId = typeof targetIdOrEmail === 'number' ? targetIdOrEmail : targetUser?.id;
 
-        if (targetId) {
+        if (API_BASE && targetId) {
           const res = await fetch(`${API_BASE}/api/admin/users/${targetId}/role`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -196,17 +202,26 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
     }
   }, []);
 
-  const loadAll = useCallback(() => {
-    fetchUsers();
-    fetchQuestions();
-    fetchGlossary();
-    fetchInfographics();
-    fetchTraffic();
-  }, [fetchUsers, fetchQuestions, fetchGlossary, fetchInfographics, fetchTraffic]);
-
+  // Lazy-load active domain data on tab switch
   useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+    if (activeSection === 'traffic') fetchTraffic();
+    else if (activeSection === 'users') fetchUsers();
+    else if (activeSection === 'questions') fetchQuestions();
+    else if (activeSection === 'glossary') fetchGlossary();
+    else if (activeSection === 'infographics') fetchInfographics();
+  }, [activeSection, fetchTraffic, fetchUsers, fetchQuestions, fetchGlossary, fetchInfographics]);
+
+  // Background hydration for badge counts after initial mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers();
+      fetchQuestions();
+      fetchGlossary();
+      fetchInfographics();
+    }, 1200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sections = [
     { id: 'traffic', label: 'Visitors' },
@@ -247,11 +262,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
         {sections.map(s => (
           <button 
             key={s.id} 
-            onClick={() => {
-              setActiveSection(s.id);
-              if (s.id === 'traffic') fetchTraffic();
-              if (s.id === 'users') fetchUsers();
-            }} 
+            onClick={() => setActiveSection(s.id)} 
             className={`py-2 px-1 rounded-xl text-center transition-all flex flex-col items-center justify-center min-h-[46px] ${
               activeSection === s.id 
                 ? 'bg-emerald-600 text-white shadow-md font-black' 

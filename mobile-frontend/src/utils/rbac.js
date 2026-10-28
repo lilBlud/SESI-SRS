@@ -18,34 +18,60 @@ export const DEFAULT_ADMIN_EMAILS = [
 export function matchesUser(userA, identifierOrUserB) {
   if (!userA || !identifierOrUserB) return false;
 
-  const getKeys = (target) => {
-    if (typeof target === 'object' && target !== null) {
+  const getId = (u) => {
+    if (typeof u === 'object' && u !== null) {
+      const val = u.Id ?? u.id;
+      return val != null ? String(val).trim() : null;
+    }
+    const s = String(u).trim();
+    return /^\d+$/.test(s) ? s : null;
+  };
+
+  const idA = getId(userA);
+  const idB = getId(identifierOrUserB);
+
+  // If both have explicit IDs (or one is a pure numeric ID), match strictly by ID
+  if (idA !== null && idB !== null) {
+    return idA === idB;
+  }
+
+  // If target is a pure numeric ID and idA did not match, do not false-match against text fields
+  if (typeof identifierOrUserB === 'number' || (typeof identifierOrUserB === 'string' && /^\d+$/.test(identifierOrUserB.trim()))) {
+    return false;
+  }
+
+  const getFields = (u) => {
+    if (typeof u === 'object' && u !== null) {
       return {
-        id: target.Id ?? target.id ?? null,
-        email: (target.Email || target.email || '').trim().toLowerCase(),
-        staffId: (target.StaffId || target.staffId || '').trim().toLowerCase(),
-        fullName: (target.FullName || target.fullName || '').trim().toLowerCase()
+        email: (u.Email || u.email || '').trim().toLowerCase(),
+        staffId: (u.StaffId || u.staffId || '').trim().toLowerCase(),
+        fullName: (u.FullName || u.fullName || '').trim().toLowerCase()
       };
     }
-    const str = String(target).trim().toLowerCase();
-    const num = Number(target);
+    const s = String(u).trim().toLowerCase();
     return {
-      id: !isNaN(num) && num > 0 ? num : null,
-      email: str.includes('@') ? str : '',
-      staffId: str,
-      fullName: str
+      email: s.includes('@') ? s : '',
+      staffId: !s.includes('@') ? s : '',
+      fullName: !s.includes('@') ? s : ''
     };
   };
 
-  const a = getKeys(userA);
-  const b = getKeys(identifierOrUserB);
+  const fA = getFields(userA);
 
-  if (a.id && b.id && a.id === b.id) return true;
-  if (a.email && b.email && a.email === b.email) return true;
-  if (a.staffId && b.staffId && a.staffId === b.staffId) return true;
-  if (a.fullName && b.fullName && a.fullName === b.fullName) return true;
+  if (typeof identifierOrUserB === 'object' && identifierOrUserB !== null) {
+    const fB = getFields(identifierOrUserB);
+    if (fA.email && fB.email && fA.email === fB.email) return true;
+    if (fA.staffId && fB.staffId && fA.staffId === fB.staffId) return true;
+    if (fA.fullName && fB.fullName && fA.fullName === fB.fullName) return true;
+    return false;
+  }
 
-  return false;
+  // Primitive string comparison
+  const str = String(identifierOrUserB).trim().toLowerCase();
+  if (str.includes('@')) {
+    return fA.email === str;
+  }
+  return (fA.staffId && fA.staffId === str) || (fA.fullName && fA.fullName === str);
 }
 
 /**

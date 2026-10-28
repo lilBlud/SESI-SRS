@@ -472,7 +472,8 @@ export async function getAdminRoleOverridesDirect() {
     const { data, error } = await supabase
       .from('EmployeeAwards')
       .select('Username, AwardTitle')
-      .in('AwardTitle', ['ROLE_ADMIN', 'ROLE_STAFF']);
+      .in('AwardTitle', ['ROLE_ADMIN', 'ROLE_STAFF'])
+      .order('Id', { ascending: true });
     if (!error && data) {
       data.forEach(r => {
         const u = (r.Username || '').trim().toLowerCase();
