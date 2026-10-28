@@ -57,12 +57,12 @@ export function GlossaryFlashcardView({
 
                 {card.formula && card.formula !== 'area' && card.formula !== 'bar' && (
                   <div className="mt-3 bg-slate-50/90 dark:bg-slate-800/90 rounded-lg p-2.5 border border-slate-200/70 dark:border-slate-700/70 w-full">
-                    <div className={`text-[13px] sm:text-[13.5px] font-bold text-center mb-1.5 leading-snug ${clr.text}`}>
+                    <div className={`text-[12px] font-black font-mono text-center mb-1.5 ${clr.text}`}>
                       📐 {card.formula}
                     </div>
                     {card.formulaNotations && (
                       <div className="text-[11px] text-slate-800 dark:text-slate-200 mt-1 leading-normal">
-                        <span className="font-bold text-slate-900 dark:text-white">Notations:</span> <span>{card.formulaNotations.replace(/\n/g, ', ')}</span>
+                        <span className="font-bold text-slate-900 dark:text-white">Notations:</span> <span className="font-mono">{card.formulaNotations.replace(/\n/g, ', ')}</span>
                       </div>
                     )}
                     {card.formulaTermMeanings && (
