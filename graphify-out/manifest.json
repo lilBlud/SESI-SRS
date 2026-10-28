@@ -200,9 +200,9 @@
     "semantic_hash": "60e44773c00797b2d1dcc60ed61fd52c"
   },
   "mobile-frontend/src/App.jsx": {
-    "mtime": 1793153639.3643525,
-    "seen": 1793153664.6750917,
-    "ast_hash": "139449aa44a4a63677e391532df522f0",
+    "mtime": 1793154782.7921717,
+    "seen": 1793154824.3160229,
+    "ast_hash": "0d05b15a669701e6c9c45b63e360ac5d",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/modals/EditPreferredNameModal.jsx": {
@@ -374,9 +374,9 @@
     "semantic_hash": "fe0e1a5008fce4d7e26bf63c93c53e07"
   },
   "mobile-frontend/src/components/tabs/glossary/GlossaryFlashcardView.jsx": {
-    "mtime": 1793152933.8308492,
-    "seen": 1793153012.3745904,
-    "ast_hash": "4659ddfe83651d861bd6245f3b7521d9",
+    "mtime": 1793154799.5181575,
+    "seen": 1793154824.3181684,
+    "ast_hash": "f615e3e35b7f3c1e1492e7eed24adb70",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/glossary/GlossaryFutureGenCard.jsx": {
