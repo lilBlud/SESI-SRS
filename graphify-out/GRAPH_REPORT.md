@@ -1,17 +1,17 @@
 # Graph Report - SESI SRS  (2026-10-28)
 
 ## Corpus Check
-- 98 files · ~73,561 words
+- 98 files · ~74,005 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 12 file(s) not represented in the graph (top: (none) 3, .drawio 2, .db 2)
 
 ## Summary
-- 482 nodes · 896 edges · 40 communities (24 shown, 16 thin omitted)
+- 482 nodes · 894 edges · 40 communities (24 shown, 16 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5a8d968d`
+- Built from commit: `478536ab`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -179,7 +179,7 @@ Nodes (5): RecordVisitRequest, Division, Path, Username, VisitorId
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `react` connect `supabaseClient.js` to `GlossaryTab.jsx`, `HomeTab.jsx`, `package.json`, `FutureGenMapModal.jsx`?**
-  _High betweenness centrality (0.109) - this node is a cross-community bridge._
+  _High betweenness centrality (0.110) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `App()` (e.g. with `BookIcon()` and `HomeIcon()`) actually correct?**
   _`App()` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `UserAnswers`, `QuizQuestions`, `EmployeeAwards` to the rest of the system?**

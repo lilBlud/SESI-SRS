@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import { HomeTab, GlossaryTab, QuizTab, ProfileTab } from './components/tabs';
 
 const AdminTab = lazy(() => import('./components/tabs/AdminTab'));
 import LoginPage from './components/pages/LoginPage';
 import PasscodeGate from './components/pages/PasscodeGate';
-import { API_BASE } from './utils/constants.js';
 import { getGlossaryDirect, getUserProfileDirect, getUserStreakDirect } from './utils/supabaseClient.js';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { useBookmarks } from './hooks/useBookmarks';
@@ -84,6 +83,17 @@ function App() {
 
   const bookmarkActions = useBookmarks();
 
+  const handleUpdateUser = useCallback((updatedData) => {
+    setUser(prev => {
+      const next = { ...prev, ...updatedData };
+      try { localStorage.setItem('sesi_user', JSON.stringify(next)); } catch { }
+      return next;
+    });
+  }, []);
+
+  // Visitor Tracking
+  const { visitorStats, refreshVisitorStats } = useVisitorTracking(user);
+
   useEffect(() => {
     if (isDark) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
@@ -91,7 +101,7 @@ function App() {
 
   // Fetch glossary from DB with offline localStorage persistence
   const fetchGlossary = useCallback(() => {
-    getGlossaryDirect()
+    return getGlossaryDirect()
       .then(d => {
         if (d && d.length > 0) {
           setGlossary(d);
@@ -99,6 +109,7 @@ function App() {
             localStorage.setItem('sesi_glossary_cache', JSON.stringify(d));
           } catch {}
         }
+        return d;
       })
       .catch(err => {
         console.warn("Direct Supabase glossary fetch failed:", err);
@@ -108,21 +119,97 @@ function App() {
   useEffect(() => { fetchGlossary(); }, [fetchGlossary]);
 
   // Fetch streak on mount and whenever user logs in
-  useEffect(() => {
+  const fetchStreak = useCallback(() => {
     if (user) {
-      getUserStreakDirect(user)
+      return getUserStreakDirect(user)
         .then(res => {
           if (res && typeof res.streak === 'number') {
             setStreak(res.streak);
           }
+          return res;
         })
         .catch(err => {
           console.warn("Direct streak fetch failed:", err);
         });
     } else {
       setStreak(0);
+      return Promise.resolve();
     }
   }, [user]);
+
+  useEffect(() => {
+    fetchStreak();
+  }, [fetchStreak]);
+
+  // Pull-to-refresh & global refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const scrollContainerRef = useRef(null);
+  const touchStartY = useRef(0);
+  const isPullEligible = useRef(false);
+
+  const handleGlobalRefresh = useCallback(async () => {
+    if (isGlobalRefreshing) return;
+    setIsGlobalRefreshing(true);
+    try {
+      await Promise.allSettled([
+        fetchGlossary(),
+        fetchStreak(),
+        refreshVisitorStats ? refreshVisitorStats() : Promise.resolve(),
+        new Promise(resolve => setTimeout(resolve, 600)) // smooth tactile feedback
+      ]);
+      setRefreshKey(k => k + 1);
+    } finally {
+      setIsGlobalRefreshing(false);
+      setPullDistance(0);
+    }
+  }, [fetchGlossary, fetchStreak, refreshVisitorStats, isGlobalRefreshing]);
+
+  const handleTouchStart = (e) => {
+    if (isGlobalRefreshing) return;
+    const container = scrollContainerRef.current;
+    if (container && container.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+      isPullEligible.current = true;
+      setIsPulling(true);
+    } else {
+      isPullEligible.current = false;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isPullEligible.current || isGlobalRefreshing) return;
+    const container = scrollContainerRef.current;
+    if (container && container.scrollTop > 0) {
+      isPullEligible.current = false;
+      setIsPulling(false);
+      setPullDistance(0);
+      return;
+    }
+    const currentY = e.touches[0].clientY;
+    const dy = currentY - touchStartY.current;
+    if (dy > 0) {
+      // Elastic resistance
+      const pull = Math.min(75, dy * 0.42);
+      setPullDistance(pull);
+    } else {
+      setPullDistance(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isPullEligible.current) return;
+    setIsPulling(false);
+    isPullEligible.current = false;
+    if (pullDistance >= 45 && !isGlobalRefreshing) {
+      handleGlobalRefresh();
+    } else {
+      setPullDistance(0);
+    }
+  };
 
   // Sync latest user profile (including avatar, preferredName, and division if updated)
   useEffect(() => {
@@ -155,8 +242,6 @@ function App() {
     }
   }, [user?.email, user?.fullName, user?.staffId, user?.division, user?.profilePicture, user?.preferredName, user?.role]);
 
-  // Visitor Tracking
-  const { visitorStats, refreshVisitorStats } = useVisitorTracking(user);
 
   const [hasShownAlreadySaved, setHasShownAlreadySaved] = useState(false);
 
@@ -201,13 +286,6 @@ function App() {
     setUser(null);
   };
 
-  const handleUpdateUser = (updatedData) => {
-    setUser(prev => {
-      const next = { ...prev, ...updatedData };
-      try { localStorage.setItem('sesi_user', JSON.stringify(next)); } catch { }
-      return next;
-    });
-  };
 
   useEffect(() => {
     if (user && (user.fullName === 'Demo User' || user.staffId === 'DEMO-001') && user.division !== 'IDD') {
@@ -309,6 +387,19 @@ function App() {
                 </button>
               )}
 
+              {/* Quick Refresh Button */}
+              <button
+                onClick={handleGlobalRefresh}
+                disabled={isGlobalRefreshing}
+                className={`w-8 h-8 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all hover:text-emerald-600 dark:hover:text-emerald-400 ${isGlobalRefreshing ? 'text-emerald-500' : ''}`}
+                aria-label="Refresh content"
+                title="Refresh feeds and data"
+              >
+                <svg className={`w-4 h-4 ${isGlobalRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+
               {/* Dark Mode Toggle */}
               <button
                 onClick={() => setIsDark(!isDark)}
@@ -335,11 +426,53 @@ function App() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20">
-        {activeTab === 'home' && <HomeTab user={user} streak={streak} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
-        {activeTab === 'glossary' && <GlossaryTab user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
-        {activeTab === 'quiz' && <QuizTab user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
-        {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
+      <main
+        ref={scrollContainerRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20"
+      >
+        {/* Pull to Refresh Indicator */}
+        {(pullDistance > 0 || isGlobalRefreshing) && (
+          <div
+            style={{
+              height: isGlobalRefreshing ? 44 : pullDistance,
+              opacity: isGlobalRefreshing ? 1 : Math.min(1, pullDistance / 35),
+              transition: isPulling ? 'none' : 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+            className="overflow-hidden flex items-center justify-center pointer-events-none select-none text-slate-500 dark:text-slate-400 -mt-2 mb-2"
+            aria-hidden="true"
+          >
+            <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-md border border-slate-200/80 dark:border-slate-700/80">
+              {isGlobalRefreshing ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] tracking-tight">Refreshing feed...</span>
+                </>
+              ) : (
+                <>
+                  <svg
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${pullDistance >= 45 ? 'rotate-180 text-emerald-500' : 'text-slate-400'}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                  <span className="text-[11px] font-medium tracking-tight">
+                    {pullDistance >= 45 ? 'Release to refresh' : 'Pull to refresh'}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
+        {activeTab === 'glossary' && <GlossaryTab key={`glossary-${refreshKey}`} user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
+        {activeTab === 'quiz' && <QuizTab key={`quiz-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
+        {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
         {activeTab === 'admin' && (
           user?.role === 'Admin' ? (
             <Suspense fallback={
