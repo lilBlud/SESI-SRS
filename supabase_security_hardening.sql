@@ -72,3 +72,7 @@ BEGIN
     END IF;
 END
 $$;
+
+-- 4. Clean up legacy Demo User quiz records from the leaderboard:
+DELETE FROM "UserAnswers" WHERE "Username" ILIKE '%demo%' OR "PreferredName" ILIKE '%demo%';
+

@@ -151,11 +151,21 @@ export async function getLeaderboardDirect(month) {
   const raw = data || [];
   const groups = {};
 
+  const isDemo = (u, p) => {
+    const s1 = (u || '').toLowerCase().trim();
+    const s2 = (p || '').toLowerCase().trim();
+    return s1 === 'demo' || s1 === 'demo user' || s1 === 'demo-001' || s2 === 'demo';
+  };
+
   for (const a of raw) {
-    const key = (a.PreferredName ?? a.preferredName ?? '').trim() || (a.Username ?? a.username ?? 'Anonymous');
+    const u = (a.Username ?? a.username ?? '').trim();
+    const p = (a.PreferredName ?? a.preferredName ?? '').trim();
+    if (isDemo(u, p)) continue;
+
+    const key = p || u || 'Anonymous';
     if (!groups[key]) {
       groups[key] = {
-        username: a.Username ?? key,
+        username: u || key,
         displayName: key,
         score: 0,
         division: a.Division ?? a.division ?? 'General',
@@ -431,10 +441,18 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
 
   if (error || !data) return { score: 0, rank: null };
 
+  const isDemo = (u, p) => {
+    const s1 = (u || '').toLowerCase().trim();
+    const s2 = (p || '').toLowerCase().trim();
+    return s1 === 'demo' || s1 === 'demo user' || s1 === 'demo-001' || s2 === 'demo';
+  };
+
   const groups = {};
   for (const a of data) {
     const u = (a.Username ?? a.username ?? '').trim();
     const p = (a.PreferredName ?? a.preferredName ?? '').trim();
+    if (isDemo(u, p)) continue;
+
     const key = u || p || 'Anonymous';
     if (!groups[key]) {
       groups[key] = {

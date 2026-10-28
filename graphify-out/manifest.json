@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793162436.3348362,
-    "seen": 1793162611.3467455,
-    "ast_hash": "78a23f1b880232bd252da9d13e7d269b",
+    "mtime": 1793163239.7923856,
+    "seen": 1793163274.414258,
+    "ast_hash": "ef5002729bdb1a8f87bd471607df94a3",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {
