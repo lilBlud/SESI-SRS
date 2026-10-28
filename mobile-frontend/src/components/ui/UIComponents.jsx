@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { DEFAULT_HISTORICAL_METRICS } from '../../data/historicalPerformanceData';
 
 export function PostImageSlider({ images, title, onImageClick }) {
   const [idx, setIdx] = useState(0);
@@ -60,31 +61,6 @@ export const getYAxisUnit = (termName, customFormat) => {
   if (name.includes("RM") || name.includes("COST") || name.includes("PROFIT") || name.includes("EXPENSE")) return "in RM";
   return "in %";
 };
-
-export const formatYAxisTick = (val, yLabel) => {
-  if (val === null || val === undefined) return '';
-  const num = Number(val);
-  if (isNaN(num)) return val;
-  const labelLower = (yLabel || '').toLowerCase();
-  if (labelLower === 'in %' || labelLower.includes('%')) {
-    return `${Math.round(num)}%`;
-  }
-  if (labelLower.includes('bil')) {
-    return `RM${num % 1 === 0 ? num : num.toFixed(1)}b`;
-  }
-  if (labelLower.includes('mil')) {
-    return `RM${Math.round(num)}m`;
-  }
-  if (labelLower === 'in rm' || labelLower.includes('rm')) {
-    return `RM${Math.round(num)}`;
-  }
-  if (labelLower.includes('min')) {
-    return `${Math.round(num)}m`;
-  }
-  return Math.round(num);
-};
-
-import { DEFAULT_HISTORICAL_METRICS } from '../../data/historicalPerformanceData';
 
 // ─── Corporate Performance Chart ───
 export function CorporatePerformanceChart({ chartData, term = '', description = '', yAxisFormat, chartType, formula }) {

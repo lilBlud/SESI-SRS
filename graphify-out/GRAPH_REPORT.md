@@ -1,25 +1,25 @@
 # Graph Report - SESI SRS  (2026-10-28)
 
 ## Corpus Check
-- 87 files · ~73,403 words
+- 78 files · ~71,765 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 13 file(s) not represented in the graph (top: (none) 4, .drawio 2, .db 2)
+- Unclassified: 9 file(s) not represented in the graph (top: (none) 3, .drawio 2, .http 1)
 
 ## Summary
-- 469 nodes · 891 edges · 28 communities (22 shown, 6 thin omitted)
+- 416 nodes · 837 edges · 25 communities (22 shown, 3 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6ba44036`
+- Built from commit: `6ab33da5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - supabaseClient.js
 - AppModels.cs
-- scripts/refactor.cjs
-- HomeTab.jsx
+- AdminGlossarySection.jsx
+- GlossaryTerm
 - UserAnswer
 - package.json
 - FutureGenMapModal.jsx
@@ -36,10 +36,8 @@
 - AuthRequest
 - EmployeeAward
 - .oxlintrc.json
-- scripts/README.md
 - SearchHistory
 - react
-- scripts/update_db.js
 - UserActivity
 
 ## God Nodes (most connected - your core abstractions)
@@ -69,27 +67,27 @@
 ## Import Cycles
 - None detected.
 
-## Communities (28 total, 6 thin omitted)
+## Communities (25 total, 3 thin omitted)
 
 ### Community 0 - "supabaseClient.js"
-Cohesion: 0.11
-Nodes (22): AdminTab, App(), LoginPage(), PasscodeGate(), VALID_PASSCODES, BookIcon(), HomeIcon(), ProfileIcon() (+14 more)
+Cohesion: 0.15
+Nodes (12): AdminTab, App(), PasscodeGate(), VALID_PASSCODES, BookIcon(), HomeIcon(), ProfileIcon(), QuizIcon() (+4 more)
 
 ### Community 1 - "AppModels.cs"
 Cohesion: 0.08
 Nodes (21): mobile_backend.Models, mobile_backend.Data, mobile_backend.Migrations, InitialCreateSqlite, AddChartData, AdminLoginRequest, Password, RecordVisitRequest (+13 more)
 
-### Community 2 - "scripts/refactor.cjs"
-Cohesion: 0.05
-Nodes (35): assets, __dirname, __filename, publicAssetsDir, fs, path, publicDir, fs (+27 more)
+### Community 2 - "AdminGlossarySection.jsx"
+Cohesion: 0.42
+Nodes (6): AdminGlossarySection(), AdminGlossaryCardList(), AdminGlossaryForm(), CorporatePerformanceChart(), getYAxisUnit(), DEFAULT_HISTORICAL_METRICS
 
-### Community 3 - "HomeTab.jsx"
+### Community 3 - "GlossaryTerm"
 Cohesion: 0.18
-Nodes (21): ProfileHeroCard(), ProfilePhotoPickerModal(), ProfileStatsBadges(), formatMonth(), RecentQuestionsCarousel(), ProfileTab(), QuizTab(), calculateStreakFromDates() (+13 more)
+Nodes (11): GlossaryTerm, Category, ChartData, CreatedAt, Description, Formula, FormulaNotations, FormulaTermMeanings (+3 more)
 
 ### Community 4 - "UserAnswer"
-Cohesion: 0.05
-Nodes (34): DbInitializer, GlossaryTerm, Category, ChartData, CreatedAt, Description, Formula, FormulaNotations (+26 more)
+Cohesion: 0.07
+Nodes (23): DbInitializer, QuizQuestion, CorrectOption, Id, Month, OptionA, OptionB, OptionC (+15 more)
 
 ### Community 5 - "package.json"
 Cohesion: 0.07
@@ -112,8 +110,8 @@ Cohesion: 0.15
 Nodes (10): AppDbContext, EmployeeAwards, GlossaryTerms, Infographics, QuizQuestions, SearchHistories, StaffUsers, UserActivities (+2 more)
 
 ### Community 10 - "HomeTab.jsx"
-Cohesion: 0.11
-Nodes (26): EditPreferredNameModal(), DEFAULT_MEDALS, FullLeaderboardModal(), ImageViewerModal(), GlossaryFlashcardView(), GlossaryFutureGenCard(), GlossaryTab(), HomeAdminTrafficCard() (+18 more)
+Cohesion: 0.08
+Nodes (44): EditPreferredNameModal(), DEFAULT_MEDALS, FullLeaderboardModal(), ImageViewerModal(), GlossaryFlashcardView(), GlossaryFutureGenCard(), GlossaryTab(), HomeAdminTrafficCard() (+36 more)
 
 ### Community 11 - "StaffUser"
 Cohesion: 0.18
@@ -153,7 +151,7 @@ Nodes (4): SearchHistory, Id, SearchDate, Term
 
 ### Community 22 - "react"
 Cohesion: 0.13
-Nodes (22): AdminGlossarySection(), AdminInfographicsSection(), AdminQuizSection(), AdminRoleModal(), AdminTrafficSection(), AdminUserCard(), AdminUsersSection(), AdminGlossaryCardList() (+14 more)
+Nodes (29): LoginPage(), AdminInfographicsSection(), AdminQuizSection(), AdminRoleModal(), AdminTrafficSection(), AdminUserCard(), AdminUsersSection(), AdminTab() (+21 more)
 
 ### Community 25 - "UserActivity"
 Cohesion: 0.50
@@ -161,23 +159,23 @@ Nodes (4): UserActivity, ActivityDate, Id, Username
 
 ## Knowledge Gaps
 - **98 isolated node(s):** `UserAnswers`, `QuizQuestions`, `EmployeeAwards`, `UserActivities`, `SearchHistories` (+93 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 202 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 159 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `react` to `supabaseClient.js`, `HomeTab.jsx`, `package.json`, `FutureGenMapModal.jsx`, `HomeTab.jsx`?**
-  _High betweenness centrality (0.112) - this node is a cross-community bridge._
+- **Why does `react` connect `HomeTab.jsx` to `supabaseClient.js`, `AdminGlossarySection.jsx`, `package.json`, `FutureGenMapModal.jsx`, `react`?**
+  _High betweenness centrality (0.141) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `App()` (e.g. with `BookIcon()` and `HomeIcon()`) actually correct?**
   _`App()` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `UserAnswers`, `QuizQuestions`, `EmployeeAwards` to the rest of the system?**
   _98 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `supabaseClient.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.10695187165775401 - nodes in this community are weakly interconnected._
-- **Why does `AppDbContext` connect `AppDbContext` to `AppModels.cs`, `UserAnswer`, `StaffUser`, `Infographic`, `VisitorLog`, `EmployeeAward`, `SearchHistory`, `UserActivity`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
 - **Should `AppModels.cs` be split into smaller, more focused modules?**
   _Cohesion score 0.07676767676767676 - nodes in this community are weakly interconnected._
+- **Why does `AppDbContext` connect `AppDbContext` to `AppModels.cs`, `GlossaryTerm`, `UserAnswer`, `StaffUser`, `Infographic`, `VisitorLog`, `EmployeeAward`, `SearchHistory`, `UserActivity`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Should `UserAnswer` be split into smaller, more focused modules?**
+  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
 - **Why does `UserAnswer` connect `UserAnswer` to `DateTime`, `AppDbContext`, `AppModels.cs`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._

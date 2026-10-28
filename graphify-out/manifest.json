@@ -103,54 +103,6 @@
     "ast_hash": "7c15f2d10ebe77ccb45e3e29f2a5703c",
     "semantic_hash": "7c15f2d10ebe77ccb45e3e29f2a5703c"
   },
-  "mobile-frontend/scripts/copy_assets.js": {
-    "mtime": 1792457134.1863198,
-    "seen": 1793087735.3924344,
-    "ast_hash": "17cd3fedcece76caebfd83ce7b9d67f0",
-    "semantic_hash": "17cd3fedcece76caebfd83ce7b9d67f0"
-  },
-  "mobile-frontend/scripts/copy_img.js": {
-    "mtime": 1792457134.18691,
-    "seen": 1793087735.392507,
-    "ast_hash": "660021f6a5c9631f05679f5fa640b3c9",
-    "semantic_hash": "660021f6a5c9631f05679f5fa640b3c9"
-  },
-  "mobile-frontend/scripts/copy_logo.js": {
-    "mtime": 1792457134.1874325,
-    "seen": 1793087735.392575,
-    "ast_hash": "d0efd18b29b93fee64ed7ace6c2a3cde",
-    "semantic_hash": "d0efd18b29b93fee64ed7ace6c2a3cde"
-  },
-  "mobile-frontend/scripts/fix.cjs": {
-    "mtime": 1792457134.1879847,
-    "seen": 1793087735.3926427,
-    "ast_hash": "f5c8c3acd54de903daa6e0dbaf7527e2",
-    "semantic_hash": "f5c8c3acd54de903daa6e0dbaf7527e2"
-  },
-  "mobile-frontend/scripts/rearrange.cjs": {
-    "mtime": 1792457134.1879847,
-    "seen": 1793087735.392711,
-    "ast_hash": "4886365b106e1cc9823f0635cf6a2c16",
-    "semantic_hash": "4886365b106e1cc9823f0635cf6a2c16"
-  },
-  "mobile-frontend/scripts/refactor.cjs": {
-    "mtime": 1792628738.318444,
-    "seen": 1793087735.3927786,
-    "ast_hash": "ae3fc3d1a8fd358a33686cc90552be24",
-    "semantic_hash": "ae3fc3d1a8fd358a33686cc90552be24"
-  },
-  "mobile-frontend/scripts/update_db.js": {
-    "mtime": 1792457134.188997,
-    "seen": 1793087735.3928463,
-    "ast_hash": "789b05f1cb7a2f5ff33c08991b285295",
-    "semantic_hash": "789b05f1cb7a2f5ff33c08991b285295"
-  },
-  "mobile-frontend/scripts/update_homescreen_logo.py": {
-    "mtime": 1792484428.3799264,
-    "seen": 1793087735.3929124,
-    "ast_hash": "60e44773c00797b2d1dcc60ed61fd52c",
-    "semantic_hash": "60e44773c00797b2d1dcc60ed61fd52c"
-  },
   "mobile-frontend/src/App.jsx": {
     "mtime": 1793154782.7921717,
     "seen": 1793154824.3160229,
@@ -422,9 +374,9 @@
     "semantic_hash": "0670cb6da24a48cf54e4e2379296945e"
   },
   "mobile-frontend/src/components/ui/UIComponents.jsx": {
-    "mtime": 1793152593.4947379,
-    "seen": 1793152749.102831,
-    "ast_hash": "5be3b79702fc71f439a6525ddfc3e91c",
+    "mtime": 1793159566.9112933,
+    "seen": 1793159625.8574934,
+    "ast_hash": "389f4d79bce230069bbbc6a80cf81ff7",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/ui/index.js": {
@@ -521,24 +473,6 @@
     "mtime": 1792484451.6956544,
     "seen": 1793150970.213878,
     "ast_hash": "360a4c28aa5746e3a455979a8bd96790",
-    "semantic_hash": ""
-  },
-  "mobile-frontend/public/200.html": {
-    "mtime": 1792457134.1197433,
-    "seen": 1793150970.2138793,
-    "ast_hash": "e7615c54aee5d0984ba263202a58ead3",
-    "semantic_hash": ""
-  },
-  "mobile-frontend/public/404.html": {
-    "mtime": 1792457134.1197433,
-    "seen": 1793150970.2138803,
-    "ast_hash": "e7615c54aee5d0984ba263202a58ead3",
-    "semantic_hash": ""
-  },
-  "mobile-frontend/scripts/README.md": {
-    "mtime": 1792457134.1857529,
-    "seen": 1793150970.213881,
-    "ast_hash": "46debc030a1073086cc01f76e168a544",
     "semantic_hash": ""
   },
   "mobile-frontend/public/apple-touch-icon.png": {

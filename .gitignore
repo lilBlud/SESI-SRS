@@ -8,6 +8,7 @@ bin/
 obj/
 *.user
 *.suo
+*.db
 
 # IDE
 .vs/
