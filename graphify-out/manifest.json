@@ -104,8 +104,8 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/App.jsx": {
-    "mtime": 1793174101.7423413,
-    "seen": 1793174148.0026462,
+    "mtime": 1793174230.6783686,
+    "seen": 1793175276.956568,
     "ast_hash": "a676313295fc0896d66d0d452c5567cb",
     "semantic_hash": ""
   },
@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793169172.248354,
-    "seen": 1793173358.2497792,
-    "ast_hash": "db4f3b97788afc022f2deb0dae337a05",
+    "mtime": 1793175225.6799722,
+    "seen": 1793175276.9627955,
+    "ast_hash": "6411502b838d87aee4086341da125a81",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {

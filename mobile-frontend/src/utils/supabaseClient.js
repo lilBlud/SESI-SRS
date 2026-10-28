@@ -141,51 +141,76 @@ export function calculateStreakFromDates(dates) {
  * enriched with user streaks from UserActivities.
  */
 export async function getLeaderboardDirect(month) {
-  const { data, error } = await supabase
-    .from('UserAnswers')
-    .select('*')
-    .eq('Month', month);
+  const [ansRes, actRes, staffRes] = await Promise.all([
+    supabase.from('UserAnswers').select('*').eq('Month', month),
+    supabase.from('UserActivities').select('Username, ActivityDate'),
+    supabase.from('StaffUsers').select('Id, FullName, PreferredName, Email, StaffId, Division, ProfilePicture')
+  ]);
 
-  if (error) throw error;
+  if (ansRes.error) throw ansRes.error;
 
-  const raw = data || [];
-  const groups = {};
+  const raw = ansRes.data || [];
+  const staffData = staffRes.data || [];
+  const actData = actRes.data || [];
 
-  const isDemo = (u, p) => {
+  const staffById = {};
+  const staffByAlias = {};
+  for (const s of staffData) {
+    if (s.Id != null) staffById[s.Id] = s;
+    const aliases = [s.FullName, s.PreferredName, s.Email, s.StaffId].filter(Boolean);
+    for (const a of aliases) {
+      staffByAlias[a.trim().toLowerCase()] = s;
+    }
+  }
+
+  const isDemo = (u, p, staff) => {
     const s1 = (u || '').toLowerCase().trim();
     const s2 = (p || '').toLowerCase().trim();
-    return s1 === 'demo' || s1 === 'demo user' || s1 === 'demo-001' || s2 === 'demo';
+    const sf = (staff?.FullName || '').toLowerCase().trim();
+    const se = (staff?.Email || '').toLowerCase().trim();
+    return s1 === 'demo' || s1 === 'demo user' || s2 === 'demo' || sf === 'demo user' || se === 'demo@test.com';
   };
+
+  const groups = {};
 
   for (const a of raw) {
     const u = (a.Username ?? a.username ?? '').trim();
     const p = (a.PreferredName ?? a.preferredName ?? '').trim();
-    if (isDemo(u, p)) continue;
+    const sid = a.staff_id ?? a.Staff_Id;
 
-    const key = p || u || 'Anonymous';
+    const staff = (sid != null && staffById[sid]) ||
+      (u && staffByAlias[u.toLowerCase()]) ||
+      (p && staffByAlias[p.toLowerCase()]) ||
+      null;
+
+    if (isDemo(u, p, staff)) continue;
+
+    const key = staff ? `staff_${staff.Id}` : (u || p || 'Anonymous');
+    const currentDisplayName = staff?.PreferredName?.trim() || p || staff?.FullName?.trim() || u || 'Anonymous';
+    const realFullName = staff?.FullName?.trim() || u || currentDisplayName;
+
     if (!groups[key]) {
       groups[key] = {
-        username: u || key,
-        displayName: key,
+        username: realFullName,
+        displayName: currentDisplayName,
         score: 0,
-        division: a.Division ?? a.division ?? 'General',
+        division: staff?.Division?.trim() || (a.Division ?? a.division ?? 'General'),
         dateTaken: a.DateAnswered ?? a.dateAnswered ?? '',
-        streak: 0
+        streak: 0,
+        profilePicture: staff?.ProfilePicture || null,
+        staffId: staff?.Id || sid || null
       };
+    } else {
+      if (staff?.PreferredName?.trim()) {
+        groups[key].displayName = staff.PreferredName.trim();
+      }
     }
+
     groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
   }
 
   // Enrich with user streaks from UserActivities
   try {
-    const [actRes, staffRes] = await Promise.all([
-      supabase.from('UserActivities').select('Username, ActivityDate'),
-      supabase.from('StaffUsers').select('FullName, PreferredName, Email, ProfilePicture')
-    ]);
-
-    const actData = actRes.data || [];
-    const staffData = staffRes.data || [];
-
     const userDates = {};
     for (const act of actData) {
       const u = (act.Username || '').trim().toLowerCase();
@@ -197,22 +222,14 @@ export async function getLeaderboardDirect(month) {
     for (const entry of Object.values(groups)) {
       const uName = (entry.username || '').trim().toLowerCase();
       const dName = (entry.displayName || '').trim().toLowerCase();
-
-      const matchedStaff = staffData.find(s => 
-        (s.FullName && s.FullName.trim().toLowerCase() === uName) ||
-        (s.PreferredName && s.PreferredName.trim().toLowerCase() === dName) ||
-        (s.PreferredName && s.PreferredName.trim().toLowerCase() === uName) ||
-        (s.FullName && s.FullName.trim().toLowerCase() === dName)
-      );
-
       const aliases = [uName, dName];
-      if (matchedStaff) {
-        if (matchedStaff.FullName) aliases.push(matchedStaff.FullName.trim().toLowerCase());
-        if (matchedStaff.PreferredName) aliases.push(matchedStaff.PreferredName.trim().toLowerCase());
-        if (matchedStaff.Email) aliases.push(matchedStaff.Email.trim().toLowerCase());
-        if (matchedStaff.ProfilePicture) {
-          entry.profilePicture = matchedStaff.ProfilePicture;
-        }
+
+      if (entry.staffId && staffById[entry.staffId]) {
+        const s = staffById[entry.staffId];
+        if (s.FullName) aliases.push(s.FullName.trim().toLowerCase());
+        if (s.PreferredName) aliases.push(s.PreferredName.trim().toLowerCase());
+        if (s.Email) aliases.push(s.Email.trim().toLowerCase());
+        if (s.StaffId) aliases.push(s.StaffId.trim().toLowerCase());
       }
 
       const allDates = [];
@@ -434,42 +451,72 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
   const targets = extractUserTargets(userOrIdentifiers);
   if (targets.length === 0) return { score: 0, rank: null };
 
-  const { data, error } = await supabase
-    .from('UserAnswers')
-    .select('*')
-    .eq('Month', month);
+  const [ansRes, staffRes] = await Promise.all([
+    supabase.from('UserAnswers').select('*').eq('Month', month),
+    supabase.from('StaffUsers').select('Id, FullName, PreferredName, Email, StaffId')
+  ]);
 
-  if (error || !data) return { score: 0, rank: null };
+  if (ansRes.error || !ansRes.data) return { score: 0, rank: null };
 
-  const isDemo = (u, p) => {
+  const raw = ansRes.data || [];
+  const staffData = staffRes.data || [];
+
+  const staffById = {};
+  const staffByAlias = {};
+  for (const s of staffData) {
+    if (s.Id != null) staffById[s.Id] = s;
+    const aliases = [s.FullName, s.PreferredName, s.Email, s.StaffId].filter(Boolean);
+    for (const a of aliases) staffByAlias[a.trim().toLowerCase()] = s;
+  }
+
+  const isDemo = (u, p, staff) => {
     const s1 = (u || '').toLowerCase().trim();
     const s2 = (p || '').toLowerCase().trim();
-    return s1 === 'demo' || s1 === 'demo user' || s1 === 'demo-001' || s2 === 'demo';
+    const sf = (staff?.FullName || '').toLowerCase().trim();
+    const se = (staff?.Email || '').toLowerCase().trim();
+    return s1 === 'demo' || s1 === 'demo user' || s2 === 'demo' || sf === 'demo user' || se === 'demo@test.com';
   };
 
   const groups = {};
-  for (const a of data) {
+  for (const a of raw) {
     const u = (a.Username ?? a.username ?? '').trim();
     const p = (a.PreferredName ?? a.preferredName ?? '').trim();
-    if (isDemo(u, p)) continue;
+    const sid = a.staff_id ?? a.Staff_Id;
 
-    const key = u || p || 'Anonymous';
+    const staff = (sid != null && staffById[sid]) ||
+      (u && staffByAlias[u.toLowerCase()]) ||
+      (p && staffByAlias[p.toLowerCase()]) ||
+      null;
+
+    if (isDemo(u, p, staff)) continue;
+
+    const key = staff ? `staff_${staff.Id}` : (u || p || 'Anonymous');
     if (!groups[key]) {
       groups[key] = {
-        username: u,
-        preferredName: p,
+        username: staff?.FullName || u,
+        preferredName: staff?.PreferredName || p,
+        aliases: [
+          (staff?.FullName || u).toLowerCase(),
+          (staff?.PreferredName || p || '').toLowerCase(),
+          (staff?.Email || '').toLowerCase(),
+          (staff?.StaffId || '').toLowerCase()
+        ].filter(Boolean),
         score: 0
       };
+    } else {
+      if (staff?.PreferredName) {
+        groups[key].preferredName = staff.PreferredName;
+        if (!groups[key].aliases.includes(staff.PreferredName.toLowerCase())) {
+          groups[key].aliases.push(staff.PreferredName.toLowerCase());
+        }
+      }
     }
-    if (p) groups[key].preferredName = p;
     groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
   }
 
   const sorted = Object.values(groups).sort((a, b) => b.score - a.score);
   const userIdx = sorted.findIndex(g => {
-    const u = g.username.toLowerCase();
-    const p = (g.preferredName || '').toLowerCase();
-    return targets.includes(u) || (p && targets.includes(p));
+    return g.aliases.some(alias => targets.includes(alias));
   });
 
   if (userIdx === -1) {
