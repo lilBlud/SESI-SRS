@@ -170,7 +170,7 @@ export async function getLeaderboardDirect(month) {
   try {
     const [actRes, staffRes] = await Promise.all([
       supabase.from('UserActivities').select('Username, ActivityDate'),
-      supabase.from('StaffUsers').select('FullName, PreferredName, Email')
+      supabase.from('StaffUsers').select('FullName, PreferredName, Email, ProfilePicture')
     ]);
 
     const actData = actRes.data || [];
@@ -200,6 +200,9 @@ export async function getLeaderboardDirect(month) {
         if (matchedStaff.FullName) aliases.push(matchedStaff.FullName.trim().toLowerCase());
         if (matchedStaff.PreferredName) aliases.push(matchedStaff.PreferredName.trim().toLowerCase());
         if (matchedStaff.Email) aliases.push(matchedStaff.Email.trim().toLowerCase());
+        if (matchedStaff.ProfilePicture) {
+          entry.profilePicture = matchedStaff.ProfilePicture;
+        }
       }
 
       const allDates = [];
