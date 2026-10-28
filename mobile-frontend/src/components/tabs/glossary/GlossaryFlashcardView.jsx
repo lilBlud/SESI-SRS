@@ -25,11 +25,11 @@ export function GlossaryFlashcardView({
       >
         <div className="flashcard-inner relative w-full h-full rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
           {/* Front */}
-          <div className="flashcard-front absolute w-full h-full flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+          <div className={`flashcard-front absolute w-full h-full flex flex-col items-center justify-center ${clr.bg} rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700`}>
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4 bg-slate-100 dark:bg-slate-700/50 px-3 py-1 rounded-full">
               Tap to reveal
             </span>
-            <h2 className={`text-3xl sm:text-4xl font-black font-mono text-center tracking-tight ${clr.text}`}>{card.term}</h2>
+            <h2 className={`text-3xl sm:text-4xl font-extrabold text-center tracking-tight ${clr.text}`}>{card.term}</h2>
             {card.full && !card.term.includes(' ') && (
               <div className="mt-3 text-sm font-bold text-slate-700 dark:text-slate-200 text-center px-4 leading-snug">{card.full}</div>
             )}
@@ -44,29 +44,27 @@ export function GlossaryFlashcardView({
               <div className="absolute top-1/4 left-1/3 w-36 h-36 rounded-full blur-lg opacity-35 dark:opacity-25 animate-aurora-3 bg-fuchsia-400 dark:bg-emerald-500" />
               {/* Sweeping diagonal light sheen */}
               <div className="absolute inset-y-0 -left-20 w-36 bg-gradient-to-r from-transparent via-white/30 dark:via-white/15 to-transparent animate-aurora-sheen pointer-events-none" />
-              {/* Protective Contrast Scrim */}
-              <div className="absolute inset-0 bg-white/40 dark:bg-slate-950/50 pointer-events-none" />
             </div>
 
-            {/* Back Content Card (High-Contrast Glass Plate) */}
-            <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center overflow-y-auto px-1 py-1">
-              <div className="w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl p-4 shadow-xs border border-white/80 dark:border-slate-700/80 my-auto text-left">
-                <p className="text-[13.5px] sm:text-[14px] text-slate-900 dark:text-slate-50 font-semibold leading-relaxed whitespace-pre-wrap text-center">
+            {/* Back Content Container */}
+            <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center overflow-y-auto px-3 py-1 text-center">
+              <div className="w-full my-auto flex flex-col items-center justify-center text-center space-y-3">
+                <p className="text-[14px] sm:text-[14.5px] text-slate-900 dark:text-slate-50 font-semibold leading-relaxed whitespace-pre-wrap text-center max-w-sm">
                   {card.desc}
                 </p>
 
                 {card.formula && card.formula !== 'area' && card.formula !== 'bar' && (
-                  <div className="mt-3 bg-slate-50/90 dark:bg-slate-800/90 rounded-lg p-2.5 border border-slate-200/70 dark:border-slate-700/70 w-full">
-                    <div className={`text-[12px] font-black font-mono text-center mb-1.5 ${clr.text}`}>
+                  <div className="w-full flex flex-col items-center justify-center text-center pt-2.5 border-t border-slate-300/40 dark:border-slate-700/40">
+                    <div className={`text-[13px] sm:text-[13.5px] font-bold text-center mb-1.5 leading-snug ${clr.text}`}>
                       📐 {card.formula}
                     </div>
                     {card.formulaNotations && (
-                      <div className="text-[11px] text-slate-800 dark:text-slate-200 mt-1 leading-normal">
-                        <span className="font-bold text-slate-900 dark:text-white">Notations:</span> <span className="font-mono">{card.formulaNotations.replace(/\n/g, ', ')}</span>
+                      <div className="text-[11.5px] text-slate-800 dark:text-slate-200 mt-1 leading-normal text-center">
+                        <span className="font-bold text-slate-900 dark:text-white">Notations:</span> <span>{card.formulaNotations.replace(/\n/g, ', ')}</span>
                       </div>
                     )}
                     {card.formulaTermMeanings && (
-                      <div className="text-[11px] text-slate-800 dark:text-slate-200 mt-1 leading-normal line-clamp-3">
+                      <div className="text-[11px] sm:text-[11.5px] text-slate-800 dark:text-slate-200 mt-1 leading-normal text-center max-w-xs">
                         <span className="font-bold text-slate-900 dark:text-white">Meanings:</span> <span>{card.formulaTermMeanings.replace(/\n/g, ' | ')}</span>
                       </div>
                     )}

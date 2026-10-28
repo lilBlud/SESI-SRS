@@ -258,7 +258,7 @@ export function GlossaryTab({
                     {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
                       <div className={`mt-3 ${clr.bg} border ${clr.border} rounded-xl p-3`}>
                         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">📐 Formula</div>
-                        <div className={`text-[13px] font-black font-mono ${clr.text} leading-relaxed`}>
+                        <div className={`text-[13px] font-bold ${clr.text} leading-relaxed`}>
                           {item.formula}
                         </div>
                         {item.formulaTermMeanings && (
@@ -346,13 +346,13 @@ export function GlossaryTab({
                         item.desc
                       )}
                       {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
-                        <div className={`mt-2 font-mono text-[11px] font-bold ${clr.text} ${clr.bg} px-2 py-1 rounded-lg`}>
+                        <div className={`mt-2 text-[11.5px] font-bold ${clr.text} ${clr.bg} px-2 py-1 rounded-lg`}>
                           📐 {item.formula}
                         </div>
                       )}
                       {item.formulaNotations && (
                         <div className="mt-1 text-[11px] text-slate-500">
-                          <span className="font-bold">Notations:</span> <span className="font-mono">{item.formulaNotations.replace(/\n/g, ', ')}</span>
+                          <span className="font-bold">Notations:</span> <span>{item.formulaNotations.replace(/\n/g, ', ')}</span>
                         </div>
                       )}
                       {item.formulaTermMeanings && (

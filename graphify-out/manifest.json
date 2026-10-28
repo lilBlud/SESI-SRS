@@ -284,10 +284,10 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/GlossaryTab.jsx": {
-    "mtime": 1793071804.272408,
-    "seen": 1793087735.394,
-    "ast_hash": "20832f4f32868d4fee355e03f8ab95ec",
-    "semantic_hash": "20832f4f32868d4fee355e03f8ab95ec"
+    "mtime": 1793157031.95908,
+    "seen": 1793157109.7174733,
+    "ast_hash": "eb782b95e75d0b9880c11060ab3c8362",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/HomeTab.jsx": {
     "mtime": 1793152982.9188254,
@@ -374,9 +374,9 @@
     "semantic_hash": "fe0e1a5008fce4d7e26bf63c93c53e07"
   },
   "mobile-frontend/src/components/tabs/glossary/GlossaryFlashcardView.jsx": {
-    "mtime": 1793156473.5532484,
-    "seen": 1793156491.7568865,
-    "ast_hash": "d628433b10ce4b588360a447e5272aaf",
+    "mtime": 1793157014.9903176,
+    "seen": 1793157109.7187834,
+    "ast_hash": "88136f345cb30c241dcdb213d47d5c6c",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/glossary/GlossaryFutureGenCard.jsx": {
