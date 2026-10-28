@@ -505,7 +505,10 @@ export async function getAdminIdentifiersDirect() {
  */
 export async function getAllUsersDirect() {
   const [usersRes, overrides] = await Promise.all([
-    supabase.from('StaffUsers').select('*').order('FullName', { ascending: true }),
+    supabase
+      .from('StaffUsers')
+      .select('Id, FullName, PreferredName, Email, Division, StaffId, Role, ProfilePicture, CreatedAt')
+      .order('FullName', { ascending: true }),
     getAdminRoleOverridesDirect()
   ]);
 
@@ -614,7 +617,9 @@ export async function getUserProfileDirect(usernameOrEmail) {
   if (!usernameOrEmail) return null;
 
   const [usersRes, overrides] = await Promise.all([
-    supabase.from('StaffUsers').select('*'),
+    supabase
+      .from('StaffUsers')
+      .select('Id, FullName, PreferredName, Email, Division, StaffId, Role, ProfilePicture, CreatedAt'),
     getAdminRoleOverridesDirect()
   ]);
 

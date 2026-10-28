@@ -11,22 +11,62 @@ export function GlossaryFlashcardView({
   isBookmarked,
   toggleBookmark
 }) {
+  const touchStartRef = React.useRef({ x: 0, y: 0, time: 0 });
+  const didSwipeRef = React.useRef(false);
+
   if (filtered.length === 0) return null;
 
   const safeIdx = Math.min(flashcardIdx, filtered.length - 1);
   const card = filtered[safeIdx];
   const clr = getColor(card.cat);
 
+  const handleTouchStart = (e) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+    didSwipeRef.current = false;
+  };
+
+  const handleTouchEnd = (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartRef.current.x;
+    const dy = t.clientY - touchStartRef.current.y;
+    const dt = Date.now() - touchStartRef.current.time;
+
+    // Fast horizontal swipe with small vertical drift
+    if (Math.abs(dx) > 40 && Math.abs(dy) < 60 && dt < 450) {
+      didSwipeRef.current = true;
+      if (dx < 0 && safeIdx < filtered.length - 1) {
+        setFlashcardIdx(i => Math.min(filtered.length - 1, i + 1));
+        setFlipped(false);
+      } else if (dx > 0 && safeIdx > 0) {
+        setFlashcardIdx(i => Math.max(0, i - 1));
+        setFlipped(false);
+      }
+    }
+  };
+
+  const handleClick = () => {
+    if (didSwipeRef.current) {
+      didSwipeRef.current = false;
+      return;
+    }
+    onFlip();
+  };
+
   return (
-    <div className="flex flex-col items-center w-full py-4">
+    <div className="flex flex-col items-center w-full py-4 select-none">
       <div
         className={`w-full max-w-md h-72 flashcard cursor-pointer ${flipped ? 'flipped' : ''}`}
-        onClick={onFlip}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onClick={handleClick}
       >
         <div className="flashcard-inner relative w-full h-full rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
           {/* Front */}
           <div className="flashcard-front absolute w-full h-full flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-2xl p-6">
-            <span className="text-xs text-slate-400 uppercase tracking-widest mb-4">Tap to reveal</span>
+            <span className="text-xs text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+              <span>👈</span> Swipe or tap <span>👉</span>
+            </span>
             <h2 className={`text-4xl font-black font-mono text-center ${clr.text}`}>{card.term}</h2>
             {card.full && !card.term.includes(' ') && (
               <div className="mt-3 text-sm font-bold text-slate-500 text-center px-4">{card.full}</div>

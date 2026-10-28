@@ -107,11 +107,16 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
       parsed = [...defaultMetric.chartData];
     } else {
       const isPct = yAxisLabel.includes('%');
-      parsed = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map((m) => ({
-        month: m,
-        year: "2026",
-        value: isPct ? parseFloat((Math.random() * 20 + 80).toFixed(1)) : Math.floor(Math.random() * 5000 + 1000)
-      }));
+      const seed = normalizedTerm.split('').reduce((acc, c) => acc + c.charCodeAt(0), 42);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+      parsed = months.map((m, idx) => {
+        const factor = (seed + idx * 7) % 20;
+        return {
+          month: m,
+          year: "2026",
+          value: isPct ? parseFloat((82 + factor * 0.8).toFixed(1)) : Math.round(1800 + factor * 160)
+        };
+      });
     }
   } else if (defaultMetric && defaultMetric.chartData) {
     // If existing data lacks historical years (from 2022), merge historical baseline for past years

@@ -38,9 +38,16 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.SetIsOriginAllowed(origin =>
+            origin.StartsWith("http://localhost:") ||
+            origin.StartsWith("http://127.0.0.1:") ||
+            origin.StartsWith("https://localhost:") ||
+            origin.EndsWith(".sesb.com.my") ||
+            origin.EndsWith(".pages.dev") ||
+            origin.EndsWith(".vercel.app")
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod();
     });
 });
 builder.Services.AddOpenApi();
@@ -490,10 +497,11 @@ app.MapGet("/api/visitors/stats", async (AppDbContext db) =>
 
 
 
-app.MapPost("/api/admin/login", (AdminLoginRequest req) =>
+app.MapPost("/api/admin/login", (AdminLoginRequest req, IConfiguration config) =>
 {
-    if (req.Password == "admin123")
-        return Results.Ok(new { token = "fake-jwt-token-for-admin" });
+    var expected = config["AdminPassword"] ?? Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "admin123";
+    if (req.Password == expected)
+        return Results.Ok(new { token = "sesi-admin-secure-token" });
     return Results.Unauthorized();
 }).WithName("AdminLogin");
 
@@ -602,17 +610,13 @@ app.MapDelete("/api/admin/glossary/{id}", async (int id, AppDbContext db) =>
     return Results.Ok();
 }).WithName("AdminDeleteGlossaryTerm");
 
+
+
 app.MapPost("/api/admin/reseed-performance", (AppDbContext db) =>
 {
     DbInitializer.Initialize(app);
     return Results.Ok(new { success = true, message = "Performance metrics reseeded successfully" });
 }).WithName("AdminReseedPerformance");
-
-app.MapGet("/api/admin/reseed-performance", (AppDbContext db) =>
-{
-    DbInitializer.Initialize(app);
-    return Results.Ok(new { success = true, message = "Performance metrics reseeded successfully" });
-}).WithName("AdminReseedPerformanceGet");
 
 // ──────── INFOGRAPHICS / POSTERS ────────
 

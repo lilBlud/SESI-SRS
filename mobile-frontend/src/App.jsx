@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { AdminTab, HomeTab, GlossaryTab, QuizTab, ProfileTab } from './components/tabs';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import { HomeTab, GlossaryTab, QuizTab, ProfileTab } from './components/tabs';
+
+const AdminTab = lazy(() => import('./components/tabs/AdminTab'));
 import LoginPage from './components/pages/LoginPage';
 import PasscodeGate from './components/pages/PasscodeGate';
 import { API_BASE } from './utils/constants.js';
@@ -37,7 +39,14 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [activeGlossaryCat, setActiveGlossaryCat] = useState('All');
   const [isDark, setIsDark] = useState(false);
-  const [glossary, setGlossary] = useState([]);
+  const [glossary, setGlossary] = useState(() => {
+    try {
+      const cached = localStorage.getItem('sesi_glossary_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [streak, setStreak] = useState(0);
   const [streakToast, setStreakToast] = useState(null); // toast notification at root level
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -80,12 +89,15 @@ function App() {
     else document.documentElement.classList.remove('dark');
   }, [isDark]);
 
-  // Fetch glossary from DB
+  // Fetch glossary from DB with offline localStorage persistence
   const fetchGlossary = useCallback(() => {
     getGlossaryDirect()
       .then(d => {
         if (d && d.length > 0) {
           setGlossary(d);
+          try {
+            localStorage.setItem('sesi_glossary_cache', JSON.stringify(d));
+          } catch {}
         }
       })
       .catch(err => {
@@ -330,13 +342,20 @@ function App() {
         {activeTab === 'profile' && <ProfileTab user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
         {activeTab === 'admin' && (
           user?.role === 'Admin' ? (
-            <AdminTab
-              currentUser={user}
-              onClose={() => setActiveTab('home')}
-              onGlossaryChange={fetchGlossary}
-              visitorStats={visitorStats}
-              onRefreshVisitorStats={refreshVisitorStats}
-            />
+            <Suspense fallback={
+              <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3 text-slate-400">
+                <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs font-semibold">Loading Admin Workspace...</span>
+              </div>
+            }>
+              <AdminTab
+                currentUser={user}
+                onClose={() => setActiveTab('home')}
+                onGlossaryChange={fetchGlossary}
+                visitorStats={visitorStats}
+                onRefreshVisitorStats={refreshVisitorStats}
+              />
+            </Suspense>
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 space-y-4">
               <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-500 flex items-center justify-center text-3xl shadow-sm">

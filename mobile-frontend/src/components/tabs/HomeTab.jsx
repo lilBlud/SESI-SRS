@@ -81,6 +81,19 @@ export function HomeTab({
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const data = await getInfographicsDirect().catch(() => null);
+      if (data && data.length > 0) setPosts(data);
+      fetchLeaderboard();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  }, [fetchLeaderboard]);
+
   const handleSavePreferredName = async (newName) => {
     const usernameTarget = user || user?.email || user?.fullName || realFullName;
     await updatePreferredNameDirect(usernameTarget, newName);
@@ -179,9 +192,22 @@ export function HomeTab({
           <h3 className="text-[13px] font-black text-slate-900 dark:text-white flex items-center gap-2">
             <span className="text-base">📰</span> Latest Posts
           </h3>
-          <span className="text-xs font-semibold text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md">
-            {filteredPosts.length} posts
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-bold flex items-center gap-1 active:scale-95 transition"
+              title="Refresh feed and leaderboard"
+            >
+              <svg className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>{isRefreshing ? 'Updating...' : 'Refresh'}</span>
+            </button>
+            <span className="text-xs font-semibold text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+              {filteredPosts.length} posts
+            </span>
+          </div>
         </div>
 
         {/* Post Category Dropdown */}
