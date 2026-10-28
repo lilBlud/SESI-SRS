@@ -67,10 +67,11 @@
     background: #334155;
   }
 
-  /* Smooth scrolling for the main content area */
+  /* Crisp native scrolling for the main content area */
   .scroll-container {
     -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
     scrollbar-width: none; /* Firefox */
   }
   .scroll-container::-webkit-scrollbar {

@@ -174,7 +174,6 @@ function App() {
     if (container && container.scrollTop <= 0) {
       touchStartY.current = e.touches[0].clientY;
       isPullEligible.current = true;
-      setIsPulling(true);
     } else {
       isPullEligible.current = false;
     }
@@ -185,28 +184,32 @@ function App() {
     const container = scrollContainerRef.current;
     if (container && container.scrollTop > 0) {
       isPullEligible.current = false;
-      setIsPulling(false);
-      setPullDistance(0);
+      if (pullDistance > 0) {
+        setIsPulling(false);
+        setPullDistance(0);
+      }
       return;
     }
     const currentY = e.touches[0].clientY;
     const dy = currentY - touchStartY.current;
-    if (dy > 0) {
-      // Elastic resistance
-      const pull = Math.min(75, dy * 0.42);
+    // Only engage elastic resistance when user intentionally drags down from the top
+    if (dy > 8) {
+      if (!isPulling) setIsPulling(true);
+      const pull = Math.min(75, (dy - 8) * 0.42);
       setPullDistance(pull);
-    } else {
+    } else if (pullDistance > 0) {
       setPullDistance(0);
+      setIsPulling(false);
     }
   };
 
   const handleTouchEnd = () => {
     if (!isPullEligible.current) return;
-    setIsPulling(false);
     isPullEligible.current = false;
+    if (isPulling) setIsPulling(false);
     if (pullDistance >= 45 && !isGlobalRefreshing) {
       handleGlobalRefresh();
-    } else {
+    } else if (pullDistance > 0) {
       setPullDistance(0);
     }
   };
