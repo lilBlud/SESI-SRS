@@ -142,6 +142,7 @@ export function HomeTab({
 
       {/* ── Visitors Today & Users Counter (Admin Only) ── */}
       <HomeAdminTrafficCard
+        isAdmin={user?.role === 'Admin'}
         visitorStats={visitorStats}
         onOpenAdmin={() => setActiveTab && setActiveTab('admin')}
       />

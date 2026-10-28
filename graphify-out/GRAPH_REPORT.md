@@ -1,23 +1,23 @@
 # Graph Report - SESI SRS  (2026-10-28)
 
 ## Corpus Check
-- 98 files · ~73,778 words
+- 87 files · ~73,403 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 12 file(s) not represented in the graph (top: (none) 3, .drawio 2, .db 2)
+- Unclassified: 13 file(s) not represented in the graph (top: (none) 4, .drawio 2, .db 2)
 
 ## Summary
-- 482 nodes · 894 edges · 40 communities (24 shown, 16 thin omitted)
+- 469 nodes · 891 edges · 28 communities (22 shown, 6 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7fed219e`
+- Built from commit: `6ba44036`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - supabaseClient.js
-- DbInitializer.cs
+- AppModels.cs
 - scripts/refactor.cjs
 - HomeTab.jsx
 - UserAnswer
@@ -26,7 +26,7 @@
 - React + Vite
 - http
 - AppDbContext
-- GlossaryTab.jsx
+- HomeTab.jsx
 - StaffUser
 - manifest.json
 - mobile-backend.csproj
@@ -37,16 +37,13 @@
 - EmployeeAward
 - .oxlintrc.json
 - scripts/README.md
-- AppModels.cs
-- GlossaryTerm
+- SearchHistory
+- react
 - scripts/update_db.js
-- mockData.js
-- QuizQuestion
-- .Initialize
-- RecordVisitRequest
+- UserActivity
 
 ## God Nodes (most connected - your core abstractions)
-1. `react` - 45 edges
+1. `react` - 44 edges
 2. `AppDbContext` - 23 edges
 3. `App()` - 18 edges
 4. `UserAnswer` - 16 edges
@@ -72,27 +69,27 @@
 ## Import Cycles
 - None detected.
 
-## Communities (40 total, 16 thin omitted)
+## Communities (28 total, 6 thin omitted)
 
 ### Community 0 - "supabaseClient.js"
-Cohesion: 0.08
-Nodes (38): AdminTab, App(), LoginPage(), PasscodeGate(), VALID_PASSCODES, AdminInfographicsSection(), AdminQuizSection(), AdminRoleModal() (+30 more)
+Cohesion: 0.11
+Nodes (22): AdminTab, App(), LoginPage(), PasscodeGate(), VALID_PASSCODES, BookIcon(), HomeIcon(), ProfileIcon() (+14 more)
 
-### Community 1 - "DbInitializer.cs"
-Cohesion: 0.21
-Nodes (4): mobile_backend.Models, mobile_backend.Data, mobile_backend.Migrations, ReadActivityRequest
+### Community 1 - "AppModels.cs"
+Cohesion: 0.08
+Nodes (21): mobile_backend.Models, mobile_backend.Data, mobile_backend.Migrations, InitialCreateSqlite, AddChartData, AdminLoginRequest, Password, RecordVisitRequest (+13 more)
 
 ### Community 2 - "scripts/refactor.cjs"
 Cohesion: 0.05
 Nodes (35): assets, __dirname, __filename, publicAssetsDir, fs, path, publicDir, fs (+27 more)
 
 ### Community 3 - "HomeTab.jsx"
-Cohesion: 0.10
-Nodes (36): EditPreferredNameModal(), DEFAULT_MEDALS, FullLeaderboardModal(), ImageViewerModal(), HomeAdminTrafficCard(), HomeHeroBanner(), HomeLeaderboardPodium(), HomeTab() (+28 more)
+Cohesion: 0.18
+Nodes (21): ProfileHeroCard(), ProfilePhotoPickerModal(), ProfileStatsBadges(), formatMonth(), RecentQuestionsCarousel(), ProfileTab(), QuizTab(), calculateStreakFromDates() (+13 more)
 
 ### Community 4 - "UserAnswer"
-Cohesion: 0.15
-Nodes (13): UserAnswer, DateAnswered, Division, Id, IsCorrect, Month, PointsAwarded, PreferredName (+5 more)
+Cohesion: 0.05
+Nodes (34): DbInitializer, GlossaryTerm, Category, ChartData, CreatedAt, Description, Formula, FormulaNotations (+26 more)
 
 ### Community 5 - "package.json"
 Cohesion: 0.07
@@ -114,9 +111,9 @@ Nodes (15): ASPNETCORE_ENVIRONMENT, applicationUrl, commandName, dotnetRunMessag
 Cohesion: 0.15
 Nodes (10): AppDbContext, EmployeeAwards, GlossaryTerms, Infographics, QuizQuestions, SearchHistories, StaffUsers, UserActivities (+2 more)
 
-### Community 10 - "GlossaryTab.jsx"
-Cohesion: 0.16
-Nodes (17): AdminGlossarySection(), AdminGlossaryCardList(), AdminGlossaryForm(), GlossaryFlashcardView(), GlossaryFutureGenCard(), GlossaryTab(), BookmarksSection(), CorporatePerformanceChart() (+9 more)
+### Community 10 - "HomeTab.jsx"
+Cohesion: 0.11
+Nodes (26): EditPreferredNameModal(), DEFAULT_MEDALS, FullLeaderboardModal(), ImageViewerModal(), GlossaryFlashcardView(), GlossaryFutureGenCard(), GlossaryTab(), HomeAdminTrafficCard() (+18 more)
 
 ### Community 11 - "StaffUser"
 Cohesion: 0.18
@@ -138,10 +135,6 @@ Nodes (8): Infographic, AdditionalImages, Category, Description, Id, ImageUrl, P
 Cohesion: 0.25
 Nodes (8): VisitorLog, Division, Id, Path, UserAgent, Username, VisitedAt, VisitorId
 
-### Community 16 - "DateTime"
-Cohesion: 0.21
-Nodes (3): InitialCreateSqlite, AddChartData, AppDbContextModelSnapshot
-
 ### Community 17 - "AuthRequest"
 Cohesion: 0.29
 Nodes (7): AuthRequest, Division, Email, FullName, Password, PreferredName, StaffId
@@ -154,41 +147,37 @@ Nodes (6): EmployeeAward, AwardTitle, Id, Message, Month, Username
 Cohesion: 0.33
 Nodes (5): plugins, rules, react/only-export-components, react/rules-of-hooks, $schema
 
-### Community 21 - "AppModels.cs"
-Cohesion: 0.11
-Nodes (18): AdminLoginRequest, Password, SearchHistory, Id, SearchDate, Term, UpdatePreferredNameRequest, PreferredName (+10 more)
+### Community 21 - "SearchHistory"
+Cohesion: 0.50
+Nodes (4): SearchHistory, Id, SearchDate, Term
 
-### Community 22 - "GlossaryTerm"
-Cohesion: 0.18
-Nodes (11): GlossaryTerm, Category, ChartData, CreatedAt, Description, Formula, FormulaNotations, FormulaTermMeanings (+3 more)
+### Community 22 - "react"
+Cohesion: 0.13
+Nodes (22): AdminGlossarySection(), AdminInfographicsSection(), AdminQuizSection(), AdminRoleModal(), AdminTrafficSection(), AdminUserCard(), AdminUsersSection(), AdminGlossaryCardList() (+14 more)
 
-### Community 37 - "QuizQuestion"
-Cohesion: 0.22
-Nodes (9): QuizQuestion, CorrectOption, Id, Month, OptionA, OptionB, OptionC, OptionD (+1 more)
-
-### Community 39 - "RecordVisitRequest"
-Cohesion: 0.40
-Nodes (5): RecordVisitRequest, Division, Path, Username, VisitorId
+### Community 25 - "UserActivity"
+Cohesion: 0.50
+Nodes (4): UserActivity, ActivityDate, Id, Username
 
 ## Knowledge Gaps
 - **98 isolated node(s):** `UserAnswers`, `QuizQuestions`, `EmployeeAwards`, `UserActivities`, `SearchHistories` (+93 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 214 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 202 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `supabaseClient.js` to `GlossaryTab.jsx`, `HomeTab.jsx`, `package.json`, `FutureGenMapModal.jsx`?**
-  _High betweenness centrality (0.110) - this node is a cross-community bridge._
+- **Why does `react` connect `react` to `supabaseClient.js`, `HomeTab.jsx`, `package.json`, `FutureGenMapModal.jsx`, `HomeTab.jsx`?**
+  _High betweenness centrality (0.112) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `App()` (e.g. with `BookIcon()` and `HomeIcon()`) actually correct?**
   _`App()` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `UserAnswers`, `QuizQuestions`, `EmployeeAwards` to the rest of the system?**
   _98 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `supabaseClient.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.07540983606557378 - nodes in this community are weakly interconnected._
-- **Why does `AppDbContext` connect `AppDbContext` to `DbInitializer.cs`, `UserAnswer`, `QuizQuestion`, `.Initialize`, `StaffUser`, `Infographic`, `VisitorLog`, `EmployeeAward`, `AppModels.cs`, `GlossaryTerm`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
-- **Should `scripts/refactor.cjs` be split into smaller, more focused modules?**
-  _Cohesion score 0.0507399577167019 - nodes in this community are weakly interconnected._
-- **Why does `UserAnswer` connect `UserAnswer` to `DateTime`, `AppDbContext`, `AppModels.cs`, `.Initialize`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+  _Cohesion score 0.10695187165775401 - nodes in this community are weakly interconnected._
+- **Why does `AppDbContext` connect `AppDbContext` to `AppModels.cs`, `UserAnswer`, `StaffUser`, `Infographic`, `VisitorLog`, `EmployeeAward`, `SearchHistory`, `UserActivity`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Should `AppModels.cs` be split into smaller, more focused modules?**
+  _Cohesion score 0.07676767676767676 - nodes in this community are weakly interconnected._
+- **Why does `UserAnswer` connect `UserAnswer` to `DateTime`, `AppDbContext`, `AppModels.cs`?**
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._

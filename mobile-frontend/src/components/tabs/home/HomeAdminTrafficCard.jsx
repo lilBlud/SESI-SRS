@@ -1,7 +1,7 @@
 import React from 'react';
 
-export function HomeAdminTrafficCard({ visitorStats, onOpenAdmin }) {
-  if (typeof window === 'undefined' || !Boolean(sessionStorage.getItem('adminToken'))) {
+export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
+  if (!isAdmin) {
     return null;
   }
 
