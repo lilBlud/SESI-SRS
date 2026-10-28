@@ -81,9 +81,18 @@ export default function AdminTrafficSection({
               type="button"
               onClick={onRefreshTraffic}
               disabled={loadingTraffic}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/80 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+              title="Refresh traffic data"
+              aria-label="Refresh traffic data"
             >
-              {loadingTraffic ? 'Refreshing...' : '🔄 Refresh'}
+              <svg 
+                className={`w-4 h-4 ${loadingTraffic ? 'animate-spin text-emerald-500' : 'transition-transform duration-300 hover:rotate-180'}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
             </button>
           </div>
 
@@ -125,10 +134,18 @@ export default function AdminTrafficSection({
               type="button"
               onClick={onRefreshTraffic}
               disabled={loadingTraffic}
-              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition-all disabled:opacity-50"
+              className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/80 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
               title="Refresh visitor logs"
+              aria-label="Refresh visitor logs"
             >
-              {loadingTraffic ? '...' : '🔄'}
+              <svg 
+                className={`w-3.5 h-3.5 ${loadingTraffic ? 'animate-spin text-emerald-500' : 'transition-transform duration-300 hover:rotate-180'}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
             </button>
           </div>
         </div>

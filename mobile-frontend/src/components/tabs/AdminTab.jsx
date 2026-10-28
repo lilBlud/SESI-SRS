@@ -246,15 +246,6 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
             </p>
           )}
         </div>
-        {onClose && (
-          <button 
-            onClick={onClose} 
-            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1 active:scale-95"
-          >
-            <span>✕</span>
-            <span>Exit</span>
-          </button>
-        )}
       </div>
 
       {/* Section Tabs */}

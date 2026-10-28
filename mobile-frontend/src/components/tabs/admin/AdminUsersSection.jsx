@@ -136,38 +136,59 @@ export default function AdminUsersSection({
           )}
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 pt-0.5">
-          <button
-            onClick={() => setFilterRole('all')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-              filterRole === 'all'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/60'
-            }`}
-          >
-            All ({totalCount})
-          </button>
-          <button
-            onClick={() => setFilterRole('Admin')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-              filterRole === 'Admin'
-                ? 'bg-emerald-600 text-white'
-                : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-            }`}
-          >
-            Admins ({adminCount})
-          </button>
-          <button
-            onClick={() => setFilterRole('Staff')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-              filterRole === 'Staff'
-                ? 'bg-slate-700 text-white dark:bg-slate-600'
-                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/60'
-            }`}
-          >
-            Staff ({staffCount})
-          </button>
+        {/* Filter Pills & Refresh */}
+        <div className="flex items-center justify-between pt-0.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              onClick={() => setFilterRole('all')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                filterRole === 'all'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                  : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+              }`}
+            >
+              All ({totalCount})
+            </button>
+            <button
+              onClick={() => setFilterRole('Admin')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                filterRole === 'Admin'
+                  ? 'bg-emerald-600 text-white'
+                  : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+              }`}
+            >
+              Admins ({adminCount})
+            </button>
+            <button
+              onClick={() => setFilterRole('Staff')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                filterRole === 'Staff'
+                  ? 'bg-slate-700 text-white dark:bg-slate-600'
+                  : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+              }`}
+            >
+              Staff ({staffCount})
+            </button>
+          </div>
+          {onRefreshUsers && (
+            <button
+              type="button"
+              onClick={onRefreshUsers}
+              disabled={loading}
+              className="w-7 h-7 shrink-0 flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/80 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg transition-all shadow-xs active:scale-95 disabled:opacity-50"
+              title="Refresh users"
+              aria-label="Refresh users"
+            >
+              <svg 
+                className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-emerald-500' : 'transition-transform duration-300 hover:rotate-180'}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

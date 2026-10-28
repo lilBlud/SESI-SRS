@@ -510,7 +510,7 @@ export async function getAllUsersDirect() {
   const [usersRes, overrides] = await Promise.all([
     supabase
       .from('StaffUsers')
-      .select('Id, FullName, PreferredName, Email, Division, StaffId, Role, ProfilePicture, CreatedAt')
+      .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, CreatedAt')
       .order('FullName', { ascending: true }),
     getAdminRoleOverridesDirect()
   ]);
@@ -622,7 +622,7 @@ export async function getUserProfileDirect(usernameOrEmail) {
   const [usersRes, overrides] = await Promise.all([
     supabase
       .from('StaffUsers')
-      .select('Id, FullName, PreferredName, Email, Division, StaffId, Role, ProfilePicture, CreatedAt'),
+      .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, CreatedAt'),
     getAdminRoleOverridesDirect()
   ]);
 

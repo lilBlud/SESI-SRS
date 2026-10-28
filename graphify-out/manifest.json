@@ -182,9 +182,9 @@
     "semantic_hash": "44ed5f1319f9b90f56f30406686428c6"
   },
   "mobile-frontend/src/components/tabs/AdminTab.jsx": {
-    "mtime": 1793151093.2288246,
-    "seen": 1793151150.2417693,
-    "ast_hash": "4c08ee03162116154fb518137c2a9504",
+    "mtime": 1793161595.178483,
+    "seen": 1793161692.1955805,
+    "ast_hash": "90d79130fa7888bfb981e28806fee770",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/GlossaryTab.jsx": {
@@ -194,9 +194,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/HomeTab.jsx": {
-    "mtime": 1793158827.5391114,
-    "seen": 1793158889.0328739,
-    "ast_hash": "b8914be70f71795bf687326b53810b9a",
+    "mtime": 1793161656.890061,
+    "seen": 1793161692.1956635,
+    "ast_hash": "e39a118fcb4d583119c6105d933d1947",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/ProfileTab.jsx": {
@@ -236,10 +236,10 @@
     "semantic_hash": "ce0fa3061b2864194a28ec432d24fb2c"
   },
   "mobile-frontend/src/components/tabs/admin/AdminTrafficSection.jsx": {
-    "mtime": 1793071804.2767687,
-    "seen": 1793087735.3946414,
-    "ast_hash": "7e361b44d5aa5136fa59dbdfb5218452",
-    "semantic_hash": "7e361b44d5aa5136fa59dbdfb5218452"
+    "mtime": 1793161623.5348654,
+    "seen": 1793161692.1961246,
+    "ast_hash": "de784928121e1dfb1f2e044ed98c8241",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminUserCard.jsx": {
     "mtime": 1793071804.2777796,
@@ -248,10 +248,10 @@
     "semantic_hash": "4073a44d2c3aeef2f1f3d0a53294b37f"
   },
   "mobile-frontend/src/components/tabs/admin/AdminUsersSection.jsx": {
-    "mtime": 1793071804.2777796,
-    "seen": 1793087735.3947864,
-    "ast_hash": "332a957cb6bd7e50f0823a15fc18da54",
-    "semantic_hash": "332a957cb6bd7e50f0823a15fc18da54"
+    "mtime": 1793161638.5572095,
+    "seen": 1793161692.196205,
+    "ast_hash": "5a9a681b94a54ba7560bf1839369f4af",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/glossary/AdminGlossaryCardList.jsx": {
     "mtime": 1792739017.8051257,
@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793159994.0036023,
-    "seen": 1793160024.4810798,
-    "ast_hash": "9ded68c50a841155ab223b35d752d637",
+    "mtime": 1793161581.8179212,
+    "seen": 1793161692.1985505,
+    "ast_hash": "e1206d82d81da2cb4adc2fb155aabc1c",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {
