@@ -374,9 +374,9 @@
     "semantic_hash": "fe0e1a5008fce4d7e26bf63c93c53e07"
   },
   "mobile-frontend/src/components/tabs/glossary/GlossaryFlashcardView.jsx": {
-    "mtime": 1793156174.6769476,
-    "seen": 1793156247.061535,
-    "ast_hash": "c8f0398c61e62c85a91f8033f0df6795",
+    "mtime": 1793156473.5532484,
+    "seen": 1793156491.7568865,
+    "ast_hash": "d628433b10ce4b588360a447e5272aaf",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/glossary/GlossaryFutureGenCard.jsx": {
