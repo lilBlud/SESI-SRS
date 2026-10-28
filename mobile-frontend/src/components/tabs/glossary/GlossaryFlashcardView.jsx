@@ -37,10 +37,11 @@ export function GlossaryFlashcardView({
           <div className={`flashcard-back absolute w-full h-full flex flex-col items-center justify-center ${clr.bg} rounded-2xl p-6 text-center overflow-hidden relative border border-slate-200/80 dark:border-slate-700/80`}>
             {/* Ambient Aurora Mesh Glow Animation */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl" aria-hidden="true">
-              <div className={`absolute -top-12 -left-12 w-48 h-48 rounded-full blur-3xl opacity-50 dark:opacity-40 animate-aurora-1 ${clr.pill}`} />
-              <div className="absolute -bottom-14 -right-12 w-52 h-52 rounded-full blur-3xl opacity-45 dark:opacity-35 animate-aurora-2 bg-indigo-400 dark:bg-indigo-600" />
-              <div className="absolute top-1/4 left-1/3 w-36 h-36 rounded-full blur-2xl opacity-35 dark:opacity-25 animate-aurora-3 bg-emerald-400 dark:bg-teal-500" />
-              <div className="absolute inset-0 bg-white/10 dark:bg-black/10 backdrop-blur-[1px]" />
+              <div className={`absolute -top-10 -left-10 w-44 h-44 rounded-full blur-xl opacity-65 dark:opacity-55 animate-aurora-1 ${clr.pill}`} />
+              <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full blur-xl opacity-60 dark:opacity-50 animate-aurora-2 bg-cyan-400 dark:bg-cyan-500" />
+              <div className="absolute top-1/4 left-1/3 w-36 h-36 rounded-full blur-lg opacity-50 dark:opacity-40 animate-aurora-3 bg-fuchsia-400 dark:bg-emerald-500" />
+              {/* Sweeping diagonal light sheen */}
+              <div className="absolute inset-y-0 -left-20 w-36 bg-gradient-to-r from-transparent via-white/35 dark:via-white/20 to-transparent animate-aurora-sheen pointer-events-none" />
             </div>
 
             {/* Back Content Container */}
