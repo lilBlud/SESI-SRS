@@ -517,9 +517,48 @@ export async function getAllUsersDirect() {
 
   if (usersRes.error) throw usersRes.error;
 
-  return (usersRes.data || []).map(u => 
-    normalizeUser(u, resolveUserRole(u, overrides))
-  );
+  return (usersRes.data || [])
+    .filter(u => u.Division !== 'DELETED' && !u.Email?.startsWith('deleted_'))
+    .map(u => 
+      normalizeUser(u, resolveUserRole(u, overrides))
+    );
+}
+
+/**
+ * Permanently delete or deactivate a staff user account.
+ */
+export async function deleteUserDirect(targetUserOrId) {
+  const allUsers = await getAllUsersDirect();
+  const target = allUsers.find(u => matchesUser(u, targetUserOrId));
+  if (!target) return;
+
+  if (target.role === 'Admin') {
+    const adminCount = allUsers.filter(u => u.role === 'Admin').length;
+    if (adminCount <= 1) {
+      throw new Error("Cannot delete the last remaining Administrator.");
+    }
+  }
+
+  // 1. Attempt physical delete
+  try {
+    await supabase.from('StaffUsers').delete().eq('Id', target.id);
+  } catch {}
+
+  // 2. Fallback to soft delete & scrub record so it is removed immediately
+  try {
+    await supabase.from('StaffUsers').update({
+      Division: 'DELETED',
+      Email: `deleted_${target.email || target.id}`,
+      FullName: '[Deleted User]',
+      PreferredName: '',
+      StaffId: ''
+    }).eq('Id', target.id);
+  } catch {}
+
+  // 3. Clean up any role override records
+  try {
+    await supabase.from('EmployeeAwards').delete().eq('Username', target.email);
+  } catch {}
 }
 
 /**

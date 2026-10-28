@@ -182,9 +182,9 @@
     "semantic_hash": "44ed5f1319f9b90f56f30406686428c6"
   },
   "mobile-frontend/src/components/tabs/AdminTab.jsx": {
-    "mtime": 1793161595.178483,
-    "seen": 1793161692.1955805,
-    "ast_hash": "90d79130fa7888bfb981e28806fee770",
+    "mtime": 1793162587.2110603,
+    "seen": 1793162611.3422902,
+    "ast_hash": "571d672bb3b15ad798409b15061eff05",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/GlossaryTab.jsx": {
@@ -242,15 +242,15 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminUserCard.jsx": {
-    "mtime": 1793071804.2777796,
-    "seen": 1793087735.3947136,
-    "ast_hash": "4073a44d2c3aeef2f1f3d0a53294b37f",
-    "semantic_hash": "4073a44d2c3aeef2f1f3d0a53294b37f"
+    "mtime": 1793162463.3736644,
+    "seen": 1793162611.343202,
+    "ast_hash": "1e76477d8c657f00307b2fb6697c4bf8",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminUsersSection.jsx": {
-    "mtime": 1793161638.5572095,
-    "seen": 1793161692.196205,
-    "ast_hash": "5a9a681b94a54ba7560bf1839369f4af",
+    "mtime": 1793162525.9270127,
+    "seen": 1793162611.3432038,
+    "ast_hash": "bda8a0f6c644c8ae3f99d32bde37e2c4",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/glossary/AdminGlossaryCardList.jsx": {
@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793161581.8179212,
-    "seen": 1793161692.1985505,
-    "ast_hash": "e1206d82d81da2cb4adc2fb155aabc1c",
+    "mtime": 1793162436.3348362,
+    "seen": 1793162611.3467455,
+    "ast_hash": "78a23f1b880232bd252da9d13e7d269b",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {

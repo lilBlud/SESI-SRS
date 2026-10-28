@@ -5,6 +5,7 @@ import {
   getVisitorStatsDirect, 
   getAllUsersDirect, 
   updateUserRoleDirect, 
+  deleteUserDirect,
   supabase 
 } from '../../utils/supabaseClient';
 import { matchesUser } from '../../utils/rbac';
@@ -133,6 +134,18 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
       } catch (apiErr) {
         throw new Error(apiErr.message || err.message || 'Failed to update user role');
       }
+      throw err;
+    }
+  };
+
+  const handleDeleteUser = async (userToDelete) => {
+    // Optimistic removal from state
+    setUsers(prev => prev.filter(u => !matchesUser(u, userToDelete)));
+    try {
+      await deleteUserDirect(userToDelete);
+      await fetchUsers();
+    } catch (err) {
+      await fetchUsers(); // Revert on failure
       throw err;
     }
   };
@@ -287,6 +300,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
           currentUser={currentUser}
           loading={loadingUsers}
           onUpdateRole={handleUpdateRole}
+          onDeleteUser={handleDeleteUser}
           onRefreshUsers={fetchUsers}
         />
       )}

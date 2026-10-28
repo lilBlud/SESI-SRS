@@ -5,7 +5,8 @@ export default function AdminUserCard({
   user,
   isSelf = false,
   adminCount = 1,
-  onSelectRoleChange
+  onSelectRoleChange,
+  onDeleteUser
 }) {
   const isAdmin = user.role === 'Admin';
 
@@ -76,29 +77,46 @@ export default function AdminUserCard({
           </div>
         </div>
 
-        {/* Role Action Button */}
-        <div className="shrink-0 flex items-center">
+        {/* Role Action & Delete Button */}
+        <div className="shrink-0 flex items-center gap-1.5">
           {isSelf ? (
             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 px-2.5 py-1 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
               Active Session
             </span>
-          ) : isAdmin ? (
-            <button
-              onClick={() => onSelectRoleChange(user, 'Staff')}
-              disabled={adminCount <= 1}
-              className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 dark:text-rose-400 rounded-xl text-[11px] font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
-              title={adminCount <= 1 ? "Cannot demote the only remaining admin" : "Demote to Staff"}
-            >
-              Revoke Admin
-            </button>
           ) : (
-            <button
-              onClick={() => onSelectRoleChange(user, 'Admin')}
-              className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 dark:text-emerald-300 rounded-xl text-[11px] font-bold transition flex items-center gap-1 shadow-xs"
-            >
-              <span>🛡️</span>
-              <span>Grant Admin</span>
-            </button>
+            <>
+              {isAdmin ? (
+                <button
+                  onClick={() => onSelectRoleChange(user, 'Staff')}
+                  disabled={adminCount <= 1}
+                  className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 dark:text-rose-400 rounded-xl text-[11px] font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={adminCount <= 1 ? "Cannot demote the only remaining admin" : "Demote to Staff"}
+                >
+                  Revoke Admin
+                </button>
+              ) : (
+                <button
+                  onClick={() => onSelectRoleChange(user, 'Admin')}
+                  className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 dark:text-emerald-300 rounded-xl text-[11px] font-bold transition flex items-center gap-1 shadow-xs"
+                >
+                  <span>🛡️</span>
+                  <span>Grant Admin</span>
+                </button>
+              )}
+              {onDeleteUser && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteUser(user)}
+                  className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition active:scale-95"
+                  title={`Delete account for ${user.fullName}`}
+                  aria-label={`Delete ${user.fullName}`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

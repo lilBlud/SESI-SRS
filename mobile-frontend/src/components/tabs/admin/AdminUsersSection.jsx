@@ -8,6 +8,7 @@ export default function AdminUsersSection({
   currentUser,
   loading = false,
   onUpdateRole,
+  onDeleteUser,
   onRefreshUsers
 }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,6 +72,24 @@ export default function AdminUsersSection({
       setActionError(err.message || 'Failed to update user role');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteClick = async (user) => {
+    if (!onDeleteUser) return;
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ${user.fullName || user.email}'s account?`
+    );
+    if (!confirmed) return;
+
+    setActionError('');
+    setActionSuccess('');
+    try {
+      await onDeleteUser(user);
+      setActionSuccess(`Successfully deleted ${user.fullName || user.email}'s account.`);
+      setTimeout(() => setActionSuccess(''), 4000);
+    } catch (err) {
+      setActionError(err.message || 'Failed to delete user account');
     }
   };
 
@@ -213,6 +232,7 @@ export default function AdminUsersSection({
               isSelf={Boolean(currentUser && matchesUser(u, currentUser))}
               adminCount={adminCount}
               onSelectRoleChange={handleOpenConfirm}
+              onDeleteUser={handleDeleteClick}
             />
           ))}
         </div>
