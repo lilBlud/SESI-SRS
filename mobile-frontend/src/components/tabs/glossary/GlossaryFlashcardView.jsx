@@ -34,48 +34,59 @@ export function GlossaryFlashcardView({
           </div>
 
           {/* Back */}
-          <div className={`flashcard-back absolute w-full h-full flex flex-col items-center justify-center ${clr.bg} rounded-2xl p-6 text-center overflow-y-auto`}>
-            {(card.cat === 'Corporate Performance' || (card.chartData && card.chartData.length > 5 && card.chartData !== '[]')) ? (
-              <div className="space-y-4 mt-2 w-full">
-                <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{card.desc}</p>
-              </div>
-            ) : (
-              <p className="text-[13px] text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{card.desc}</p>
-            )}
+          <div className={`flashcard-back absolute w-full h-full flex flex-col items-center justify-center ${clr.bg} rounded-2xl p-6 text-center overflow-hidden relative border border-slate-200/80 dark:border-slate-700/80`}>
+            {/* Ambient Aurora Mesh Glow Animation */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl" aria-hidden="true">
+              <div className={`absolute -top-12 -left-12 w-48 h-48 rounded-full blur-3xl opacity-50 dark:opacity-40 animate-aurora-1 ${clr.pill}`} />
+              <div className="absolute -bottom-14 -right-12 w-52 h-52 rounded-full blur-3xl opacity-45 dark:opacity-35 animate-aurora-2 bg-indigo-400 dark:bg-indigo-600" />
+              <div className="absolute top-1/4 left-1/3 w-36 h-36 rounded-full blur-2xl opacity-35 dark:opacity-25 animate-aurora-3 bg-emerald-400 dark:bg-teal-500" />
+              <div className="absolute inset-0 bg-white/10 dark:bg-black/10 backdrop-blur-[1px]" />
+            </div>
 
-            {card.formula && card.formula !== 'area' && card.formula !== 'bar' && (
-              <div className="mt-3 bg-white/60 dark:bg-slate-800/60 rounded-lg px-3 py-2 text-left w-full">
-                <div className={`text-[12px] font-black font-mono text-center mb-2 ${clr.text}`}>
-                  📐 {card.formula}
+            {/* Back Content Container */}
+            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-y-auto">
+              {(card.cat === 'Corporate Performance' || (card.chartData && card.chartData.length > 5 && card.chartData !== '[]')) ? (
+                <div className="space-y-4 mt-2 w-full">
+                  <p className="text-[13px] text-slate-700 dark:text-slate-200 font-medium leading-relaxed whitespace-pre-wrap">{card.desc}</p>
                 </div>
-                {card.formulaNotations && (
-                  <div className="text-[10px] text-slate-700 dark:text-slate-300 mt-1">
-                    <span className="font-bold">Notations:</span> <span className="font-mono">{card.formulaNotations.replace(/\n/g, ', ')}</span>
-                  </div>
-                )}
-                {card.formulaTermMeanings && (
-                  <div className="text-[10px] text-slate-700 dark:text-slate-300 mt-1 line-clamp-3">
-                    <span className="font-bold">Meanings:</span> <span>{card.formulaTermMeanings.replace(/\n/g, ' | ')}</span>
-                  </div>
-                )}
-              </div>
-            )}
+              ) : (
+                <p className="text-[13px] text-slate-700 dark:text-slate-200 font-medium whitespace-pre-wrap">{card.desc}</p>
+              )}
 
-            <div className="mt-auto pt-3 pb-1 w-full flex flex-col items-center gap-2">
-              <div className="text-[11px] bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">✓ Streak counted!</div>
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleBookmark(card, 'glossary'); }}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all active:scale-95 text-[12px] font-bold ${
-                  isBookmarked(card.id || card.term, 'glossary')
-                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                    : 'bg-black/10 dark:bg-black/30 hover:bg-black/20 dark:hover:bg-black/40 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <svg className="w-4 h-4" fill={isBookmarked(card.id || card.term, 'glossary') ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-                {isBookmarked(card.id || card.term, 'glossary') ? 'Saved' : 'Bookmark'}
-              </button>
+              {card.formula && card.formula !== 'area' && card.formula !== 'bar' && (
+                <div className="mt-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-xs border border-white/60 dark:border-slate-700/60 rounded-xl px-3.5 py-2.5 text-left w-full">
+                  <div className={`text-[12px] font-black font-mono text-center mb-2 ${clr.text}`}>
+                    📐 {card.formula}
+                  </div>
+                  {card.formulaNotations && (
+                    <div className="text-[10px] text-slate-700 dark:text-slate-300 mt-1">
+                      <span className="font-bold">Notations:</span> <span className="font-mono">{card.formulaNotations.replace(/\n/g, ', ')}</span>
+                    </div>
+                  )}
+                  {card.formulaTermMeanings && (
+                    <div className="text-[10px] text-slate-700 dark:text-slate-300 mt-1 line-clamp-3">
+                      <span className="font-bold">Meanings:</span> <span>{card.formulaTermMeanings.replace(/\n/g, ' | ')}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-auto pt-3 pb-1 w-full flex flex-col items-center gap-2">
+                <div className="text-[11px] bg-emerald-100/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full font-bold shadow-xs">✓ Streak counted!</div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleBookmark(card, 'glossary'); }}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all active:scale-95 text-[12px] font-bold ${
+                    isBookmarked(card.id || card.term, 'glossary')
+                      ? 'bg-emerald-500 text-white shadow-xs'
+                      : 'bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill={isBookmarked(card.id || card.term, 'glossary') ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                  {isBookmarked(card.id || card.term, 'glossary') ? 'Saved' : 'Bookmark'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

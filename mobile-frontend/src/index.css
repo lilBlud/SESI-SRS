@@ -191,3 +191,47 @@
 .animate-zoom-bg {
   animation: zoom-bg 30s ease-in-out infinite;
 }
+
+/* ── Aurora Mesh Glow Animation ── */
+@keyframes aurora-1 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(24px, -18px, 0) scale(1.15);
+  }
+}
+
+@keyframes aurora-2 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(-20px, 20px, 0) scale(0.9);
+  }
+}
+
+@keyframes aurora-3 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  50% {
+    transform: translate3d(18px, 15px, 0) scale(1.12);
+  }
+}
+
+.animate-aurora-1 {
+  animation: aurora-1 8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-aurora-2 {
+  animation: aurora-2 10s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-aurora-3 {
+  animation: aurora-3 9s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
