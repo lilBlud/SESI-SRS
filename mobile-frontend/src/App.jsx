@@ -385,7 +385,7 @@ function App() {
                   aria-label="Admin Dashboard"
                   title="Admin Dashboard"
                 >
-                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="m9 12 2 2 4-4" /></svg>
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /><rect width="7" height="5" x="14" y="3" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /><rect width="7" height="9" x="14" y="12" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /><rect width="7" height="5" x="3" y="16" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full border-[1.5px] border-slate-100 dark:border-slate-800"></div>
                 </button>
               )}
