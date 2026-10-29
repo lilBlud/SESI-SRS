@@ -103,6 +103,17 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin delete on Infographics') THEN
         CREATE POLICY "Allow admin delete on Infographics" ON "Infographics" FOR DELETE USING (true);
     END IF;
+
+    -- EmployeeAwards: Allow Insert, Update, Delete for admin role assignment
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin insert on EmployeeAwards') THEN
+        CREATE POLICY "Allow admin insert on EmployeeAwards" ON "EmployeeAwards" FOR INSERT WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin update on EmployeeAwards') THEN
+        CREATE POLICY "Allow admin update on EmployeeAwards" ON "EmployeeAwards" FOR UPDATE USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin delete on EmployeeAwards') THEN
+        CREATE POLICY "Allow admin delete on EmployeeAwards" ON "EmployeeAwards" FOR DELETE USING (true);
+    END IF;
 END
 $$;
 

@@ -244,7 +244,7 @@ export async function getLeaderboardDirect(month) {
     const userDates = {};
     for (const act of actData) {
       const u = (act.Username || '').trim().toLowerCase();
-      if (!u) continue;
+      if (!u || u.startsWith('role_')) continue;
       if (!userDates[u]) userDates[u] = [];
       userDates[u].push(act.ActivityDate);
     }
@@ -560,14 +560,40 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
 export async function getAdminRoleOverridesDirect() {
   const adminSet = new Set(DEFAULT_ADMIN_EMAILS.map(e => e.toLowerCase()));
   const staffSet = new Set();
+
+  // 1. Read local cache for immediate synchronous feedback
   try {
-    const { data, error } = await supabase
-      .from('EmployeeAwards')
-      .select('Username, AwardTitle')
-      .in('AwardTitle', ['ROLE_ADMIN', 'ROLE_STAFF'])
-      .order('Id', { ascending: true });
-    if (!error && data) {
-      data.forEach(r => {
+    const localKey = 'sesi_user_roles_override';
+    const localMap = JSON.parse(localStorage.getItem(localKey) || '{}');
+    for (const [ident, r] of Object.entries(localMap)) {
+      const u = ident.toLowerCase();
+      if (r === 'Admin') {
+        adminSet.add(u);
+        staffSet.delete(u);
+      } else if (r === 'Staff') {
+        staffSet.add(u);
+        adminSet.delete(u);
+      }
+    }
+  } catch {}
+
+  // 2. Fetch remote DB records from EmployeeAwards AND UserActivities
+  try {
+    const [awardsRes, activitiesRes] = await Promise.all([
+      supabase
+        .from('EmployeeAwards')
+        .select('Username, AwardTitle')
+        .in('AwardTitle', ['ROLE_ADMIN', 'ROLE_STAFF'])
+        .order('Id', { ascending: true }),
+      supabase
+        .from('UserActivities')
+        .select('Username, ActivityDate, staff_id')
+        .like('Username', 'ROLE_%')
+        .order('Id', { ascending: true })
+    ]);
+
+    if (!awardsRes.error && awardsRes.data) {
+      awardsRes.data.forEach(r => {
         const u = (r.Username || '').trim().toLowerCase();
         if (r.AwardTitle === 'ROLE_ADMIN') {
           adminSet.add(u);
@@ -578,8 +604,24 @@ export async function getAdminRoleOverridesDirect() {
         }
       });
     }
+
+    if (!activitiesRes.error && activitiesRes.data) {
+      activitiesRes.data.forEach(r => {
+        const raw = (r.Username || '').trim();
+        const upper = raw.toUpperCase();
+        if (upper.startsWith('ROLE_ADMIN:')) {
+          const u = raw.slice(11).trim().toLowerCase();
+          adminSet.add(u);
+          staffSet.delete(u);
+        } else if (upper.startsWith('ROLE_STAFF:')) {
+          const u = raw.slice(11).trim().toLowerCase();
+          staffSet.add(u);
+          adminSet.delete(u);
+        }
+      });
+    }
   } catch (err) {
-    console.warn("Could not query EmployeeAwards for admin roles:", err);
+    console.warn("Could not query role overrides:", err);
   }
   return { adminSet, staffSet };
 }
@@ -648,6 +690,16 @@ export async function deleteUserDirect(targetUserOrId) {
   try {
     await supabase.from('EmployeeAwards').delete().eq('Username', target.email);
   } catch {}
+  try {
+    const targetEmail = (target.email || '').toLowerCase().trim();
+    for (const key of [targetEmail, target.fullName.toLowerCase().trim(), String(target.id)]) {
+      if (!key) continue;
+      await supabase.from('UserActivities').delete().in('Username', [`ROLE_ADMIN:${key}`, `ROLE_STAFF:${key}`]);
+    }
+    if (target.id != null) {
+      await supabase.from('UserActivities').delete().eq('staff_id', target.id).like('Username', 'ROLE_%');
+    }
+  } catch {}
 }
 
 /**
@@ -673,66 +725,95 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
     }
   }
 
-  const targetEmail = target.email.trim().toLowerCase();
-  const userAliases = [targetEmail, target.fullName.toLowerCase(), target.staffId.toLowerCase()].filter(Boolean);
+  const targetEmail = (target.email || '').trim().toLowerCase();
+  const targetFullName = (target.fullName || '').trim().toLowerCase();
+  const targetStaffId = (target.staffId || '').trim().toLowerCase();
+  const targetIdStr = target.id != null ? String(target.id) : '';
 
-  // 1. Try updating Role in StaffUsers if column exists
+  const userAliases = [targetEmail, targetFullName, targetStaffId, targetIdStr].filter(Boolean);
+  const normalizedRole = newRole.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'STAFF';
+
+  // 1. Delete previous role overrides from UserActivities
   try {
-    await supabase
-      .from('StaffUsers')
-      .update({ Role: newRole })
-      .eq('Id', target.id);
-  } catch {}
+    for (const alias of userAliases) {
+      await supabase
+        .from('UserActivities')
+        .delete()
+        .in('Username', [`ROLE_ADMIN:${alias}`, `ROLE_STAFF:${alias}`]);
+    }
+    if (target.id != null) {
+      await supabase
+        .from('UserActivities')
+        .delete()
+        .eq('staff_id', target.id)
+        .like('Username', 'ROLE_%');
+    }
+  } catch (err) {
+    console.warn("Could not clear previous role in UserActivities:", err);
+  }
 
-  // 2. Persist role in EmployeeAwards system records
-  if (newRole === 'Admin') {
-    await supabase
-      .from('EmployeeAwards')
-      .delete()
-      .eq('AwardTitle', 'ROLE_STAFF')
-      .in('Username', userAliases);
+  // 2. Persist new role override in UserActivities
+  const roleIdentifier = targetEmail || targetIdStr || targetFullName;
+  const roleRecord = `ROLE_${normalizedRole}:${roleIdentifier}`;
+  const { error: actInsErr } = await supabase
+    .from('UserActivities')
+    .insert([{
+      Username: roleRecord,
+      ActivityDate: new Date().toISOString(),
+      staff_id: target.id || null
+    }]);
 
-    const { data: existing } = await supabase
-      .from('EmployeeAwards')
-      .select('Id')
-      .eq('AwardTitle', 'ROLE_ADMIN')
-      .eq('Username', targetEmail);
+  if (actInsErr) {
+    console.error("Failed to persist role in UserActivities:", actInsErr);
+    throw new Error(actInsErr.message || "Failed to update user role");
+  }
 
-    if (!existing || existing.length === 0) {
-      const { error: insErr } = await supabase
+  // 3. Best-effort sync to EmployeeAwards & StaffUsers (does not throw if RLS blocks)
+  try {
+    if (newRole === 'Admin') {
+      await supabase
+        .from('EmployeeAwards')
+        .delete()
+        .eq('AwardTitle', 'ROLE_STAFF')
+        .in('Username', userAliases);
+
+      await supabase
         .from('EmployeeAwards')
         .insert([{
           Month: 'SYSTEM',
           Username: targetEmail,
           AwardTitle: 'ROLE_ADMIN',
-          Message: `Admin granted to ${target.fullName}`
+          Message: `Admin granted to ${target.fullName}`,
+          staff_id: target.id || null
         }]);
-      if (insErr) throw insErr;
-    }
-  } else {
-    await supabase
-      .from('EmployeeAwards')
-      .delete()
-      .eq('AwardTitle', 'ROLE_ADMIN')
-      .in('Username', userAliases);
+    } else {
+      await supabase
+        .from('EmployeeAwards')
+        .delete()
+        .eq('AwardTitle', 'ROLE_ADMIN')
+        .in('Username', userAliases);
 
-    const { data: existingStaff } = await supabase
-      .from('EmployeeAwards')
-      .select('Id')
-      .eq('AwardTitle', 'ROLE_STAFF')
-      .eq('Username', targetEmail);
-
-    if (!existingStaff || existingStaff.length === 0) {
       await supabase
         .from('EmployeeAwards')
         .insert([{
           Month: 'SYSTEM',
           Username: targetEmail,
           AwardTitle: 'ROLE_STAFF',
-          Message: `Admin revoked for ${target.fullName}`
+          Message: `Admin revoked for ${target.fullName}`,
+          staff_id: target.id || null
         }]);
     }
-  }
+  } catch {}
+
+  // 4. Update localStorage cache so UI immediately reflects the new role
+  try {
+    const localKey = 'sesi_user_roles_override';
+    const localMap = JSON.parse(localStorage.getItem(localKey) || '{}');
+    if (targetEmail) localMap[targetEmail] = newRole;
+    if (targetIdStr) localMap[targetIdStr] = newRole;
+    if (targetFullName) localMap[targetFullName] = newRole;
+    localStorage.setItem(localKey, JSON.stringify(localMap));
+  } catch {}
 
   return {
     id: target.id,

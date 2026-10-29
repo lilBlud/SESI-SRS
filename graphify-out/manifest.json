@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793255697.826516,
-    "seen": 1793255909.7419422,
-    "ast_hash": "ec6702714afe7678a113d954e8ecf1e4",
+    "mtime": 1793257301.215614,
+    "seen": 1793257370.9381642,
+    "ast_hash": "531cce308e14c4df0861889421e0e575",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {
@@ -575,6 +575,18 @@
     "mtime": 1790813377.9117796,
     "seen": 1793150970.213897,
     "ast_hash": "6d5180a782d64c8cf51ba01c2a2184d8",
+    "semantic_hash": ""
+  },
+  "test_activities.js": {
+    "mtime": 1793256941.1472778,
+    "seen": 1793257370.938405,
+    "ast_hash": "a0eb008b060ac8953eba4d4d57d246ec",
+    "semantic_hash": ""
+  },
+  "test_persistence.js": {
+    "mtime": 1793257020.3875964,
+    "seen": 1793257370.9384081,
+    "ast_hash": "c83956e877e9e655c53923e01c20ee3b",
     "semantic_hash": ""
   },
   "mobile-frontend/package-lock.json": {
