@@ -212,9 +212,9 @@
     "semantic_hash": "9ed7eabb78afc81a0ee3b3fa2b813eec"
   },
   "mobile-frontend/src/components/tabs/admin/AdminGlossarySection.jsx": {
-    "mtime": 1793169172.1933248,
-    "seen": 1793173358.249734,
-    "ast_hash": "c6b9a44bc549b3bb724abcc31bea57fa",
+    "mtime": 1793239241.4862006,
+    "seen": 1793239387.4385085,
+    "ast_hash": "d8ef6598022fea6ffe86068dd31b5a39",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminInfographicsSection.jsx": {

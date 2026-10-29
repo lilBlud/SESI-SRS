@@ -318,15 +318,19 @@ export default function AdminGlossarySection({
   };
 
   const deleteGlossaryTerm = async (id) => {
-    if (!confirm('Delete this card / term?')) return;
+    if (!confirm('Are you sure you want to delete this card / term?')) return;
     try {
       const { error } = await supabase.from('GlossaryTerms').delete().eq('Id', id);
       if (error) throw error;
+      setGMsg('🗑️ Card deleted successfully!');
+      setTimeout(() => setGMsg(''), 3500);
     } catch (err) {
       console.warn("Direct Supabase delete glossary failed, trying API:", err);
       if (API_BASE) {
         await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE' }).catch(() => null);
       }
+      setGMsg('❌ Failed to delete card');
+      setTimeout(() => setGMsg(''), 3500);
     }
     onRefreshGlossary();
     if (onGlossaryChange) onGlossaryChange();
@@ -483,36 +487,53 @@ export default function AdminGlossarySection({
         )}
       </div>
 
-      {/* Add / Edit Form Modal / Card */}
+      {/* Action Toast Feedback Banner */}
+      {gMsg && (
+        <div className="p-3 bg-emerald-600 text-white rounded-2xl text-xs font-bold shadow-lg flex items-center justify-between animate-fadeIn sticky top-2 z-40">
+          <span>{gMsg}</span>
+          <button type="button" onClick={() => setGMsg('')} className="text-white/80 hover:text-white font-bold ml-2 text-sm leading-none">✕</button>
+        </div>
+      )}
+
+      {/* Add / Edit Form Modal Dialog */}
       {showForm && (
-        <AdminGlossaryForm
-          isPerfStudio={isPerfStudio}
-          gEditId={gEditId}
-          gTerm={gTerm}
-          setGTerm={setGTerm}
-          gFull={gFull}
-          setGFull={setGFull}
-          gCat={gCat}
-          setGCat={setGCat}
-          gDesc={gDesc}
-          setGDesc={setGDesc}
-          gFormula={gFormula}
-          setGFormula={setGFormula}
-          gYAxisFormat={gYAxisFormat}
-          setGYAxisFormat={setGYAxisFormat}
-          gNotations={gNotations}
-          setGNotations={setGNotations}
-          gMeanings={gMeanings}
-          setGMeanings={setGMeanings}
-          gChartData={gChartData}
-          setGChartData={setGChartData}
-          cYear={cYear}
-          setCYear={setCYear}
-          gMsg={gMsg}
-          onSubmit={addGlossaryTerm}
-          onCancel={cancelEditGlossaryTerm}
-          onLoadPreset={loadPreset}
-        />
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) cancelEditGlossaryTerm();
+          }}
+        >
+          <div className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl shadow-2xl custom-scrollbar my-auto" onClick={e => e.stopPropagation()}>
+            <AdminGlossaryForm
+              isPerfStudio={isPerfStudio}
+              gEditId={gEditId}
+              gTerm={gTerm}
+              setGTerm={setGTerm}
+              gFull={gFull}
+              setGFull={setGFull}
+              gCat={gCat}
+              setGCat={setGCat}
+              gDesc={gDesc}
+              setGDesc={setGDesc}
+              gFormula={gFormula}
+              setGFormula={setGFormula}
+              gYAxisFormat={gYAxisFormat}
+              setGYAxisFormat={setGYAxisFormat}
+              gNotations={gNotations}
+              setGNotations={setGNotations}
+              gMeanings={gMeanings}
+              setGMeanings={setGMeanings}
+              gChartData={gChartData}
+              setGChartData={setGChartData}
+              cYear={cYear}
+              setCYear={setCYear}
+              gMsg={gMsg}
+              onSubmit={addGlossaryTerm}
+              onCancel={cancelEditGlossaryTerm}
+              onLoadPreset={loadPreset}
+            />
+          </div>
+        </div>
       )}
 
       {/* Card List with Search & Category Filtering */}
