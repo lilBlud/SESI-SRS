@@ -100,7 +100,7 @@ export default function LoginPage({ onLogin }) {
         <h1 className="text-2xl font-bold text-white leading-tight">
           Welcome to Sabah Electricity Supply Industry<br />
           <span className="text-[32px] font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 block mt-2">
-            SESI
+            SESI INSIGHT
           </span>
         </h1>
         <p className="text-slate-300 text-sm mt-3 font-medium">

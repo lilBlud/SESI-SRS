@@ -104,9 +104,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/App.jsx": {
-    "mtime": 1793174230.6783686,
-    "seen": 1793175276.956568,
-    "ast_hash": "a676313295fc0896d66d0d452c5567cb",
+    "mtime": 1793255130.80211,
+    "seen": 1793255207.2670803,
+    "ast_hash": "b3b415cddf65b9b3783354afc741a1ee",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/modals/EditPreferredNameModal.jsx": {
@@ -170,10 +170,10 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/pages/LoginPage.jsx": {
-    "mtime": 1793169172.1795096,
-    "seen": 1793173358.2497263,
-    "ast_hash": "c53a86a6cb6d2c05bbee6931d8b2f227",
-    "semantic_hash": "c53a86a6cb6d2c05bbee6931d8b2f227"
+    "mtime": 1793255130.8076622,
+    "seen": 1793255207.2678156,
+    "ast_hash": "3fde1afe6d878fde0c97d5378ef979ec",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/pages/PasscodeGate.jsx": {
     "mtime": 1793169172.180703,
@@ -470,9 +470,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/index.html": {
-    "mtime": 1793169172.1268396,
-    "seen": 1793173358.2499232,
-    "ast_hash": "360a4c28aa5746e3a455979a8bd96790",
+    "mtime": 1793255130.8083334,
+    "seen": 1793255207.2713442,
+    "ast_hash": "0dfa0a9661e4b16f65c9080ab06249cf",
     "semantic_hash": ""
   },
   "mobile-frontend/public/apple-touch-icon.png": {
