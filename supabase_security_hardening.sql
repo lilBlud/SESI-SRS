@@ -59,7 +59,7 @@ BEGIN
 END
 $$;
 
--- 3. Write Protections:
+-- 3. Write & Admin Management Policies:
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert on StaffUsers for signup') THEN
@@ -70,9 +70,41 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow users to update own profile') THEN
         CREATE POLICY "Allow users to update own profile" ON "StaffUsers" FOR UPDATE USING (true);
     END IF;
+
+    -- Glossary & Corporate Performance Cards: Allow Insert, Update, Delete
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin insert on GlossaryTerms') THEN
+        CREATE POLICY "Allow admin insert on GlossaryTerms" ON "GlossaryTerms" FOR INSERT WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin update on GlossaryTerms') THEN
+        CREATE POLICY "Allow admin update on GlossaryTerms" ON "GlossaryTerms" FOR UPDATE USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin delete on GlossaryTerms') THEN
+        CREATE POLICY "Allow admin delete on GlossaryTerms" ON "GlossaryTerms" FOR DELETE USING (true);
+    END IF;
+
+    -- Quiz Questions: Allow Insert, Update, Delete
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin insert on QuizQuestions') THEN
+        CREATE POLICY "Allow admin insert on QuizQuestions" ON "QuizQuestions" FOR INSERT WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin update on QuizQuestions') THEN
+        CREATE POLICY "Allow admin update on QuizQuestions" ON "QuizQuestions" FOR UPDATE USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin delete on QuizQuestions') THEN
+        CREATE POLICY "Allow admin delete on QuizQuestions" ON "QuizQuestions" FOR DELETE USING (true);
+    END IF;
+
+    -- Infographics & Posts: Allow Insert, Update, Delete
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin insert on Infographics') THEN
+        CREATE POLICY "Allow admin insert on Infographics" ON "Infographics" FOR INSERT WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin update on Infographics') THEN
+        CREATE POLICY "Allow admin update on Infographics" ON "Infographics" FOR UPDATE USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow admin delete on Infographics') THEN
+        CREATE POLICY "Allow admin delete on Infographics" ON "Infographics" FOR DELETE USING (true);
+    END IF;
 END
 $$;
 
 -- 4. Clean up legacy Demo User quiz records from the leaderboard:
 DELETE FROM "UserAnswers" WHERE "Username" ILIKE '%demo%' OR "PreferredName" ILIKE '%demo%';
-
