@@ -104,9 +104,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/App.jsx": {
-    "mtime": 1793257585.130654,
-    "seen": 1793257643.7803853,
-    "ast_hash": "fc8273bd29d5d444e22f641ebe5b821c",
+    "mtime": 1793258092.1020498,
+    "seen": 1793258150.5650368,
+    "ast_hash": "65466cf45595c01674b2d091ba1b4c69",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/modals/EditPreferredNameModal.jsx": {
