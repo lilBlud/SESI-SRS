@@ -40,32 +40,17 @@ export function HomeTab({
   const filteredPosts = postCat === 'All' ? posts : posts.filter(p => (p.category || 'General') === postCat);
 
   const fetchLeaderboard = useCallback(() => {
-    const applyPodium = (data) => {
-      if (!data || data.length < 3) {
-        data = [
-          { username: "Cameron", displayName: "Cameron", score: 4201, division: "Sales Division", streak: 5 },
-          { username: "Ka", displayName: "Ka", score: 3912, division: "HR Division", streak: 3 },
-          { username: "Evelien", displayName: "Evelien", score: 2926, division: "IT Division", streak: 4 },
-          { username: "QuizWiz", displayName: "QuizWiz", score: 2800, division: "Marketing", streak: 2 },
-          { username: "CoolCat", displayName: "CoolCat", score: 2500, division: "Finance", streak: 6 },
-          { username: "Ahmad", displayName: "Ahmad", score: 1920, division: "Strategic Planning", streak: 7 },
-          { username: "Sarah", displayName: "Sarah", score: 1850, division: "Operations", streak: 1 },
-          { username: "John", displayName: "John", score: 1500, division: "HR Division", streak: 2 }
-        ];
-      }
-      setLeaderboard(data);
-      setLoadingLb(false);
-    };
-
     getLeaderboardDirect(currentMonth)
       .then(data => {
-        applyPodium(data && data.length > 0 ? data : []);
+        setLeaderboard(Array.isArray(data) ? data : []);
+        setLoadingLb(false);
       })
       .catch(err => {
         console.warn("Direct Supabase leaderboard fetch error:", err);
-        applyPodium([]);
+        setLeaderboard([]);
+        setLoadingLb(false);
       });
-  }, []);
+  }, [currentMonth]);
 
   useEffect(() => {
     getInfographicsDirect()

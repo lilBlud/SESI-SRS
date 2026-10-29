@@ -463,28 +463,7 @@ namespace mobile_backend.Data
                 }
 
                 // Seed mock leaderboard for podium
-                if (!db.UserAnswers.Any(a => a.Username == "Cameron" && a.Month == seedMonth))
-                {
-                    var usernames = new[] { "Cameron", "Ka", "Evelien", "QuizWiz", "CoolCat" };
-                    var scores = new[] { 4201, 3912, 2926, 2800, 2500 };
-                    for (int i = 0; i < usernames.Length; i++)
-                    {
-                        db.UserAnswers.Add(new UserAnswer 
-                        { 
-                            Username = usernames[i], 
-                            Division = "Sales Division", 
-                            Month = seedMonth, 
-                            QuestionId = 1, 
-                            QuestionText = "Mock Question", 
-                            SelectedOption = "A", 
-                            IsCorrect = true, 
-                            TimeTakenSeconds = 10, 
-                            PointsAwarded = scores[i], 
-                            DateAnswered = DateTime.UtcNow.AddMinutes(-i) 
-                        });
-                    }
-                    db.SaveChanges();
-                }
+                // Seed mock leaderboard disabled to keep leaderboard authentic
             }
             catch (Exception ex)
             {

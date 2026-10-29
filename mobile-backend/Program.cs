@@ -118,25 +118,7 @@ app.MapGet("/api/seed", async (AppDbContext db) =>
     var seedMonth = DateTime.UtcNow.ToString("yyyy-MM");
     if (!db.UserAnswers.Any(a => a.Username == "Cameron" && a.Month == seedMonth))
     {
-        var usernames = new[] { "Cameron", "Ka", "Evelien", "QuizWiz", "CoolCat" };
-        var scores = new[] { 4201, 3912, 2926, 2800, 2500 };
-        for (int i = 0; i < usernames.Length; i++)
-        {
-            db.UserAnswers.Add(new UserAnswer 
-            { 
-                Username = usernames[i], 
-                Division = "Sales Division", 
-                Month = seedMonth, 
-                QuestionId = 1, 
-                QuestionText = "Mock Question", 
-                SelectedOption = "A", 
-                IsCorrect = true, 
-                TimeTakenSeconds = 10, 
-                PointsAwarded = scores[i], 
-                DateAnswered = DateTime.UtcNow.AddMinutes(-i) 
-            });
-        }
-        await db.SaveChangesAsync();
+        // Seed mock accounts disabled to keep leaderboard authentic
     }
     return Results.Ok("Seeded");
 });
@@ -322,7 +304,18 @@ app.MapGet("/api/leaderboard/{month}", async (string month, AppDbContext db) =>
         .GroupBy(s => s.PreferredName.Trim().ToLower())
         .ToDictionary(g => g.Key, g => g.First());
 
+    var excludedMock = new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
+    { 
+        "demo", "demo user", "demo-001", "ka", "evelien", "quizwiz", "coolcat", "cameron", "petrus" 
+    };
+
     var top = allAnswers
+        .Where(a => {
+            var u = (a.Username ?? "").Trim();
+            var p = (a.PreferredName ?? "").Trim();
+            if (excludedMock.Contains(u) || excludedMock.Contains(p) || u.Contains("demo", StringComparison.OrdinalIgnoreCase)) return false;
+            return true;
+        })
         .GroupBy(a => a.Username)
         .Select(g =>
         {

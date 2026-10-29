@@ -6,10 +6,10 @@
     "semantic_hash": "d72c387efa5f95e9c0fb12b09e438e48"
   },
   "mobile-backend/Data/DbInitializer.cs": {
-    "mtime": 1793169172.1197326,
-    "seen": 1793173358.2487235,
-    "ast_hash": "a95389fed5e80f8025602dcd262d9073",
-    "semantic_hash": "a95389fed5e80f8025602dcd262d9073"
+    "mtime": 1793255743.923317,
+    "seen": 1793255909.7368596,
+    "ast_hash": "44d8d0f33ef2881729e8f01071f510bb",
+    "semantic_hash": ""
   },
   "mobile-backend/Migrations/20261001011906_InitialCreateSqlite.Designer.cs": {
     "mtime": 1790817547.0349228,
@@ -48,9 +48,9 @@
     "semantic_hash": "65eddcfd21da770e2dea54e665a3a482"
   },
   "mobile-backend/Program.cs": {
-    "mtime": 1793169172.1241834,
-    "seen": 1793173358.249229,
-    "ast_hash": "bda8fd3f23339c7d73292eb2bc571fba",
+    "mtime": 1793255769.669251,
+    "seen": 1793255909.7373464,
+    "ast_hash": "5f5d4223a79e7783cae8cbd93e7fc7c9",
     "semantic_hash": ""
   },
   "mobile-backend/Properties/launchSettings.json": {
@@ -194,9 +194,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/HomeTab.jsx": {
-    "mtime": 1793169172.1871054,
-    "seen": 1793173358.2497306,
-    "ast_hash": "e39a118fcb4d583119c6105d933d1947",
+    "mtime": 1793255718.9054344,
+    "seen": 1793255909.7390003,
+    "ast_hash": "a3edc105cf211b0dd692d58427d2eb6a",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/ProfileTab.jsx": {
@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793175225.6799722,
-    "seen": 1793175276.9627955,
-    "ast_hash": "6411502b838d87aee4086341da125a81",
+    "mtime": 1793255697.826516,
+    "seen": 1793255909.7419422,
+    "ast_hash": "ec6702714afe7678a113d954e8ecf1e4",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {
