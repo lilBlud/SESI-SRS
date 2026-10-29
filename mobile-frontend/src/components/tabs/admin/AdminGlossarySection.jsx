@@ -319,19 +319,26 @@ export default function AdminGlossarySection({
 
   const deleteGlossaryTerm = async (id) => {
     if (!confirm('Are you sure you want to delete this card / term?')) return;
+    let deleted = false;
     try {
       const { error } = await supabase.from('GlossaryTerms').delete().eq('Id', id);
       if (error) throw error;
-      setGMsg('🗑️ Card deleted successfully!');
-      setTimeout(() => setGMsg(''), 3500);
+      deleted = true;
     } catch (err) {
       console.warn("Direct Supabase delete glossary failed, trying API:", err);
       if (API_BASE) {
-        await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE' }).catch(() => null);
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE' });
+          if (res.ok) deleted = true;
+        } catch {}
       }
-      setGMsg('❌ Failed to delete card');
-      setTimeout(() => setGMsg(''), 3500);
     }
+    if (deleted) {
+      setGMsg('🗑️ Card deleted successfully!');
+    } else {
+      setGMsg('❌ Failed to delete card');
+    }
+    setTimeout(() => setGMsg(''), 3500);
     onRefreshGlossary();
     if (onGlossaryChange) onGlossaryChange();
   };

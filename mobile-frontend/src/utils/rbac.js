@@ -84,14 +84,15 @@ export function resolveUserRole(rawUser, { adminSet = new Set(), staffSet = new 
   const email = (rawUser.Email || rawUser.email || '').trim().toLowerCase();
   const fullName = (rawUser.FullName || rawUser.fullName || '').trim().toLowerCase();
   const staffId = (rawUser.StaffId || rawUser.staffId || '').trim().toLowerCase();
+  const idStr = (rawUser.Id ?? rawUser.id) != null ? String(rawUser.Id ?? rawUser.id).trim() : '';
   const dbRole = rawUser.Role ?? rawUser.role;
 
   // 1. Explicit Staff revocation override always takes precedence
-  const isExplicitStaff = staffSet.has(email) || staffSet.has(fullName) || staffSet.has(staffId);
+  const isExplicitStaff = (idStr && staffSet.has(idStr)) || staffSet.has(email) || staffSet.has(fullName) || staffSet.has(staffId);
   if (isExplicitStaff) return 'Staff';
 
   // 2. Explicit Admin grant override or DB Admin
-  const isExplicitAdmin = adminSet.has(email) || adminSet.has(fullName) || adminSet.has(staffId);
+  const isExplicitAdmin = (idStr && adminSet.has(idStr)) || adminSet.has(email) || adminSet.has(fullName) || adminSet.has(staffId);
   if (dbRole === 'Admin' || isExplicitAdmin) return 'Admin';
 
   return 'Staff';
@@ -136,4 +137,30 @@ export function getUserInitials(name) {
   if (parts.length === 0) return 'U';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/**
+ * Fast multi-identifier lookup index for staff records.
+ * Resolves by numeric Id, or case-insensitive string alias (FullName, PreferredName, Email, StaffId).
+ */
+export function buildStaffIndex(staffList = []) {
+  const byId = {};
+  const byAlias = {};
+  for (const s of (staffList || [])) {
+    if (!s) continue;
+    if (s.Id != null) byId[s.Id] = s;
+    if (s.id != null) byId[s.id] = s;
+    const aliases = [s.FullName, s.fullName, s.PreferredName, s.preferredName, s.Email, s.email, s.StaffId, s.staffId].filter(Boolean);
+    for (const a of aliases) {
+      byAlias[String(a).trim().toLowerCase()] = s;
+    }
+  }
+
+  const find = (identifier, id) => {
+    if (id != null && byId[id]) return byId[id];
+    if (!identifier) return null;
+    return byAlias[String(identifier).trim().toLowerCase()] || null;
+  };
+
+  return { byId, byAlias, find };
 }

@@ -3,7 +3,8 @@ import {
   DEFAULT_ADMIN_EMAILS, 
   resolveUserRole, 
   normalizeUser, 
-  matchesUser 
+  matchesUser,
+  buildStaffIndex
 } from './rbac';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://avlypjdoahothehakchf.supabase.co';
@@ -189,18 +190,7 @@ export async function getLeaderboardDirect(month) {
   const staffData = staffRes.data || [];
   const actData = actRes.data || [];
 
-  const staffById = {};
-  const staffByAlias = {};
-  for (const s of staffData) {
-    if (s.Id != null) staffById[s.Id] = s;
-    const aliases = [s.FullName, s.PreferredName, s.Email, s.StaffId].filter(Boolean);
-    for (const a of aliases) {
-      staffByAlias[a.trim().toLowerCase()] = s;
-    }
-  }
-
-  // excluded account check handled by isExcludedLeaderboardAccount
-
+  const staffIndex = buildStaffIndex(staffData);
   const groups = {};
 
   for (const a of raw) {
@@ -208,16 +198,12 @@ export async function getLeaderboardDirect(month) {
     const p = (a.PreferredName ?? a.preferredName ?? '').trim();
     const sid = a.staff_id ?? a.Staff_Id;
 
-    const staff = (sid != null && staffById[sid]) ||
-      (u && staffByAlias[u.toLowerCase()]) ||
-      (p && staffByAlias[p.toLowerCase()]) ||
-      null;
-
+    const staff = staffIndex.find(u, sid) || staffIndex.find(p);
     if (isExcludedLeaderboardAccount(u, p, staff, sid)) continue;
 
-    const key = staff ? `staff_${staff.Id}` : (u || p || 'Anonymous');
-    const currentDisplayName = staff?.PreferredName?.trim() || p || staff?.FullName?.trim() || u || 'Anonymous';
-    const realFullName = staff?.FullName?.trim() || u || currentDisplayName;
+    const key = staff ? `staff_${staff.Id ?? staff.id}` : (u || p || 'Anonymous');
+    const currentDisplayName = staff?.PreferredName?.trim() || staff?.preferredName?.trim() || p || staff?.FullName?.trim() || staff?.fullName?.trim() || u || 'Anonymous';
+    const realFullName = staff?.FullName?.trim() || staff?.fullName?.trim() || u || currentDisplayName;
 
     if (!groups[key]) {
       groups[key] = {
@@ -491,30 +477,17 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
   const raw = ansRes.data || [];
   const staffData = staffRes.data || [];
 
-  const staffById = {};
-  const staffByAlias = {};
-  for (const s of staffData) {
-    if (s.Id != null) staffById[s.Id] = s;
-    const aliases = [s.FullName, s.PreferredName, s.Email, s.StaffId].filter(Boolean);
-    for (const a of aliases) staffByAlias[a.trim().toLowerCase()] = s;
-  }
-
-  // excluded account check handled by isExcludedLeaderboardAccount
-
+  const staffIndex = buildStaffIndex(staffData);
   const groups = {};
   for (const a of raw) {
     const u = (a.Username ?? a.username ?? '').trim();
     const p = (a.PreferredName ?? a.preferredName ?? '').trim();
     const sid = a.staff_id ?? a.Staff_Id;
 
-    const staff = (sid != null && staffById[sid]) ||
-      (u && staffByAlias[u.toLowerCase()]) ||
-      (p && staffByAlias[p.toLowerCase()]) ||
-      null;
-
+    const staff = staffIndex.find(u, sid) || staffIndex.find(p);
     if (isExcludedLeaderboardAccount(u, p, staff, sid)) continue;
 
-    const key = staff ? `staff_${staff.Id}` : (u || p || 'Anonymous');
+    const key = staff ? `staff_${staff.Id ?? staff.id}` : (u || p || 'Anonymous');
     if (!groups[key]) {
       groups[key] = {
         username: staff?.FullName || u,
@@ -692,13 +665,21 @@ export async function deleteUserDirect(targetUserOrId) {
   } catch {}
   try {
     const targetEmail = (target.email || '').toLowerCase().trim();
-    for (const key of [targetEmail, target.fullName.toLowerCase().trim(), String(target.id)]) {
-      if (!key) continue;
-      await supabase.from('UserActivities').delete().in('Username', [`ROLE_ADMIN:${key}`, `ROLE_STAFF:${key}`]);
+    const deleteTargets = [targetEmail, target.fullName?.toLowerCase().trim(), String(target.id)]
+      .filter(Boolean)
+      .flatMap(k => [`ROLE_ADMIN:${k}`, `ROLE_STAFF:${k}`]);
+    if (deleteTargets.length > 0) {
+      await supabase.from('UserActivities').delete().in('Username', deleteTargets);
     }
     if (target.id != null) {
       await supabase.from('UserActivities').delete().eq('staff_id', target.id).like('Username', 'ROLE_%');
     }
+    const localKey = 'sesi_user_roles_override';
+    const localMap = JSON.parse(localStorage.getItem(localKey) || '{}');
+    if (targetEmail) delete localMap[targetEmail];
+    if (target.id != null) delete localMap[String(target.id)];
+    if (target.fullName) delete localMap[target.fullName.toLowerCase().trim()];
+    localStorage.setItem(localKey, JSON.stringify(localMap));
   } catch {}
 }
 
@@ -733,13 +714,14 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
   const userAliases = [targetEmail, targetFullName, targetStaffId, targetIdStr].filter(Boolean);
   const normalizedRole = newRole.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'STAFF';
 
-  // 1. Delete previous role overrides from UserActivities
+  // 1. Delete previous role overrides from UserActivities (batched in single query)
   try {
-    for (const alias of userAliases) {
+    const deleteTargets = userAliases.flatMap(alias => [`ROLE_ADMIN:${alias}`, `ROLE_STAFF:${alias}`]);
+    if (deleteTargets.length > 0) {
       await supabase
         .from('UserActivities')
         .delete()
-        .in('Username', [`ROLE_ADMIN:${alias}`, `ROLE_STAFF:${alias}`]);
+        .in('Username', deleteTargets);
     }
     if (target.id != null) {
       await supabase

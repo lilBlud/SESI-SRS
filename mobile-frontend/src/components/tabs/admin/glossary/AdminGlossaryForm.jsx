@@ -30,6 +30,8 @@ export function AdminGlossaryForm({
   onCancel,
   onLoadPreset
 }) {
+  const yearsWithData = Array.isArray(gChartData) ? [...new Set(gChartData.map(d => String(d.year)))].sort() : [];
+
   return (
     <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl border-2 border-emerald-500/40 dark:border-emerald-500/30 shadow-lg space-y-4 animate-fadeIn">
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
@@ -145,7 +147,7 @@ export function AdminGlossaryForm({
                 Formula (Optional)
               </label>
               <input
-                placeholder="e.g. Base Tariff = (Operating Cost + Return on Capital) / Total Sales"
+                placeholder={"e.g. Base Tariff = (Operating Cost + Return on Capital) / Total Sales"}
                 className="w-full box-border block p-2.5 rounded-xl border text-sm font-mono dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 value={gFormula}
                 onChange={e => setGFormula(e.target.value)}
@@ -153,10 +155,10 @@ export function AdminGlossaryForm({
             </div>
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                Formula Notations & Meanings (Optional)
+                Formula Notations &amp; Meanings (Optional)
               </label>
               <textarea
-                placeholder="e.g. R = Rate Base&#10;WACC = Weighted Average Cost of Capital"
+                placeholder={"e.g. R = Rate Base\nWACC = Weighted Average Cost of Capital"}
                 rows={2}
                 className="w-full box-border block p-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                 value={gMeanings}
@@ -271,10 +273,7 @@ export function AdminGlossaryForm({
             </div>
 
             {/* Multi-Year Data Coverage Chips */}
-            {(() => {
-              const yearsWithData = [...new Set(gChartData.map(d => String(d.year)))].sort();
-              if (yearsWithData.length === 0) return null;
-              return (
+            {yearsWithData.length > 0 && (
                 <div className="space-y-1 pt-1">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                     Years Available in Dataset
@@ -308,8 +307,7 @@ export function AdminGlossaryForm({
                     })}
                   </div>
                 </div>
-              );
-            })()}
+            )}
 
             {/* Live Interactive Chart Preview */}
             {gChartData.length > 0 && (

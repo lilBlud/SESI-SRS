@@ -212,9 +212,9 @@
     "semantic_hash": "9ed7eabb78afc81a0ee3b3fa2b813eec"
   },
   "mobile-frontend/src/components/tabs/admin/AdminGlossarySection.jsx": {
-    "mtime": 1793239241.4862006,
-    "seen": 1793239387.4385085,
-    "ast_hash": "d8ef6598022fea6ffe86068dd31b5a39",
+    "mtime": 1793260107.2567184,
+    "seen": 1793260149.6921563,
+    "ast_hash": "47adaf2401d65ed501b46e2446ef4ac7",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminInfographicsSection.jsx": {
@@ -260,9 +260,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/glossary/AdminGlossaryForm.jsx": {
-    "mtime": 1793169172.2061572,
-    "seen": 1793173358.2497437,
-    "ast_hash": "98483996d0d1da47c4b4b5aae46ee4e2",
+    "mtime": 1793260209.7658153,
+    "seen": 1793260218.3382077,
+    "ast_hash": "153fc21b0a5074a5abcd0471e46e4274",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/glossary/index.js": {
@@ -428,9 +428,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/utils/rbac.js": {
-    "mtime": 1793169172.2448964,
-    "seen": 1793173358.2497766,
-    "ast_hash": "837649bcda05ba26b77587f2b1553a99",
+    "mtime": 1793260107.2522223,
+    "seen": 1793260149.6949883,
+    "ast_hash": "a914f7b4dba1c1053faabf65d2b3cd0f",
     "semantic_hash": ""
   },
   "mobile-frontend/src/utils/sabahMapGeoData.js": {
@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793257301.215614,
-    "seen": 1793257370.9381642,
-    "ast_hash": "531cce308e14c4df0861889421e0e575",
+    "mtime": 1793260107.2564,
+    "seen": 1793260149.6950727,
+    "ast_hash": "2d80efcdb65f0862cbef5c73cf6975d6",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {
