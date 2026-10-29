@@ -354,7 +354,7 @@ function App() {
               />
             </div>
             <div className="flex flex-col justify-center select-none">
-              <span className="text-[18px] sm:text-[20px] font-black tracking-tight leading-none text-[#059669] dark:text-[#34d399] whitespace-nowrap" style={{ textRendering: 'geometricPrecision' }}>
+              <span className="text-[15px] sm:text-[16px] font-black tracking-tight leading-none text-[#059669] dark:text-[#34d399] whitespace-nowrap" style={{ textRendering: 'geometricPrecision' }}>
                 SESI INSIGHT
               </span>
               <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 mt-0.5 leading-none tracking-tight">
