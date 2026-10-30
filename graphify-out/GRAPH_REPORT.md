@@ -1,7 +1,7 @@
-# Graph Report - SESI SRS  (2026-10-29)
+# Graph Report - SESI SRS  (2026-10-30)
 
 ## Corpus Check
-- 78 files · ~73,280 words
+- 78 files · ~73,327 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 9 file(s) not represented in the graph (top: (none) 3, .drawio 2, .http 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0e98e71e`
+- Built from commit: `38eed88d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

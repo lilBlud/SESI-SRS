@@ -180,7 +180,7 @@ export const isExcludedLeaderboardAccount = (u, p, staff, staffId) => {
 export async function getLeaderboardDirect(month) {
   const [ansRes, actRes, staffRes] = await Promise.all([
     supabase.from('UserAnswers').select('*').eq('Month', month),
-    supabase.from('UserActivities').select('Username, ActivityDate'),
+    supabase.from('UserActivities').select('Username, ActivityDate, staff_id'),
     supabase.from('StaffUsers').select('Id, FullName, PreferredName, Email, StaffId, Division, ProfilePicture')
   ]);
 
@@ -228,11 +228,19 @@ export async function getLeaderboardDirect(month) {
   // Enrich with user streaks from UserActivities
   try {
     const userDates = {};
+    const staffIdDates = {};
+
     for (const act of actData) {
       const u = (act.Username || '').trim().toLowerCase();
       if (!u || u.startsWith('role_')) continue;
       if (!userDates[u]) userDates[u] = [];
       userDates[u].push(act.ActivityDate);
+
+      if (act.staff_id != null) {
+        const sidStr = String(act.staff_id);
+        if (!staffIdDates[sidStr]) staffIdDates[sidStr] = [];
+        staffIdDates[sidStr].push(act.ActivityDate);
+      }
     }
 
     for (const entry of Object.values(groups)) {
@@ -240,15 +248,18 @@ export async function getLeaderboardDirect(month) {
       const dName = (entry.displayName || '').trim().toLowerCase();
       const aliases = [uName, dName];
 
-      if (entry.staffId && staffById[entry.staffId]) {
-        const s = staffById[entry.staffId];
-        if (s.FullName) aliases.push(s.FullName.trim().toLowerCase());
-        if (s.PreferredName) aliases.push(s.PreferredName.trim().toLowerCase());
-        if (s.Email) aliases.push(s.Email.trim().toLowerCase());
-        if (s.StaffId) aliases.push(s.StaffId.trim().toLowerCase());
+      const staffMember = entry.staffId ? (staffIndex.byId[entry.staffId] || staffIndex.byId[String(entry.staffId)]) : null;
+      if (staffMember) {
+        if (staffMember.FullName) aliases.push(staffMember.FullName.trim().toLowerCase());
+        if (staffMember.PreferredName) aliases.push(staffMember.PreferredName.trim().toLowerCase());
+        if (staffMember.Email) aliases.push(staffMember.Email.trim().toLowerCase());
+        if (staffMember.StaffId) aliases.push(staffMember.StaffId.trim().toLowerCase());
       }
 
       const allDates = [];
+      if (entry.staffId && staffIdDates[String(entry.staffId)]) {
+        allDates.push(...staffIdDates[String(entry.staffId)]);
+      }
       for (const alias of new Set(aliases)) {
         if (userDates[alias]) {
           allDates.push(...userDates[alias]);
@@ -292,14 +303,15 @@ export async function getUserStreakDirect(userOrIdentifiers) {
   try {
     const { data, error } = await supabase
       .from('UserActivities')
-      .select('Username, ActivityDate')
+      .select('Username, ActivityDate, staff_id')
       .order('ActivityDate', { ascending: false });
 
     if (error || !data) return { streak: 0, dates: [] };
 
     const matched = data.filter(a => {
       const u = String(a.Username ?? a.username ?? '').trim().toLowerCase();
-      return targets.includes(u);
+      const sid = a.staff_id != null ? String(a.staff_id) : '';
+      return targets.includes(u) || (sid && targets.includes(sid));
     });
 
     const dates = matched.map(m => m.ActivityDate ?? m.activityDate);
