@@ -93,8 +93,10 @@ export function FullLeaderboardModal({
 
           {leaderboard.map((entry, idx) => {
             const isMe = user && userTargets.length > 0 && (
+              (entry.staffId && user?.id && String(entry.staffId) === String(user.id)) ||
               (entry.username && userTargets.includes(entry.username.trim().toLowerCase())) ||
-              (entry.displayName && userTargets.includes(entry.displayName.trim().toLowerCase()))
+              (entry.displayName && userTargets.includes(entry.displayName.trim().toLowerCase())) ||
+              (entry.aliases && entry.aliases.some(a => userTargets.includes(a)))
             );
             const displayName = entry.displayName || entry.username;
             return (

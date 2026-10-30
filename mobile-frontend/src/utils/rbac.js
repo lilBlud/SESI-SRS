@@ -164,3 +164,42 @@ export function buildStaffIndex(staffList = []) {
 
   return { byId, byAlias, find };
 }
+
+export const MOCK_LEADERBOARD_NAMES = new Set([
+  'demo',
+  'demo user',
+  'demo-001',
+  'ka',
+  'evelien',
+  'quizwiz',
+  'coolcat',
+  'cameron',
+  'petrus'
+]);
+
+/**
+ * Filter out test accounts, mock scores, and deleted accounts from public leaderboard rankings.
+ */
+export function isExcludedLeaderboardAccount(u, p, staff, staffId) {
+  const s1 = (u || '').toLowerCase().trim();
+  const s2 = (p || '').toLowerCase().trim();
+  const sf = (staff?.FullName || staff?.fullName || '').toLowerCase().trim();
+  const sp = (staff?.PreferredName || staff?.preferredName || '').toLowerCase().trim();
+  const se = (staff?.Email || staff?.email || '').toLowerCase().trim();
+  const sd = (staff?.Division || staff?.division || '').toUpperCase().trim();
+  const sid = staff?.Id ?? staff?.id ?? staffId;
+
+  // Direct mock or demo names
+  if (MOCK_LEADERBOARD_NAMES.has(s1) || MOCK_LEADERBOARD_NAMES.has(s2) || MOCK_LEADERBOARD_NAMES.has(sf) || MOCK_LEADERBOARD_NAMES.has(sp)) return true;
+
+  // Substrings identifying demo accounts
+  if (s1.includes('demo') || s2.includes('demo') || sf.includes('demo') || se.includes('demo')) return true;
+
+  // Deleted users
+  if (sf.includes('[deleted user]') || sd === 'DELETED' || se.startsWith('deleted_') || sid === 8 || sid === 9) return true;
+
+  // System admin or test accounts without division
+  if (se === 'admin@test.com' && (!sd || sd === '')) return true;
+
+  return false;
+}

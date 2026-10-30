@@ -177,6 +177,67 @@ export const isExcludedLeaderboardAccount = (u, p, staff, staffId) => {
   return false;
 };
 
+
+/**
+ * Pure aggregation pipeline: groups UserAnswers by resolved staff/user identity,
+ * accumulates monthly scores, filters excluded accounts, and resolves preferred display names.
+ */
+export function aggregateMonthlyScores(userAnswers = [], staffData = []) {
+  const staffIndex = buildStaffIndex(staffData);
+  const groups = {};
+
+  for (const a of userAnswers) {
+    const u = (a.Username ?? a.username ?? '').trim();
+    const p = (a.PreferredName ?? a.preferredName ?? '').trim();
+    const sid = a.staff_id ?? a.Staff_Id;
+
+    const staff = staffIndex.find(u, sid) || staffIndex.find(p);
+    if (isExcludedLeaderboardAccount(u, p, staff, sid)) continue;
+
+    const key = staff ? `staff_${staff.Id ?? staff.id}` : (u || p || 'Anonymous');
+    const currentDisplayName = staff?.PreferredName?.trim() || staff?.preferredName?.trim() || p || staff?.FullName?.trim() || staff?.fullName?.trim() || u || 'Anonymous';
+    const realFullName = staff?.FullName?.trim() || staff?.fullName?.trim() || u || currentDisplayName;
+
+    if (!groups[key]) {
+      const aliases = [
+        realFullName.toLowerCase(),
+        currentDisplayName.toLowerCase(),
+        (staff?.FullName || '').toLowerCase(),
+        (staff?.PreferredName || '').toLowerCase(),
+        (staff?.Email || '').toLowerCase(),
+        (staff?.StaffId || '').toLowerCase(),
+        u.toLowerCase(),
+        p.toLowerCase()
+      ].filter(Boolean);
+
+      groups[key] = {
+        key,
+        username: realFullName,
+        displayName: currentDisplayName,
+        score: 0,
+        division: staff?.Division?.trim() || (a.Division ?? a.division ?? 'General'),
+        dateTaken: a.DateAnswered ?? a.dateAnswered ?? '',
+        streak: 0,
+        profilePicture: staff?.ProfilePicture || null,
+        staffId: staff?.Id ?? staff?.id ?? sid ?? null,
+        aliases: [...new Set(aliases)]
+      };
+    } else {
+      if (staff?.PreferredName?.trim()) {
+        groups[key].displayName = staff.PreferredName.trim();
+        const pLower = staff.PreferredName.trim().toLowerCase();
+        if (!groups[key].aliases.includes(pLower)) {
+          groups[key].aliases.push(pLower);
+        }
+      }
+    }
+
+    groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
+  }
+
+  return { groups, staffIndex };
+}
+
 export async function getLeaderboardDirect(month) {
   const [ansRes, actRes, staffRes] = await Promise.all([
     supabase.from('UserAnswers').select('*').eq('Month', month),
@@ -190,40 +251,7 @@ export async function getLeaderboardDirect(month) {
   const staffData = staffRes.data || [];
   const actData = actRes.data || [];
 
-  const staffIndex = buildStaffIndex(staffData);
-  const groups = {};
-
-  for (const a of raw) {
-    const u = (a.Username ?? a.username ?? '').trim();
-    const p = (a.PreferredName ?? a.preferredName ?? '').trim();
-    const sid = a.staff_id ?? a.Staff_Id;
-
-    const staff = staffIndex.find(u, sid) || staffIndex.find(p);
-    if (isExcludedLeaderboardAccount(u, p, staff, sid)) continue;
-
-    const key = staff ? `staff_${staff.Id ?? staff.id}` : (u || p || 'Anonymous');
-    const currentDisplayName = staff?.PreferredName?.trim() || staff?.preferredName?.trim() || p || staff?.FullName?.trim() || staff?.fullName?.trim() || u || 'Anonymous';
-    const realFullName = staff?.FullName?.trim() || staff?.fullName?.trim() || u || currentDisplayName;
-
-    if (!groups[key]) {
-      groups[key] = {
-        username: realFullName,
-        displayName: currentDisplayName,
-        score: 0,
-        division: staff?.Division?.trim() || (a.Division ?? a.division ?? 'General'),
-        dateTaken: a.DateAnswered ?? a.dateAnswered ?? '',
-        streak: 0,
-        profilePicture: staff?.ProfilePicture || null,
-        staffId: staff?.Id || sid || null
-      };
-    } else {
-      if (staff?.PreferredName?.trim()) {
-        groups[key].displayName = staff.PreferredName.trim();
-      }
-    }
-
-    groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
-  }
+  const { groups, staffIndex } = aggregateMonthlyScores(raw, staffData);
 
   // Enrich with user streaks from UserActivities
   try {
@@ -481,7 +509,7 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
 
   const [ansRes, staffRes] = await Promise.all([
     supabase.from('UserAnswers').select('*').eq('Month', month),
-    supabase.from('StaffUsers').select('Id, FullName, PreferredName, Email, StaffId')
+    supabase.from('StaffUsers').select('Id, FullName, PreferredName, Email, StaffId, Division, ProfilePicture')
   ]);
 
   if (ansRes.error || !ansRes.data) return { score: 0, rank: null };
@@ -775,7 +803,7 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
         .from('EmployeeAwards')
         .insert([{
           Month: 'SYSTEM',
-          Username: targetEmail,
+          Username: roleIdentifier,
           AwardTitle: 'ROLE_ADMIN',
           Message: `Admin granted to ${target.fullName}`,
           staff_id: target.id || null
@@ -791,7 +819,7 @@ export async function updateUserRoleDirect(targetUserOrId, newRole) {
         .from('EmployeeAwards')
         .insert([{
           Month: 'SYSTEM',
-          Username: targetEmail,
+          Username: roleIdentifier,
           AwardTitle: 'ROLE_STAFF',
           Message: `Admin revoked for ${target.fullName}`,
           staff_id: target.id || null

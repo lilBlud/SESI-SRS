@@ -16,8 +16,10 @@ export function LeaderboardAvatar({
 
   const userTargets = extractUserTargets(user);
   const isMe = entry && userTargets.length > 0 && (
+    (entry.staffId && user?.id && String(entry.staffId) === String(user.id)) ||
     (entry.username && userTargets.includes(entry.username.trim().toLowerCase())) ||
-    (entry.displayName && userTargets.includes(entry.displayName.trim().toLowerCase()))
+    (entry.displayName && userTargets.includes(entry.displayName.trim().toLowerCase())) ||
+    (entry.aliases && entry.aliases.some(a => userTargets.includes(a)))
   );
 
   const pic = !imgErr && (entry?.profilePicture || (isMe ? user?.profilePicture : null));

@@ -116,10 +116,10 @@
     "semantic_hash": "d75e7010e1af04069663382cf3f7b160"
   },
   "mobile-frontend/src/components/modals/FullLeaderboardModal.jsx": {
-    "mtime": 1793169172.1622021,
-    "seen": 1793173358.2497137,
-    "ast_hash": "3271855bde61fe65388ac6fdcb44e336",
-    "semantic_hash": "3271855bde61fe65388ac6fdcb44e336"
+    "mtime": 1793320759.0896008,
+    "seen": 1793320837.7530358,
+    "ast_hash": "ba2a4c0562f8bcb9c3dcbc3fb2ca77e4",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/modals/FutureGenMapModal.jsx": {
     "mtime": 1793169172.16468,
@@ -368,9 +368,9 @@
     "semantic_hash": "32d3101050d7783de6d97786a6b50dda"
   },
   "mobile-frontend/src/components/ui/LeaderboardAvatar.jsx": {
-    "mtime": 1793169172.2335644,
-    "seen": 1793173358.2497647,
-    "ast_hash": "877945f2bc722a2c6e045be4c473aa63",
+    "mtime": 1793320759.0887113,
+    "seen": 1793320837.7570798,
+    "ast_hash": "4af5b6a55e4d2c9bd0d17b9c57e23da6",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/ui/UIComponents.jsx": {
@@ -428,9 +428,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/utils/rbac.js": {
-    "mtime": 1793260107.2522223,
-    "seen": 1793260149.6949883,
-    "ast_hash": "a914f7b4dba1c1053faabf65d2b3cd0f",
+    "mtime": 1793320759.0817206,
+    "seen": 1793320837.7578344,
+    "ast_hash": "4de3e857a93442ea699593944248c6f3",
     "semantic_hash": ""
   },
   "mobile-frontend/src/utils/sabahMapGeoData.js": {
@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793320079.731202,
-    "seen": 1793320142.1893773,
-    "ast_hash": "eccf2b5df1009fd56d8824c500ac313e",
+    "mtime": 1793320816.4216907,
+    "seen": 1793320837.7579107,
+    "ast_hash": "249b6fcbf76046ca2ca026a586fec2d9",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {
