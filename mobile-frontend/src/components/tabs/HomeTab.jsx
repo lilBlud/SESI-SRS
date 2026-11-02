@@ -139,21 +139,16 @@ export function HomeTab({
         user={user}
         streak={streak}
         onViewAll={() => setShowFullLb(true)}
-        onTakeQuiz={() => setActiveTab && setActiveTab('quiz')}
       />
 
       {/* ── Category Quick Access ── */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-slate-800">
-        <div className="flex items-center justify-between mb-3 px-0.5">
-          <h3 className="text-[13px] font-black tracking-tight text-slate-900 dark:text-white">
-            Regulatory Frameworks
-          </h3>
-          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            {CATEGORIES.length - 1} Topics
-          </span>
-        </div>
+      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10">
+        <h3 className="text-[13px] font-black text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+          <span className="text-base">📂</span> Browse by Category
+        </h3>
         <div className="grid grid-cols-2 gap-2">
           {CATEGORIES.slice(1).map(cat => {
+            const clr = getColor(cat.key);
             return (
               <button
                 key={cat.key}
@@ -161,18 +156,16 @@ export function HomeTab({
                   if (setActiveGlossaryCat) setActiveGlossaryCat(cat.key);
                   setActiveTab('glossary');
                 }}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all active:scale-98 bg-slate-50 hover:bg-slate-100/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 group shadow-2xs"
+                className={`flex items-center gap-2 p-2.5 rounded-xl text-left transition-all active:scale-95 hover:shadow-md ${clr.bg} border ${clr.border}`}
               >
-                <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/80 border border-slate-200/80 dark:border-slate-600/80 flex items-center justify-center shrink-0 shadow-2xs text-[13px] group-hover:scale-105 transition-transform">
+                <div className="w-6 flex items-center justify-center shrink-0">
                   {cat.iconImage ? (
-                    <img src={cat.iconImage} alt={cat.label} className="h-4 w-auto object-contain" />
+                    <img src={cat.iconImage} alt={cat.label} className="h-6 w-auto object-contain scale-[1.5]" />
                   ) : (
-                    <span>{cat.emoji}</span>
+                    <span className="text-lg">{cat.emoji}</span>
                   )}
                 </div>
-                <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                  {cat.label}
-                </span>
+                <span className={`text-[11px] font-bold ${clr.text} leading-tight`}>{cat.label}</span>
               </button>
             );
           })}
@@ -182,8 +175,8 @@ export function HomeTab({
       {/* ── Posts Section ── */}
       <div id="posts" className="scroll-mt-28 space-y-4">
         <div className="flex items-center justify-between px-4">
-          <h3 className="text-[13px] font-black tracking-tight text-slate-900 dark:text-white">
-            Latest Bulletins & Updates
+          <h3 className="text-[13px] font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span className="text-base">📰</span> Latest Posts
           </h3>
           <div className="flex items-center gap-2">
             <button
@@ -244,7 +237,7 @@ export function HomeTab({
           return (
             <div
               key={post.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200/80 dark:border-slate-800 relative overflow-hidden"
+              className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 relative overflow-hidden"
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="pr-12">

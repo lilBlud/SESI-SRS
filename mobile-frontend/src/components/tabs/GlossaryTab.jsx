@@ -209,8 +209,8 @@ export function GlossaryTab({
               <div
                 key={item.id || item.term}
                 onClick={() => recordRead(item.id || item.term)}
-                className={`bg-white dark:bg-slate-900 rounded-xl shadow-2xs border border-slate-200/80 dark:border-slate-800 cursor-pointer transition-all active:scale-[0.99] ${
-                  isExpanded ? 'border-emerald-500/80 ring-1 ring-emerald-500/30' : ''
+                className={`bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 cursor-pointer transition-all active:scale-[0.99] ${
+                  isExpanded ? `ring-2 ${clr.border}` : 'dark:ring-white/10'
                 }`}
               >
                 <div className="p-4 flex items-center gap-3">
@@ -302,7 +302,7 @@ export function GlossaryTab({
 
       {/* LIST View */}
       {viewMode === 'list' && filtered.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200/80 dark:border-slate-800 overflow-hidden">
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 overflow-hidden">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
               <tr>

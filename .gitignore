@@ -43,8 +43,3 @@ skills-lock.json
 # Graphify Cache & State
 graphify-out/cache/
 graphify-out/.graphify*
-
-# Video generators and nested repos
-OpenMontage/
-my-video/
-.codex/

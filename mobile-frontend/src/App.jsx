@@ -313,10 +313,15 @@ function App() {
   }
 
   return (
-    <div className={`h-[100vh] overflow-hidden flex flex-col text-slate-900 transition-colors duration-200 w-full max-w-[430px] mx-auto relative shadow-2xl bg-slate-100/80 dark:bg-slate-950 ${isDark ? 'dark:text-slate-100' : ''}`}>
-      {/* Subtle Ambient Radial Lighting (Clean, no noisy photo background) */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[380px] h-[220px] bg-emerald-500/10 dark:bg-emerald-500/5 blur-[80px] -z-10 pointer-events-none rounded-full" />
-      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[320px] h-[180px] bg-sky-500/5 dark:bg-sky-500/5 blur-[90px] -z-10 pointer-events-none rounded-full" />
+    <div className={`h-[100vh] overflow-hidden flex flex-col text-slate-900 transition-colors duration-200 w-full max-w-[430px] mx-auto relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
+      {/* Hardware Accelerated HD Background Image */}
+      <img
+        src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
+        alt="Background"
+        className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none"
+      />
+      {/* Dark Mode Text Contrast Overlay */}
+      {isDark && <div className="absolute inset-0 bg-slate-950/50 -z-10 pointer-events-none"></div>}
 
       {/* Root level Toast Notification */}
       {streakToast && (
@@ -496,26 +501,16 @@ function App() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800/80 z-50 safe-area-bottom">
-        <div className="flex items-center justify-around h-[60px] px-2">
-          {tabs.map(({ id, label, Icon }) => {
-            const isActive = activeTab === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className="flex-1 flex flex-col items-center justify-center h-full py-1 transition-all active:scale-95 group"
-                aria-label={label}
-              >
-                <div className={`transition-colors duration-150 ${isActive ? 'text-emerald-600 dark:text-emerald-400 scale-105' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>
-                  <Icon active={isActive} />
-                </div>
-                <span className={`text-[10px] tracking-tight mt-1 transition-colors duration-150 ${isActive ? 'font-black text-emerald-700 dark:text-emerald-400' : 'font-semibold text-slate-400 dark:text-slate-500'}`}>
-                  {label}
-                </span>
-              </button>
-            );
-          })}
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-50 pb-3">
+        <div className="flex items-center justify-around h-[68px] px-2">
+          {tabs.map(({ id, label, Icon }) => (
+            <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center justify-center w-[68px] h-[60px] mx-1 rounded-2xl transition-all ${activeTab === id ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'opacity-60'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === id ? 'text-emerald-600' : 'text-slate-400'}`}>
+                <Icon active={activeTab === id} />
+                <span className="text-[11px] font-bold leading-none">{label}</span>
+              </div>
+            </button>
+          ))}
         </div>
       </nav>
 
