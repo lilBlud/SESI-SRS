@@ -19,22 +19,22 @@ export function HomeHeroBanner({ greetingName, isDark, onNavigateGlossary, onNav
 
       {/* Content */}
       <div className="relative z-10 p-6 pt-5 min-h-[170px]">
-        <h1 className="text-[24px] font-black tracking-tight leading-tight text-slate-900 dark:text-white dark:[text-shadow:_0_2px_15px_rgb(0_0_0_/_1),_0_1px_2px_rgb(0_0_0_/_1)]">
+        <h1 className="text-[22px] sm:text-[24px] font-extrabold tracking-tight leading-snug text-slate-900 dark:text-white">
           Welcome back, {greetingName}!
         </h1>
-        <p className="text-emerald-700 dark:text-[#a0e8c5] text-[13px] mt-1.5 leading-relaxed font-bold dark:[text-shadow:_0_1px_4px_rgb(0_0_0_/_1)]">
+        <p className="text-emerald-800 dark:text-emerald-300 text-[13px] mt-1.5 leading-normal font-semibold">
           Energy Transition & Regulatory updates.
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onNavigateGlossary}
-            className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 dark:bg-white dark:hover:bg-slate-50 dark:active:bg-slate-100 text-white dark:text-emerald-700 text-[13px] font-black rounded-full shadow-[0_4px_15px_rgba(16,185,129,0.3)] dark:shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all flex items-center gap-1.5"
+            className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 dark:bg-white dark:hover:bg-slate-50 dark:active:bg-slate-100 text-white dark:text-emerald-700 text-[12.5px] font-bold rounded-full shadow-[0_4px_15px_rgba(16,185,129,0.3)] dark:shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all flex items-center gap-1.5 tracking-tight"
           >
             📖 Dictionary
           </button>
           <button
             onClick={onNavigateQuiz}
-            className="px-5 py-2.5 bg-slate-900/5 hover:bg-slate-900/10 active:bg-slate-900/15 dark:bg-black/20 dark:hover:bg-black/30 dark:active:bg-black/40 text-slate-800 dark:text-white text-[13px] font-bold rounded-full border border-slate-900/10 dark:border-white/30 backdrop-blur-md shadow-sm transition-all"
+            className="px-5 py-2.5 bg-slate-900/5 hover:bg-slate-900/10 active:bg-slate-900/15 dark:bg-black/20 dark:hover:bg-black/30 dark:active:bg-black/40 text-slate-800 dark:text-white text-[12.5px] font-bold rounded-full border border-slate-900/10 dark:border-white/30 backdrop-blur-md shadow-sm transition-all tracking-tight"
           >
             Monthly Quiz
           </button>

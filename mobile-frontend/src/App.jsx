@@ -354,10 +354,10 @@ function App() {
               />
             </div>
             <div className="flex flex-col justify-center select-none">
-              <span className="text-[15px] sm:text-[16px] font-black tracking-tight leading-none text-[#059669] dark:text-[#34d399] whitespace-nowrap" style={{ textRendering: 'geometricPrecision' }}>
+              <span className="text-[15px] sm:text-[16px] font-extrabold tracking-tight leading-none text-[#059669] dark:text-[#34d399] whitespace-nowrap" style={{ textRendering: 'geometricPrecision' }}>
                 SESI INSIGHT
               </span>
-              <span className="text-[9px] sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 mt-0.5 leading-none tracking-tight whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] font-semibold text-slate-600 dark:text-slate-300 mt-0.5 leading-none tracking-tight whitespace-nowrap">
                 Sabah Electricity Supply Industry
               </span>
             </div>
@@ -370,7 +370,7 @@ function App() {
             {streak > 0 && (
               <div className="flex items-center gap-1 bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-950/40 dark:to-amber-950/40 border border-orange-200/50 dark:border-orange-800/50 text-orange-600 dark:text-orange-400 px-2.5 py-1.5 rounded-full shadow-sm shrink-0">
                 <span className="text-[12px] leading-none">🔥</span>
-                <span className="text-[13px] font-black leading-none">{streak}</span>
+                <span className="text-[13px] font-extrabold tabular-nums leading-none">{streak}</span>
               </div>
             )}
 
@@ -507,7 +507,7 @@ function App() {
             <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center justify-center w-[68px] h-[60px] mx-1 rounded-2xl transition-all ${activeTab === id ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'opacity-60'}`}>
               <div className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === id ? 'text-emerald-600' : 'text-slate-400'}`}>
                 <Icon active={activeTab === id} />
-                <span className="text-[11px] font-bold leading-none">{label}</span>
+                <span className="text-[11px] font-semibold leading-none tracking-tight">{label}</span>
               </div>
             </button>
           ))}

@@ -50,11 +50,11 @@ export function HomeLeaderboardPodium({
             </div>
           </div>
           <div>
-            <h2 className="text-[16px] font-black text-white tracking-tight">Monthly Leaderboard</h2>
-            <p className="text-white/70 text-[11px] font-medium">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+            <h2 className="text-[16px] font-extrabold text-white tracking-tight">Monthly Leaderboard</h2>
+            <p className="text-white/80 text-[11px] font-medium tracking-normal">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
           </div>
         </div>
-        <button onClick={onViewAll} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold rounded-lg backdrop-blur-sm transition-all">
+        <button onClick={onViewAll} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold tracking-tight rounded-lg backdrop-blur-sm transition-all">
           View All →
         </button>
       </div>
@@ -65,9 +65,10 @@ export function HomeLeaderboardPodium({
             <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : leaderboard.length === 0 ? (
-          <div className="text-center py-6 text-slate-400 text-sm">
+          <div className="text-center py-8 px-4">
             <div className="text-3xl mb-2">🎯</div>
-            No entries yet — be the first to take the quiz!
+            <p className="text-slate-700 dark:text-slate-200 font-bold text-[13.5px] tracking-tight">No entries yet this month</p>
+            <p className="text-slate-500 dark:text-slate-400 text-[11.5px] mt-0.5">Be the first to take the quiz and claim the #1 spot!</p>
           </div>
         ) : (
           <>
@@ -77,7 +78,7 @@ export function HomeLeaderboardPodium({
               <div className="w-full">
                 {leaderboard.length > 1 && (
                   <div className="flex flex-col items-center justify-end relative">
-                    <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-2.5 truncate">
+                    <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100 w-full text-center px-1 mb-2.5 tracking-tight truncate">
                       {(leaderboard[1].displayName || leaderboard[1].username).split(' ')[0]}
                     </div>
                     <LeaderboardAvatar
@@ -92,7 +93,7 @@ export function HomeLeaderboardPodium({
                       isPodium={true}
                     />
                     <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-20 bg-gradient-to-b from-slate-200 to-slate-50 dark:from-slate-600/40 dark:to-slate-800/10 border-t-2 border-slate-300 dark:border-slate-500">
-                      <div className="font-black text-[14px] text-slate-800 dark:text-white leading-none">{leaderboard[1].score}</div>
+                      <div className="font-extrabold text-[14px] text-slate-900 dark:text-white tabular-nums tracking-tight leading-none">{leaderboard[1].score}</div>
                     </div>
                   </div>
                 )}
@@ -103,7 +104,7 @@ export function HomeLeaderboardPodium({
                 {leaderboard.length > 0 && (
                   <div className="flex flex-col items-center justify-end relative">
                     <div className="absolute -top-5 text-lg animate-bounce z-20 drop-shadow-md">👑</div>
-                    <div className="text-[13px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-2.5 truncate">
+                    <div className="text-[13px] font-extrabold text-slate-900 dark:text-white w-full text-center px-1 mb-2.5 tracking-tight truncate">
                       {(leaderboard[0].displayName || leaderboard[0].username).split(' ')[0]}
                     </div>
                     <LeaderboardAvatar
@@ -117,7 +118,7 @@ export function HomeLeaderboardPodium({
                       isPodium={true}
                     />
                     <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-28 bg-gradient-to-b from-amber-200 to-amber-50 dark:from-amber-600/40 dark:to-amber-900/10 border-t-2 border-amber-300 dark:border-amber-500">
-                      <div className="font-black text-[15px] text-slate-800 dark:text-white leading-none">{leaderboard[0].score}</div>
+                      <div className="font-extrabold text-[15px] text-amber-950 dark:text-amber-100 tabular-nums tracking-tight leading-none">{leaderboard[0].score}</div>
                     </div>
                   </div>
                 )}
@@ -127,7 +128,7 @@ export function HomeLeaderboardPodium({
               <div className="w-full">
                 {leaderboard.length > 2 && (
                   <div className="flex flex-col items-center justify-end relative">
-                    <div className="text-[12px] font-black text-slate-800 dark:text-white w-full text-center px-1 mb-2.5 truncate">
+                    <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100 w-full text-center px-1 mb-2.5 tracking-tight truncate">
                       {(leaderboard[2].displayName || leaderboard[2].username).split(' ')[0]}
                     </div>
                     <LeaderboardAvatar
@@ -142,7 +143,7 @@ export function HomeLeaderboardPodium({
                       isPodium={true}
                     />
                     <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-16 bg-gradient-to-b from-orange-200 to-orange-50 dark:from-orange-600/40 dark:to-orange-900/10 border-t-2 border-orange-300 dark:border-orange-500">
-                      <div className="font-black text-[14px] text-slate-800 dark:text-white leading-none">{leaderboard[2].score}</div>
+                      <div className="font-extrabold text-[14px] text-orange-950 dark:text-orange-100 tabular-nums tracking-tight leading-none">{leaderboard[2].score}</div>
                     </div>
                   </div>
                 )}
@@ -152,11 +153,11 @@ export function HomeLeaderboardPodium({
             {/* Runners up */}
             {leaderboard.length > 3 && (
               <div className="mt-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl p-2.5 border border-slate-100 dark:border-slate-700/50 space-y-1.5">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-1">Runners-up</div>
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center mb-1">Runners-up</div>
                 {leaderboard.slice(3, 5).map((entry, idx) => (
                   <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-800 px-3 py-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300 shadow-inner shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums shadow-inner shrink-0">
                         {idx + 4}
                       </div>
                       <LeaderboardAvatar
@@ -168,13 +169,13 @@ export function HomeLeaderboardPodium({
                         bgClass="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600"
                       />
                       <div className="min-w-0">
-                        <div className="text-[12px] font-bold text-slate-800 dark:text-slate-200 truncate">{entry.displayName || entry.username}</div>
+                        <div className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 tracking-tight truncate">{entry.displayName || entry.username}</div>
                         {entry.displayName && entry.displayName !== entry.username && (
-                          <div className="text-[10px] text-slate-400 truncate">{entry.username}</div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{entry.username}</div>
                         )}
                       </div>
                     </div>
-                    <div className="text-[13px] font-black text-emerald-600 dark:text-emerald-400 shrink-0">{entry.score} <span className="text-[9px] text-slate-400 uppercase">pts</span></div>
+                    <div className="text-[13px] font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0 tabular-nums tracking-tight">{entry.score} <span className="text-[9px] text-slate-400 uppercase font-semibold">pts</span></div>
                   </div>
                 ))}
               </div>

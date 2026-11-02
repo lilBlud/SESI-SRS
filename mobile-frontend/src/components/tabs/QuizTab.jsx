@@ -164,18 +164,18 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-4">Monthly Knowledge Hub</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-[13px] mt-1.5">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} Quiz</p>
+          <h2 className="text-[22px] sm:text-[24px] font-extrabold tracking-tight text-slate-900 dark:text-white mt-4">Monthly Knowledge Hub</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-[13px] font-medium mt-1.5">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} Quiz</p>
         </div>
 
         {/* Streak Banner */}
         <div className={`rounded-2xl p-4 flex items-center gap-3 ${streak > 0 ? 'bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
           <div className="text-3xl">{streak > 0 ? '🔥' : '💤'}</div>
           <div>
-            <div className="font-black text-[15px] text-slate-900 dark:text-white">
+            <div className="font-bold text-[15px] tracking-tight text-slate-900 dark:text-white">
               {streak > 0 ? `${streak}-Day Streak!` : 'No Streak Yet'}
             </div>
-            <p className="text-[12px] text-slate-500 mt-0.5">
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">
               {streak > 0 ? 'Keep reading daily to maintain your streak!' : 'Tap terms in the Dictionary to start your streak.'}
             </p>
           </div>
@@ -188,8 +188,8 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
             className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl p-5 shadow-lg shadow-emerald-500/25 text-left active:scale-[0.98] transition-all flex items-center justify-between"
           >
             <div>
-              <span className="text-[16px] font-bold">Start Monthly Quiz</span>
-              <p className="text-[13px] text-emerald-100 mt-1">Test your knowledge for this month</p>
+              <span className="text-[16px] font-bold tracking-tight">Start Monthly Quiz</span>
+              <p className="text-[13px] text-emerald-100/90 font-normal mt-0.5">Test your knowledge for this month</p>
             </div>
             <svg className="w-6 h-6 shrink-0 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
           </button>
@@ -226,7 +226,7 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
                 Practice Mode
               </span>
             )}
-            <span className="text-[12px] font-bold text-slate-500">Question {currentQ + 1} / {questions.length}</span>
+            <span className="text-[12px] font-semibold text-slate-500 dark:text-slate-400 tabular-nums">Question {currentQ + 1} / {questions.length}</span>
           </div>
         </div>
 
@@ -236,7 +236,7 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-          <h3 className="text-[17px] font-bold leading-snug">{q.question}</h3>
+          <h3 className="text-[16.5px] sm:text-[17px] font-bold tracking-tight leading-snug text-slate-900 dark:text-white">{q.question}</h3>
         </div>
 
         <div className="space-y-3">
@@ -249,7 +249,7 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
             }
 
             return (
-              <button key={idx} onClick={() => selectAnswer(idx)} disabled={answered} className={`w-full text-left p-4 rounded-2xl border-2 text-[15px] font-medium transition-all ${styles}`}>
+              <button key={idx} onClick={() => selectAnswer(idx)} disabled={answered} className={`w-full text-left p-4 rounded-2xl border-2 text-[14.5px] font-medium leading-snug transition-all ${styles}`}>
                 <div className="flex items-center">
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold mr-3 shrink-0 ${answered && idx === q.correctIndex ? 'bg-emerald-500 text-white' : answered && idx === selected ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-600'}`}>
                     {answered && idx === q.correctIndex ? '✓' : answered && idx === selected ? '✗' : String.fromCharCode(65 + idx)}
@@ -274,7 +274,7 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
                   </span>
                 </div>
               ) : (
-                <div className={`font-black text-xl ${lastAns?.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                <div className={`font-extrabold text-xl tabular-nums tracking-tight ${lastAns?.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
                   +{lastAns?.points || 0} Points
                 </div>
               )}
@@ -298,9 +298,9 @@ export function QuizTab({ user, streak, setActiveTab, onStreakUpdate }) {
         <div className="pt-6">
           <div className="text-5xl mb-4 animate-bounce-slow">{emoji}</div>
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30">
-            <span className="text-3xl font-black text-white">{pct}%</span>
+            <span className="text-3xl font-extrabold text-white tabular-nums tracking-tight">{pct}%</span>
           </div>
-          <h2 className="text-2xl font-black mt-4">
+          <h2 className="text-[22px] font-extrabold tracking-tight mt-4">
             {isPracticeMode ? 'Practice Completed!' : 'Quiz Completed!'}
           </h2>
           <div className="text-slate-500 dark:text-slate-400 text-[14px] mt-2 px-2">

@@ -148,7 +148,7 @@ export function GlossaryTab({
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-200/80 dark:bg-slate-700/80 px-2 py-0.5 rounded-md tabular-nums">
             {filtered.length} terms
           </span>
         </div>
@@ -163,7 +163,7 @@ export function GlossaryTab({
               <button
                 key={c.key}
                 onClick={() => setCat(c.key)}
-                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 ${
+                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold tracking-tight transition-all flex items-center gap-1 ${
                   isActive
                     ? (clr ? `${clr.pill} text-white shadow-md` : 'bg-emerald-600 text-white shadow-md')
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -216,14 +216,14 @@ export function GlossaryTab({
                 <div className="p-4 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-black text-[15px] text-slate-900 dark:text-white">
+                      <h3 className="font-bold text-[15px] text-slate-900 dark:text-white tracking-tight">
                         {item.term}
                         {item.full && !item.term.includes(' ') && (
-                          <span className="ml-2 font-semibold text-[13px] text-slate-500 dark:text-slate-400">({item.full})</span>
+                          <span className="ml-2 font-medium text-[12.5px] text-slate-500 dark:text-slate-400 tracking-normal">({item.full})</span>
                         )}
                       </h3>
                       {isPerfCard && (
-                        <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300/50 dark:border-emerald-700/50 flex items-center gap-1">
+                        <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300/50 dark:border-emerald-700/50 flex items-center gap-1 tracking-tight">
                           <span>📈</span>
                           <span>Performance Card</span>
                         </span>
@@ -241,7 +241,7 @@ export function GlossaryTab({
                     <div className="mt-2">
                       {isPerfCard ? (
                         <div className="space-y-2 mt-3 mb-2">
-                          <p className="text-[13px] text-slate-600 dark:text-slate-300 mb-3 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
+                          <p className="text-[13.5px] text-slate-700 dark:text-slate-300 mb-3 leading-relaxed whitespace-pre-wrap font-normal">{item.desc}</p>
                           <CorporatePerformanceChart
                             chartData={item.chartData}
                             term={item.term}
@@ -251,19 +251,19 @@ export function GlossaryTab({
                           />
                         </div>
                       ) : (
-                        <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
+                        <p className="text-[13.5px] text-slate-700 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap font-normal">{item.desc}</p>
                       )}
                     </div>
 
                     {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
                       <div className={`mt-3 ${clr.bg} border ${clr.border} rounded-xl p-3`}>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">📐 Formula</div>
-                        <div className={`text-[13px] font-bold ${clr.text} leading-relaxed`}>
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">📐 Formula</div>
+                        <div className={`text-[13px] font-semibold ${clr.text} leading-relaxed`}>
                           {item.formula}
                         </div>
                         {item.formulaTermMeanings && (
                           <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
-                            <ul className="text-[12px] text-slate-700 dark:text-slate-300 mt-0.5 space-y-1">
+                            <ul className="text-[12.5px] text-slate-700 dark:text-slate-300 mt-0.5 space-y-1 leading-relaxed">
                               {item.formulaTermMeanings.split('\n').map((line, i) => (
                                 <li key={i}>- {line}</li>
                               ))}
@@ -274,7 +274,7 @@ export function GlossaryTab({
                     )}
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                      <div className="flex items-center gap-2 text-[11.5px] text-slate-500 dark:text-slate-400 font-medium">
                         <span className="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">✓ Read</span>
                         <span>Counts toward your daily streak!</span>
                       </div>

@@ -107,18 +107,18 @@ export function HomeTab({
               <img src="/assets/logo.png" alt="SESI App Logo" className="w-full h-full object-contain" />
             </div>
             <div className="min-w-0">
-              <div className="text-[13px] font-black text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
+              <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-snug flex items-center gap-1.5">
                 Install SESI App on Phone
-                <span className="text-[9px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded-md">App</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded-md">App</span>
               </div>
-              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+              <div className="text-[11.5px] font-normal text-slate-500 dark:text-slate-400 truncate mt-0.5">
                 Add to your Home Screen for faster access
               </div>
             </div>
           </div>
           <button
             type="button"
-            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-black rounded-xl shadow-sm transition-transform active:scale-95 shrink-0 ml-2"
+            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold tracking-tight rounded-xl shadow-sm transition-transform active:scale-95 shrink-0 ml-2"
           >
             Install
           </button>
@@ -143,7 +143,7 @@ export function HomeTab({
 
       {/* ── Category Quick Access ── */}
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10">
-        <h3 className="text-[13px] font-black text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+        <h3 className="text-[13px] font-bold tracking-tight text-slate-900 dark:text-white mb-3 flex items-center gap-2">
           <span className="text-base">📂</span> Browse by Category
         </h3>
         <div className="grid grid-cols-2 gap-2">
@@ -165,7 +165,7 @@ export function HomeTab({
                     <span className="text-lg">{cat.emoji}</span>
                   )}
                 </div>
-                <span className={`text-[11px] font-bold ${clr.text} leading-tight`}>{cat.label}</span>
+                <span className={`text-[11.5px] font-semibold ${clr.text} leading-tight tracking-tight`}>{cat.label}</span>
               </button>
             );
           })}
@@ -175,7 +175,7 @@ export function HomeTab({
       {/* ── Posts Section ── */}
       <div id="posts" className="scroll-mt-28 space-y-4">
         <div className="flex items-center justify-between px-4">
-          <h3 className="text-[13px] font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-[13px] font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <span className="text-base">📰</span> Latest Posts
           </h3>
           <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export function HomeTab({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
-            <span className="text-xs font-semibold text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-200/80 dark:bg-slate-700/80 px-2 py-0.5 rounded-md tabular-nums">
               {filteredPosts.length} posts
             </span>
           </div>
@@ -202,7 +202,7 @@ export function HomeTab({
             <select
               value={postCat}
               onChange={(e) => setPostCat(e.target.value)}
-              className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[13px] rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+              className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-[13px] rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
             >
               {CATEGORIES.map(c => {
                 const count = c.key === 'All' ? posts.length : (postCatCounts[c.key] || 0);
@@ -241,11 +241,11 @@ export function HomeTab({
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="pr-12">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${clr.text} mb-1 flex items-center gap-1.5`}>
+                  <span className={`text-[10.5px] font-bold uppercase tracking-wider ${clr.text} mb-1.5 flex items-center gap-1.5`}>
                     <span className="text-sm">{clr.emoji}</span> {post.category || 'General'}
                   </span>
-                  <h2 className="text-xl font-black text-slate-900 dark:text-white leading-tight">{post.title}</h2>
-                  {dateStr && <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">{dateStr}</p>}
+                  <h2 className="text-[18px] sm:text-[19px] font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight">{post.title}</h2>
+                  {dateStr && <p className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 mt-1">{dateStr}</p>}
                 </div>
 
                 {/* Bookmark Toggle */}
@@ -265,7 +265,7 @@ export function HomeTab({
               </div>
 
               {post.description && (
-                <p className="mt-2 text-[13px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-4">
+                <p className="mt-2.5 text-[13.5px] text-slate-700 dark:text-slate-300 font-normal leading-relaxed mb-4">
                   {post.description}
                 </p>
               )}
@@ -287,7 +287,7 @@ export function HomeTab({
                   {hasImages && (
                     <button
                       onClick={() => saveImage(allImages[0], `${post.title.replace(/\s+/g, '_')}.png`)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-bold rounded-xl transition-all active:scale-95"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11.5px] font-semibold rounded-xl transition-all active:scale-95"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -297,7 +297,7 @@ export function HomeTab({
                   )}
                 </div>
 
-                <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold">
+                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px] font-semibold tracking-normal">
                   <span>💡</span>
                   <span>SESI Update</span>
                 </div>

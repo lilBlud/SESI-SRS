@@ -8,13 +8,13 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
   return (
     <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl sm:rounded-[26px] p-3.5 sm:p-4 shadow-[0_4px_24px_rgba(0,0,0,0.06)] ring-1 ring-black/5 dark:ring-white/10">
       <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100 dark:border-slate-800">
-        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md flex items-center gap-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md flex items-center gap-1">
           <span>🔒</span> Admin Traffic View
         </span>
         <button
           type="button"
           onClick={onOpenAdmin}
-          className="text-[11px] font-bold text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+          className="text-[11px] font-semibold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
         >
           Open Admin Dashboard →
         </button>
@@ -31,14 +31,14 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
             </svg>
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400 truncate">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
               Visitors Today
             </div>
             <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-[20px] sm:text-[22px] font-black text-slate-900 dark:text-white tracking-tight leading-none">
+              <span className="text-[20px] sm:text-[22px] font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight leading-none">
                 {(visitorStats?.todayVisits ?? 0).toLocaleString()}
               </span>
-              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 truncate">
+              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate tabular-nums">
                 ({(visitorStats?.totalVisits ?? 0).toLocaleString()} total)
               </span>
             </div>
@@ -54,10 +54,10 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
             </svg>
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400 truncate">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
               Users
             </div>
-            <div className="text-[20px] sm:text-[22px] font-black text-slate-900 dark:text-white tracking-tight leading-none mt-0.5">
+            <div className="text-[20px] sm:text-[22px] font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight leading-none mt-0.5">
               {(visitorStats?.uniqueVisitors ?? 0).toLocaleString()}
             </div>
           </div>
