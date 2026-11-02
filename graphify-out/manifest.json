@@ -104,9 +104,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/App.jsx": {
-    "mtime": 1793582964.0387225,
-    "seen": 1793583054.405607,
-    "ast_hash": "7fed224be528957de128db131d95d1e0",
+    "mtime": 1793585113.3468747,
+    "seen": 1793585209.2563388,
+    "ast_hash": "df5fb6d1c699beba242a15aea987bc77",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/modals/EditPreferredNameModal.jsx": {
@@ -296,8 +296,8 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/home/HomeHeroBanner.jsx": {
-    "mtime": 1793582783.0366125,
-    "seen": 1793583054.4076889,
+    "mtime": 1793583785.178875,
+    "seen": 1793584020.9286466,
     "ast_hash": "e238b55c79b6399513592878dd3cc75d",
     "semantic_hash": ""
   },
@@ -320,16 +320,16 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/profile/BookmarksSection.jsx": {
-    "mtime": 1793169172.2220476,
-    "seen": 1793173358.2497554,
-    "ast_hash": "852766e2a2e51527f36fadbd54547c34",
-    "semantic_hash": "852766e2a2e51527f36fadbd54547c34"
+    "mtime": 1793583946.738942,
+    "seen": 1793584020.928864,
+    "ast_hash": "085834f032a0a9e8e47c4f38d037a47e",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/profile/ProfileHeroCard.jsx": {
-    "mtime": 1793169172.2234502,
-    "seen": 1793173358.2497566,
-    "ast_hash": "74a49084d29cfe25de33b5d50d5748d0",
-    "semantic_hash": "74a49084d29cfe25de33b5d50d5748d0"
+    "mtime": 1793583946.7379422,
+    "seen": 1793584020.928866,
+    "ast_hash": "b1702b21ff42e65c7faed8976920bbe8",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/profile/ProfilePhotoPickerModal.jsx": {
     "mtime": 1793169172.2246225,
@@ -338,16 +338,16 @@
     "semantic_hash": "18bac7543b191c8d3a3939e1cd8cc289"
   },
   "mobile-frontend/src/components/tabs/profile/ProfileStatsBadges.jsx": {
-    "mtime": 1793169172.2261534,
-    "seen": 1793173358.2497585,
-    "ast_hash": "851f55666f3c08d37e404d3fc38b4f60",
-    "semantic_hash": "851f55666f3c08d37e404d3fc38b4f60"
+    "mtime": 1793583946.7369409,
+    "seen": 1793584020.928939,
+    "ast_hash": "0b50b92b5d9c42417181ad87e816279f",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/profile/RecentQuestionsCarousel.jsx": {
-    "mtime": 1793169172.2274747,
-    "seen": 1793173358.2497597,
-    "ast_hash": "c2d5fe19f5be99b22c422da5b2d7d28f",
-    "semantic_hash": "c2d5fe19f5be99b22c422da5b2d7d28f"
+    "mtime": 1793583946.738942,
+    "seen": 1793584020.9289408,
+    "ast_hash": "442be6336d719b1ddf6b3399ca4b867c",
+    "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/profile/index.js": {
     "mtime": 1793169172.2285376,
@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793320816.4216907,
-    "seen": 1793320837.7579107,
-    "ast_hash": "249b6fcbf76046ca2ca026a586fec2d9",
+    "mtime": 1793585113.3468747,
+    "seen": 1793585209.2625468,
+    "ast_hash": "77f9d357bd5ed3576a644c208354d2bb",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {
@@ -9959,6 +9959,18 @@
     "mtime": 1793322902.7648232,
     "seen": 1793582499.1573563,
     "ast_hash": "4ebcfbdc776edd9769b735fa684bccb8",
+    "semantic_hash": ""
+  },
+  "mobile-frontend/src/hooks/useInstallPrompt.js": {
+    "mtime": 1793585146.1443746,
+    "seen": 1793585209.262046,
+    "ast_hash": "e3656d4c8237f005377de9bf345581a7",
+    "semantic_hash": ""
+  },
+  "mobile-frontend/src/hooks/usePullToRefresh.js": {
+    "mtime": 1793585146.2167325,
+    "seen": 1793585209.2620482,
+    "ast_hash": "1d2e0bdb805d30f77ee3aaf0b2cbfef0",
     "semantic_hash": ""
   },
   "OpenMontage/remotion-composer/package-lock.json": {
