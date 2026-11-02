@@ -35,8 +35,8 @@ export function ProfileStatsBadges({ loading, totalScore, currentRank }) {
           </svg>
         </div>
         <div>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Score</p>
-          <p className="text-2xl font-black text-slate-900 dark:text-white leading-none mt-0.5">
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Score</p>
+          <p className="text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight leading-none mt-0.5">
             {totalScore}
           </p>
         </div>
@@ -84,8 +84,8 @@ export function ProfileStatsBadges({ loading, totalScore, currentRank }) {
           </div>
         </div>
         <div>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Standing</p>
-          <p className="text-2xl font-black text-slate-900 dark:text-white leading-none mt-0.5">
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Standing</p>
+          <p className="text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight leading-none mt-0.5">
             {currentRank ? `#${currentRank}` : '-'}
           </p>
         </div>

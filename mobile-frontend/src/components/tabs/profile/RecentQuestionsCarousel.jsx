@@ -21,8 +21,8 @@ export function RecentQuestionsCarousel({
         <div className="flex items-center gap-2">
           <span className="text-2xl">📝</span>
           <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white leading-none">Recent Questions</h3>
-            <p className="text-[12px] text-slate-500 mt-1">Your latest answered questions</p>
+            <h3 className="text-[17px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">Recent Questions</h3>
+            <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">Your latest answered questions</p>
           </div>
         </div>
 
