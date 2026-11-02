@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { QuizCard } from './QuizCard';
 
 /**
@@ -14,8 +14,15 @@ export function QuizIdleView({
   onStartQuiz,
   currentMonth
 }) {
-  const availableYears = ['All', ...Array.from(new Set(quizzes.map(q => q.month?.split('-')[0]).filter(Boolean)))];
-  const filteredQuizzes = selectedYear === 'All' ? quizzes : quizzes.filter(q => q.month?.startsWith(selectedYear));
+  const availableYears = useMemo(
+    () => ['All', ...Array.from(new Set(quizzes.map(q => q.month?.split('-')[0]).filter(Boolean)))],
+    [quizzes]
+  );
+
+  const filteredQuizzes = useMemo(
+    () => (selectedYear === 'All' ? quizzes : quizzes.filter(q => q.month?.startsWith(selectedYear))),
+    [quizzes, selectedYear]
+  );
 
   return (
     <div className="animate-slideUp space-y-5">
@@ -99,4 +106,3 @@ export function QuizIdleView({
     </div>
   );
 }
-

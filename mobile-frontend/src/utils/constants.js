@@ -1,6 +1,13 @@
 export const API_BASE = import.meta.env.VITE_API_BASE || "";
 export const currentMonth = new Date().toISOString().slice(0, 7);
 
+export const formatMonthName = (m) => {
+  if (!m) return '';
+  const [y, mo] = m.split('-');
+  const date = new Date(parseInt(y, 10), parseInt(mo, 10) - 1);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+};
+
 // ─── Category Config (colours, emoji, labels) ───
 export const CATEGORIES = [
   { key: 'All', label: 'All Categories', emoji: '📚', color: 'slate' },
@@ -33,4 +40,3 @@ export const CAT_COLORS = {
   'ReSET2030': { bg: 'bg-sky-100 dark:bg-sky-950/40', text: 'text-sky-700 dark:text-sky-400', border: 'border-sky-200 dark:border-sky-800', pill: 'bg-sky-500', gradient: 'from-sky-500 to-sky-700' },
 };
 export const getColor = (cat) => CAT_COLORS[cat] || { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-700', pill: 'bg-slate-500', gradient: 'from-slate-500 to-slate-700' };
-

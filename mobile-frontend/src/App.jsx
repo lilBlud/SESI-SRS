@@ -39,7 +39,29 @@ function App() {
   });
   const [activeTab, setActiveTab] = useState('home');
   const [activeGlossaryCat, setActiveGlossaryCat] = useState('All');
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sesi_theme');
+      if (saved) return saved === 'dark';
+      return Boolean(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleTheme = useCallback(() => {
+    if (typeof document !== 'undefined' && document.startViewTransition) {
+      document.startViewTransition(() => {
+        setIsDark(prev => !prev);
+      });
+    } else {
+      document.documentElement.classList.add('theme-transitioning');
+      setIsDark(prev => !prev);
+      setTimeout(() => {
+        document.documentElement.classList.remove('theme-transitioning');
+      }, 350);
+    }
+  }, []);
   const [glossary, setGlossary] = useState(() => {
     try {
       const cached = localStorage.getItem('sesi_glossary_cache');
@@ -66,8 +88,13 @@ function App() {
   const { visitorStats, refreshVisitorStats } = useVisitorTracking(user);
 
   useEffect(() => {
-    if (isDark) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      try { localStorage.setItem('sesi_theme', 'dark'); } catch {}
+    } else {
+      document.documentElement.classList.remove('dark');
+      try { localStorage.setItem('sesi_theme', 'light'); } catch {}
+    }
   }, [isDark]);
 
   // Fetch glossary from DB with offline localStorage persistence
@@ -242,14 +269,27 @@ function App() {
 
   return (
     <div className={`h-[100vh] overflow-hidden flex flex-col text-slate-900 transition-colors duration-200 w-full max-w-[430px] mx-auto relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
-      {/* Hardware Accelerated HD Background Image */}
+      {/* Hardware Accelerated HD Background Images with Smooth Cross-Fade */}
       <img
-        src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
-        alt="Background"
-        className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none"
+        src="/assets/hd_light_topo.jpg"
+        alt="Background Light"
+        className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
+          isDark ? 'opacity-0' : 'opacity-100'
+        }`}
+      />
+      <img
+        src="/assets/hd_dark_topo.jpg"
+        alt="Background Dark"
+        className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
+          isDark ? 'opacity-100' : 'opacity-0'
+        }`}
       />
       {/* Dark Mode Text Contrast Overlay */}
-      {isDark && <div className="absolute inset-0 bg-slate-950/50 -z-10 pointer-events-none"></div>}
+      <div
+        className={`absolute inset-0 bg-slate-950/50 -z-10 pointer-events-none transition-opacity duration-350 ease-in-out ${
+          isDark ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
 
       {/* Root level Toast Notification */}
       {streakToast && (
@@ -318,17 +358,26 @@ function App() {
                 </button>
               )}
 
-              {/* Dark Mode Toggle */}
+              {/* Dark Mode Toggle with micro-interaction */}
               <button
-                onClick={() => setIsDark(!isDark)}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all hover:text-slate-900 dark:hover:text-white"
+                onClick={handleToggleTheme}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all hover:text-slate-900 dark:hover:text-white relative overflow-hidden active:scale-90"
                 aria-label="Toggle theme"
               >
-                {isDark ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                ) : (
+                <span
+                  className={`flex items-center justify-center transition-all duration-300 transform ${
+                    isDark ? 'rotate-90 scale-0 opacity-0 absolute' : 'rotate-0 scale-100 opacity-100'
+                  }`}
+                >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                )}
+                </span>
+                <span
+                  className={`flex items-center justify-center transition-all duration-300 transform ${
+                    isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0 absolute'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </span>
               </button>
 
               {/* Logout Button */}

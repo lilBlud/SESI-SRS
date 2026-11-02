@@ -1,11 +1,5 @@
 import React from 'react';
-
-const formatMonthName = (m) => {
-  if (!m) return '';
-  const [y, mo] = m.split('-');
-  const date = new Date(parseInt(y, 10), parseInt(mo, 10) - 1);
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-};
+import { formatMonthName } from '../../../utils/constants';
 
 /**
  * QuizActiveView: View for taking an active monthly quiz.
@@ -147,4 +141,3 @@ export function QuizActiveView({
     </div>
   );
 }
-

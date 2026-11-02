@@ -3,9 +3,21 @@ import React from 'react';
 export function HomeHeroBanner({ greetingName, isDark, onNavigateGlossary, onNavigateQuiz }) {
   return (
     <div
-      className="relative rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden mb-6 bg-cover bg-center ring-1 ring-black/5 dark:ring-white/10"
-      style={{ backgroundImage: `url('/assets/${isDark ? 'pattern_dark.png' : 'pattern_light.png'}')` }}
+      className="relative rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden mb-6 ring-1 ring-black/5 dark:ring-white/10"
     >
+      {/* Background patterns with smooth cross-fade */}
+      <div
+        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-350 ease-in-out pointer-events-none ${
+          isDark ? 'opacity-0' : 'opacity-100'
+        }`}
+        style={{ backgroundImage: "url('/assets/pattern_light.png')" }}
+      />
+      <div
+        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-350 ease-in-out pointer-events-none ${
+          isDark ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ backgroundImage: "url('/assets/pattern_dark.png')" }}
+      />
       {/* Animated Glowing Overlay */}
       <div className="absolute inset-0 bg-emerald-500/20 mix-blend-normal dark:bg-emerald-400/60 dark:mix-blend-color-dodge animate-pulse-slow pointer-events-none" />
 

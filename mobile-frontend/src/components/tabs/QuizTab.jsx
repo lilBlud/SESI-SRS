@@ -4,8 +4,8 @@ import {
   getQuizQuestionsDirect, 
   getAvailableQuizzesWithStatusDirect,
   recordUserActivityDirect, 
-  extractUserTargets, 
-  supabase 
+  recordQuizAnswerDirect,
+  extractUserTargets 
 } from '../../utils/supabaseClient';
 import { QuizIdleView, QuizActiveView, QuizReviewView } from './quiz';
 
@@ -120,28 +120,19 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
     setAnswers(prev => [...prev, { questionId: q.id, selected: idx, correct: q.correctIndex, isCorrect, points: pointsAwarded, isFirstTime }]);
 
     if (isFirstTime) {
-      const payload = {
+      recordQuizAnswerDirect({
         Username: USERNAME,
         PreferredName: user?.preferredName || "",
         Division: DIVISION,
         Month: selectedMonth,
-        QuestionId: q.id || q.Id || 0,
-        QuestionText: q.question || q.Question || "",
-        SelectedOption: (q.options || q.Options || [])[idx] || "",
+        QuestionId: q.id || 0,
+        QuestionText: q.question || "",
+        SelectedOption: (q.options || [])[idx] || "",
         IsCorrect: isCorrect,
         TimeTakenSeconds: timeTakenSeconds,
         PointsAwarded: pointsAwarded,
         staff_id: user?.id || null
-      };
-
-      try {
-        await supabase.from('UserAnswers').insert([{
-          ...payload,
-          DateAnswered: new Date().toISOString()
-        }]);
-      } catch (dbErr) {
-        console.warn("Direct Supabase insert failed:", dbErr);
-      }
+      });
     }
 
     recordUserActivityDirect(user || USERNAME)

@@ -45,13 +45,26 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
         className="w-full max-w-[430px] h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 text-slate-900 dark:text-slate-100 antialiased"
         onClick={e => e.stopPropagation()}
       >
-        {/* Hardware Accelerated HD Background Image - Matches App Theme */}
+        {/* Hardware Accelerated HD Background Image - Matches App Theme with Smooth Cross-Fade */}
         <img
-          src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
-          alt="Background"
-          className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none opacity-40 dark:opacity-20"
+          src="/assets/hd_light_topo.jpg"
+          alt="Background Light"
+          className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
+            isDark ? 'opacity-0' : 'opacity-40'
+          }`}
         />
-        {isDark && <div className="absolute inset-0 bg-slate-950/40 -z-10 pointer-events-none" />}
+        <img
+          src="/assets/hd_dark_topo.jpg"
+          alt="Background Dark"
+          className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
+            isDark ? 'opacity-20' : 'opacity-0'
+          }`}
+        />
+        <div
+          className={`absolute inset-0 bg-slate-950/40 -z-10 pointer-events-none transition-opacity duration-350 ease-in-out ${
+            isDark ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
 
         {/* Header Bar - Solid, crisp styling with no blur filters to prevent iOS WebKit font blurring */}
         <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 pb-3 pt-[max(env(safe-area-inset-top),16px)] shadow-xs z-20 relative shrink-0 antialiased">

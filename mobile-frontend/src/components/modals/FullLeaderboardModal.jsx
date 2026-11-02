@@ -29,13 +29,26 @@ export function FullLeaderboardModal({
         className="w-full max-w-[430px] h-[100vh] flex flex-col bg-slate-100 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/50 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
         onClick={e => e.stopPropagation()}
       >
-        {/* Background Pattern */}
+        {/* Background Pattern with smooth cross-fade */}
         <img
-          src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
-          alt="Background"
-          className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none opacity-40 dark:opacity-20"
+          src="/assets/hd_light_topo.jpg"
+          alt="Background Light"
+          className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
+            isDark ? 'opacity-0' : 'opacity-40'
+          }`}
         />
-        {isDark && <div className="absolute inset-0 bg-slate-950/40 -z-10 pointer-events-none"></div>}
+        <img
+          src="/assets/hd_dark_topo.jpg"
+          alt="Background Dark"
+          className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
+            isDark ? 'opacity-20' : 'opacity-0'
+          }`}
+        />
+        <div
+          className={`absolute inset-0 bg-slate-950/40 -z-10 pointer-events-none transition-opacity duration-350 ease-in-out ${
+            isDark ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
 
         {/* Mobile Header */}
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-4 pb-4 pt-[max(env(safe-area-inset-top),24px)] flex items-center shadow-md z-10 relative shrink-0">

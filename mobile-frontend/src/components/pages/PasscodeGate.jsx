@@ -46,14 +46,23 @@ export default function PasscodeGate({ onUnlock, isDark = false }) {
 
   return (
     <div className={`relative w-full max-w-[430px] mx-auto min-h-[100dvh] overflow-hidden flex flex-col justify-between px-5 py-8 font-sans shadow-2xl select-none transition-colors duration-200 ${isDark ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
-      {/* ── Hardware Accelerated HD Topographic Background (SESI signature) ── */}
+      {/* ── Hardware Accelerated HD Topographic Background (SESI signature) with Smooth Cross-Fade ── */}
       <img
-        src={isDark ? '/assets/hd_dark_topo.jpg' : '/assets/hd_light_topo.jpg'}
-        alt="Background"
-        className="absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none"
+        src="/assets/hd_light_topo.jpg"
+        alt="Background Light"
+        className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
+          isDark ? 'opacity-0' : 'opacity-100'
+        }`}
+      />
+      <img
+        src="/assets/hd_dark_topo.jpg"
+        alt="Background Dark"
+        className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
+          isDark ? 'opacity-100' : 'opacity-0'
+        }`}
       />
       {/* Light/Dark Contrast Overlay */}
-      <div className="absolute inset-0 bg-white/70 dark:bg-slate-950/75 -z-10 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-white/70 dark:bg-slate-950/75 -z-10 pointer-events-none transition-colors duration-350"></div>
 
       {/* Subtle Ambient Emerald Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[320px] h-[320px] bg-gradient-to-b from-emerald-500/15 via-teal-500/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>

@@ -410,9 +410,25 @@ export async function recordUserActivityDirect(userOrUsername) {
 export async function getAvailableQuizzesWithStatusDirect(userOrIdentifiers) {
   const targets = extractUserTargets(userOrIdentifiers);
 
+  // Filter by user's identity if available to prevent global cutoff across company
+  let ansQuery = supabase
+    .from('UserAnswers')
+    .select('Month, PointsAwarded, QuestionId, Username, PreferredName, staff_id');
+
+  const staffId = typeof userOrIdentifiers === 'object' && userOrIdentifiers?.id ? userOrIdentifiers.id : null;
+  const username = typeof userOrIdentifiers === 'object' ? (userOrIdentifiers.fullName || userOrIdentifiers.username || '') : String(userOrIdentifiers || '');
+
+  if (staffId) {
+    ansQuery = ansQuery.or(`staff_id.eq.${staffId},Username.ilike.%${username}%`);
+  } else if (username && username !== 'User') {
+    ansQuery = ansQuery.ilike('Username', `%${username}%`);
+  } else {
+    ansQuery = ansQuery.limit(1000);
+  }
+
   const [qRes, ansRes] = await Promise.all([
     supabase.from('QuizQuestions').select('Id, Month'),
-    supabase.from('UserAnswers').select('Month, PointsAwarded, QuestionId, Username, PreferredName').limit(500)
+    ansQuery
   ]);
 
   const questions = qRes.data || [];
@@ -464,6 +480,25 @@ export async function getAvailableQuizzesWithStatusDirect(userOrIdentifiers) {
         answeredQuestionIds: stats ? Array.from(stats.questionIds) : []
       };
     });
+}
+
+
+
+/**
+ * Record a user's quiz answer directly to Supabase.
+ */
+export async function recordQuizAnswerDirect(answerPayload) {
+  try {
+    const { data, error } = await supabase.from('UserAnswers').insert([{
+      ...answerPayload,
+      DateAnswered: new Date().toISOString()
+    }]);
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.warn("Direct Supabase recordQuizAnswerDirect failed:", err);
+    return null;
+  }
 }
 
 export async function getUserMonthlyQuizStatusDirect(userOrIdentifiers, month) {
