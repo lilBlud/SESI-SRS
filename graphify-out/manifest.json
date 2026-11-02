@@ -104,8 +104,8 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/App.jsx": {
-    "mtime": 1793585113.3468747,
-    "seen": 1793585209.2563388,
+    "mtime": 1793585349.9872289,
+    "seen": 1793585795.929221,
     "ast_hash": "df5fb6d1c699beba242a15aea987bc77",
     "semantic_hash": ""
   },
@@ -206,9 +206,9 @@
     "semantic_hash": "7b4c9bf95bcd2323f83eb8811422d4e0"
   },
   "mobile-frontend/src/components/tabs/QuizTab.jsx": {
-    "mtime": 1793582964.0377219,
-    "seen": 1793583054.4066787,
-    "ast_hash": "f5038c9b0ac36f220eabeda7ef7a6b4a",
+    "mtime": 1793585702.5273526,
+    "seen": 1793585795.9303956,
+    "ast_hash": "e32a9979adebd0c93eb9a24a252736c1",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminGlossarySection.jsx": {
@@ -440,9 +440,9 @@
     "semantic_hash": "77515814bcd10ef0492ab10e1c1309bb"
   },
   "mobile-frontend/src/utils/supabaseClient.js": {
-    "mtime": 1793585113.3468747,
-    "seen": 1793585209.2625468,
-    "ast_hash": "77f9d357bd5ed3576a644c208354d2bb",
+    "mtime": 1793585619.2695851,
+    "seen": 1793585795.9333045,
+    "ast_hash": "dd3217811ab61d59d025d5364fc08057",
     "semantic_hash": ""
   },
   "mobile-frontend/tailwind.config.js": {
