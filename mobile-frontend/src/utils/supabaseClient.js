@@ -113,8 +113,6 @@ export function calculateStreakFromDates(dates) {
 
   const now = new Date();
   const nowMy = new Date(now.getTime() + (8 * 3600 * 1000));
-  const todayStr = nowMy.toISOString().slice(0, 10);
-
   const yesterday = new Date(nowMy.getTime() - (24 * 3600 * 1000));
   const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
@@ -332,7 +330,8 @@ export async function getUserStreakDirect(userOrIdentifiers) {
     const { data, error } = await supabase
       .from('UserActivities')
       .select('Username, ActivityDate, staff_id')
-      .order('ActivityDate', { ascending: false });
+      .order('ActivityDate', { ascending: false })
+      .limit(500);
 
     if (error || !data) return { streak: 0, dates: [] };
 
@@ -453,7 +452,7 @@ export async function getUserRecentAnswersDirect(userOrIdentifiers, month) {
     query = query.eq('Month', month);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await query.limit(200);
   if (error) throw error;
 
   const filtered = (data || []).filter(a => {
@@ -483,7 +482,8 @@ export async function getUserActiveMonthsDirect(userOrIdentifiers) {
 
   const { data, error } = await supabase
     .from('UserAnswers')
-    .select('Month, Username, PreferredName');
+    .select('Month, Username, PreferredName')
+    .limit(500);
 
   if (error) throw error;
 
@@ -517,43 +517,10 @@ export async function getUserScoreAndRankDirect(userOrIdentifiers, month) {
   const raw = ansRes.data || [];
   const staffData = staffRes.data || [];
 
-  const staffIndex = buildStaffIndex(staffData);
-  const groups = {};
-  for (const a of raw) {
-    const u = (a.Username ?? a.username ?? '').trim();
-    const p = (a.PreferredName ?? a.preferredName ?? '').trim();
-    const sid = a.staff_id ?? a.Staff_Id;
-
-    const staff = staffIndex.find(u, sid) || staffIndex.find(p);
-    if (isExcludedLeaderboardAccount(u, p, staff, sid)) continue;
-
-    const key = staff ? `staff_${staff.Id ?? staff.id}` : (u || p || 'Anonymous');
-    if (!groups[key]) {
-      groups[key] = {
-        username: staff?.FullName || u,
-        preferredName: staff?.PreferredName || p,
-        aliases: [
-          (staff?.FullName || u).toLowerCase(),
-          (staff?.PreferredName || p || '').toLowerCase(),
-          (staff?.Email || '').toLowerCase(),
-          (staff?.StaffId || '').toLowerCase()
-        ].filter(Boolean),
-        score: 0
-      };
-    } else {
-      if (staff?.PreferredName) {
-        groups[key].preferredName = staff.PreferredName;
-        if (!groups[key].aliases.includes(staff.PreferredName.toLowerCase())) {
-          groups[key].aliases.push(staff.PreferredName.toLowerCase());
-        }
-      }
-    }
-    groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
-  }
-
+  const { groups } = aggregateMonthlyScores(raw, staffData);
   const sorted = Object.values(groups).sort((a, b) => b.score - a.score);
   const userIdx = sorted.findIndex(g => {
-    return g.aliases.some(alias => targets.includes(alias));
+    return g.aliases && g.aliases.some(alias => targets.includes(alias));
   });
 
   if (userIdx === -1) {

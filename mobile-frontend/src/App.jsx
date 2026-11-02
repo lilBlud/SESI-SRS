@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { HomeTab, GlossaryTab, QuizTab, ProfileTab } from './components/tabs';
 
 const AdminTab = lazy(() => import('./components/tabs/AdminTab'));
@@ -8,6 +8,8 @@ import { getGlossaryDirect, getUserProfileDirect, getUserStreakDirect } from './
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { useBookmarks } from './hooks/useBookmarks';
 import { useVisitorTracking } from './hooks/useVisitorTracking';
+import { usePullToRefresh } from './hooks/usePullToRefresh';
+import { useInstallPrompt } from './hooks/useInstallPrompt';
 
 function App() {
   const [isPasscodeUnlocked, setIsPasscodeUnlocked] = useState(() => {
@@ -48,38 +50,7 @@ function App() {
   });
   const [streak, setStreak] = useState(0);
   const [streakToast, setStreakToast] = useState(null); // toast notification at root level
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      const isIosStandalone = ('standalone' in window.navigator) && window.navigator.standalone === true;
-      const hasDismissed = sessionStorage.getItem('dismissedInstallPrompt');
-
-      // Clear any old suppression so beta testers always get prompted
-      localStorage.removeItem('dismissedInstallPrompt');
-
-      if (!isStandalone && !isIosStandalone && !hasDismissed) {
-        const timer = setTimeout(() => setShowInstallPrompt(true), 1000);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [user]);
-
-  const dismissInstallPrompt = () => {
-    setShowInstallPrompt(false);
-    try { sessionStorage.setItem('dismissedInstallPrompt', 'true'); } catch { }
-  };
 
   const bookmarkActions = useBookmarks();
 
@@ -141,78 +112,35 @@ function App() {
     fetchStreak();
   }, [fetchStreak]);
 
-  // Pull-to-refresh & global refresh state
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isPulling, setIsPulling] = useState(false);
-  const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const scrollContainerRef = useRef(null);
-  const touchStartY = useRef(0);
-  const isPullEligible = useRef(false);
+  // Hook: PWA Install Prompt lifecycle
+  const {
+    showInstallPrompt,
+    setShowInstallPrompt,
+    deferredPrompt,
+    dismissInstallPrompt,
+    triggerInstallPrompt
+  } = useInstallPrompt(user);
 
+  // Global refresh callback
   const handleGlobalRefresh = useCallback(async () => {
-    if (isGlobalRefreshing) return;
-    setIsGlobalRefreshing(true);
-    try {
-      await Promise.allSettled([
-        fetchGlossary(),
-        fetchStreak(),
-        refreshVisitorStats ? refreshVisitorStats() : Promise.resolve(),
-        new Promise(resolve => setTimeout(resolve, 600)) // smooth tactile feedback
-      ]);
-      setRefreshKey(k => k + 1);
-    } finally {
-      setIsGlobalRefreshing(false);
-      setPullDistance(0);
-    }
-  }, [fetchGlossary, fetchStreak, refreshVisitorStats, isGlobalRefreshing]);
+    await Promise.allSettled([
+      fetchGlossary(),
+      fetchStreak(),
+      refreshVisitorStats ? refreshVisitorStats() : Promise.resolve()
+    ]);
+    setRefreshKey(k => k + 1);
+  }, [fetchGlossary, fetchStreak, refreshVisitorStats]);
 
-  const handleTouchStart = (e) => {
-    if (isGlobalRefreshing) return;
-    const container = scrollContainerRef.current;
-    if (container && container.scrollTop <= 0) {
-      touchStartY.current = e.touches[0].clientY;
-      isPullEligible.current = true;
-    } else {
-      isPullEligible.current = false;
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isPullEligible.current || isGlobalRefreshing) return;
-    const container = scrollContainerRef.current;
-    if (container && container.scrollTop > 0) {
-      isPullEligible.current = false;
-      if (pullDistance > 0) {
-        setIsPulling(false);
-        setPullDistance(0);
-      }
-      return;
-    }
-    const currentY = e.touches[0].clientY;
-    const dy = currentY - touchStartY.current;
-    // Only engage elastic resistance when user intentionally drags down from the top
-    if (dy > 8) {
-      if (!isPulling) setIsPulling(true);
-      const pull = Math.min(75, (dy - 8) * 0.42);
-      setPullDistance(pull);
-    } else if (pullDistance > 0) {
-      setPullDistance(0);
-      setIsPulling(false);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isPullEligible.current) return;
-    isPullEligible.current = false;
-    if (isPulling) setIsPulling(false);
-    if (pullDistance >= 45 && !isGlobalRefreshing) {
-      handleGlobalRefresh();
-    } else if (pullDistance > 0) {
-      setPullDistance(0);
-    }
-  };
+  // Hook: Elastic pull-to-refresh
+  const {
+    pullDistance,
+    isPulling,
+    isRefreshing: isGlobalRefreshing,
+    scrollContainerRef,
+    touchHandlers
+  } = usePullToRefresh(handleGlobalRefresh);
 
   // Sync latest user profile (including avatar, preferredName, and division if updated)
   useEffect(() => {
@@ -243,7 +171,7 @@ function App() {
           console.warn("Direct profile sync failed:", err);
         });
     }
-  }, [user?.email, user?.fullName, user?.staffId, user?.division, user?.profilePicture, user?.preferredName, user?.role]);
+  }, [user?.email, user?.fullName, user?.staffId, user?.division, user?.profilePicture, user?.preferredName, user?.role, handleUpdateUser]);
 
 
   const [hasShownAlreadySaved, setHasShownAlreadySaved] = useState(false);
@@ -294,7 +222,7 @@ function App() {
     if (user && (user.fullName === 'Demo User' || user.staffId === 'DEMO-001') && user.division !== 'IDD') {
       handleUpdateUser({ division: 'IDD' });
     }
-  }, [user]);
+  }, [user, handleUpdateUser]);
 
   if (!isPasscodeUnlocked) {
     return (
@@ -418,9 +346,7 @@ function App() {
 
       <main
         ref={scrollContainerRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        {...touchHandlers}
         className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20"
       >
         {/* Pull to Refresh Indicator */}
@@ -459,7 +385,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={() => setShowInstallPrompt(true)} />}
+        {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
         {activeTab === 'glossary' && <GlossaryTab key={`glossary-${refreshKey}`} user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
         {activeTab === 'quiz' && <QuizTab key={`quiz-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
