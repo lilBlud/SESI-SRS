@@ -206,9 +206,9 @@
     "semantic_hash": "7b4c9bf95bcd2323f83eb8811422d4e0"
   },
   "mobile-frontend/src/components/tabs/QuizTab.jsx": {
-    "mtime": 1793586921.9738584,
-    "seen": 1793586995.142005,
-    "ast_hash": "b646ce4509aea9835f7650948c11ea68",
+    "mtime": 1793604353.517698,
+    "seen": 1793604837.672675,
+    "ast_hash": "a2181f23a8c391d3300349dad69a9abf",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminGlossarySection.jsx": {
@@ -9971,6 +9971,36 @@
     "mtime": 1793585146.2167325,
     "seen": 1793585209.2620482,
     "ast_hash": "1d2e0bdb805d30f77ee3aaf0b2cbfef0",
+    "semantic_hash": ""
+  },
+  "mobile-frontend/src/components/tabs/quiz/QuizActiveView.jsx": {
+    "mtime": 1793604379.3534546,
+    "seen": 1793604837.6749697,
+    "ast_hash": "78afde9fb8afb6194fde1139dee4170f",
+    "semantic_hash": ""
+  },
+  "mobile-frontend/src/components/tabs/quiz/QuizCard.jsx": {
+    "mtime": 1793604379.4267592,
+    "seen": 1793604837.6749718,
+    "ast_hash": "6467f76d785fb52a78e1e9d4717350ce",
+    "semantic_hash": ""
+  },
+  "mobile-frontend/src/components/tabs/quiz/QuizIdleView.jsx": {
+    "mtime": 1793604379.484761,
+    "seen": 1793604837.6749737,
+    "ast_hash": "1998d11a214c116ceccb802de60619a7",
+    "semantic_hash": ""
+  },
+  "mobile-frontend/src/components/tabs/quiz/QuizReviewView.jsx": {
+    "mtime": 1793604379.526502,
+    "seen": 1793604837.6749754,
+    "ast_hash": "627bd54d6e78a8d914896c14f2fe5c08",
+    "semantic_hash": ""
+  },
+  "mobile-frontend/src/components/tabs/quiz/index.js": {
+    "mtime": 1793604379.590059,
+    "seen": 1793604837.6749773,
+    "ast_hash": "63824cefdf61d52a997160a129c4e1b9",
     "semantic_hash": ""
   },
   "OpenMontage/remotion-composer/package-lock.json": {
