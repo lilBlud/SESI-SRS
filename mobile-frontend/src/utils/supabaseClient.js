@@ -404,6 +404,68 @@ export async function recordUserActivityDirect(userOrUsername) {
  * Check if the user has already answered the quiz for the specified month.
  * Returns status including whether they have attempted, recorded score, and count.
  */
+/**
+ * Fetch all available quiz months from QuizQuestions and user completion status from UserAnswers.
+ */
+export async function getAvailableQuizzesWithStatusDirect(userOrIdentifiers) {
+  const targets = extractUserTargets(userOrIdentifiers);
+
+  const [qRes, ansRes] = await Promise.all([
+    supabase.from('QuizQuestions').select('Id, Month'),
+    supabase.from('UserAnswers').select('Month, PointsAwarded, QuestionId, Username, PreferredName').limit(500)
+  ]);
+
+  const questions = qRes.data || [];
+  const rawAnswers = ansRes.data || [];
+
+  const monthMap = {};
+  for (const q of questions) {
+    const m = q.Month;
+    if (!m) continue;
+    if (!monthMap[m]) monthMap[m] = { month: m, questionCount: 0 };
+    monthMap[m].questionCount++;
+  }
+
+  // Filter user's answers
+  const userAnswers = rawAnswers.filter(a => {
+    const u = (a.Username ?? '').trim().toLowerCase();
+    const p = (a.PreferredName ?? '').trim().toLowerCase();
+    return targets.includes(u) || (p && targets.includes(p));
+  });
+
+  const userMonthStats = {};
+  for (const a of userAnswers) {
+    const m = a.Month;
+    if (!m) continue;
+    if (!userMonthStats[m]) {
+      userMonthStats[m] = { score: 0, count: 0, questionIds: new Set() };
+    }
+    userMonthStats[m].score += Number(a.PointsAwarded || 0);
+    userMonthStats[m].count++;
+    if (a.QuestionId) userMonthStats[m].questionIds.add(Number(a.QuestionId));
+  }
+
+  // Ensure currentMonth is present
+  const currentM = new Date().toISOString().slice(0, 7);
+  if (!monthMap[currentM]) {
+    monthMap[currentM] = { month: currentM, questionCount: 0 };
+  }
+
+  return Object.values(monthMap)
+    .sort((a, b) => b.month.localeCompare(a.month))
+    .map(m => {
+      const stats = userMonthStats[m.month];
+      return {
+        month: m.month,
+        questionCount: m.questionCount,
+        hasAttempted: Boolean(stats && stats.count > 0),
+        score: stats ? stats.score : 0,
+        answeredCount: stats ? stats.count : 0,
+        answeredQuestionIds: stats ? Array.from(stats.questionIds) : []
+      };
+    });
+}
+
 export async function getUserMonthlyQuizStatusDirect(userOrIdentifiers, month) {
   const targets = extractUserTargets(userOrIdentifiers);
   if (targets.length === 0) {
