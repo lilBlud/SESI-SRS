@@ -20,6 +20,10 @@ export function QuizTab({ user, streak, setActiveTab: _setActiveTab, onStreakUpd
   const [quizzes, setQuizzes] = useState([]);
   const [loadingQuizzes, setLoadingQuizzes] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState('All');
+
+  const availableYears = ['All', ...Array.from(new Set(quizzes.map(q => q.month?.split('-')[0]).filter(Boolean)))];
+  const filteredQuizzes = selectedYear === 'All' ? quizzes : quizzes.filter(q => q.month?.startsWith(selectedYear));
 
   const [questions, setQuestions] = useState([]);
   const [currentQ, setCurrentQ] = useState(0);
@@ -217,21 +221,34 @@ export function QuizTab({ user, streak, setActiveTab: _setActiveTab, onStreakUpd
             <h3 className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <span>🎯</span> Monthly Quizzes
             </h3>
-            <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-              {quizzes.length} available
-            </span>
+            <div className="flex items-center gap-2">
+              {availableYears.length > 1 && (
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold py-1 px-2.5 rounded-xl outline-none cursor-pointer focus:ring-2 focus:ring-emerald-500/40 transition-all"
+                >
+                  {availableYears.map(y => (
+                    <option key={y} value={y}>{y === 'All' ? 'All Years' : y}</option>
+                  ))}
+                </select>
+              )}
+              <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md tabular-nums">
+                {filteredQuizzes.length}
+              </span>
+            </div>
           </div>
 
           {loadingQuizzes ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
-          ) : quizzes.length === 0 ? (
+          ) : filteredQuizzes.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-sm bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-              No quizzes published yet. Check back soon!
+              {selectedYear === 'All' ? 'No quizzes published yet. Check back soon!' : `No quizzes found for ${selectedYear}.`}
             </div>
           ) : (
-            quizzes.map((quiz) => {
+            filteredQuizzes.map((quiz) => {
               const isCurrent = quiz.month === currentMonth;
               const hasQuestions = quiz.questionCount > 0;
 
