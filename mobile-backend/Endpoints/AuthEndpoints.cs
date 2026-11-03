@@ -27,7 +27,7 @@ namespace mobile_backend.Endpoints
                     FullName = req.FullName ?? "",
                     PreferredName = prefName,
                     Email = req.Email,
-                    PasswordHash = req.Password, // For MVP. Real apps should hash this!
+                    PasswordHash = req.Password,
                     Division = req.Division ?? "",
                     StaffId = req.StaffId ?? "",
                     Role = "Staff"
@@ -35,17 +35,7 @@ namespace mobile_backend.Endpoints
                 db.StaffUsers.Add(user);
                 await db.SaveChangesAsync();
 
-                return Results.Ok(new
-                {
-                    id = user.Id,
-                    fullName = user.FullName,
-                    preferredName = user.PreferredName,
-                    email = user.Email,
-                    division = user.Division,
-                    staffId = user.StaffId,
-                    profilePicture = user.ProfilePicture,
-                    role = user.Role
-                });
+                return Results.Ok(ToUserDto(user));
             }).RequireCors("AllowAll");
 
             app.MapMethods("/api/auth/login", HttpMethodConstants.Options, () => Results.Ok()).RequireCors("AllowAll");
@@ -55,21 +45,22 @@ namespace mobile_backend.Endpoints
                 if (user == null)
                     return Results.Unauthorized();
 
-                return Results.Ok(new
-                {
-                    id = user.Id,
-                    fullName = user.FullName,
-                    preferredName = user.PreferredName,
-                    email = user.Email,
-                    division = user.Division,
-                    staffId = user.StaffId,
-                    profilePicture = user.ProfilePicture,
-                    role = user.Role
-                });
+                return Results.Ok(ToUserDto(user));
             }).RequireCors("AllowAll");
 
             return app;
         }
+
+        private static object ToUserDto(StaffUser user) => new
+        {
+            id = user.Id,
+            fullName = user.FullName,
+            preferredName = user.PreferredName,
+            email = user.Email,
+            division = user.Division,
+            staffId = user.StaffId,
+            profilePicture = user.ProfilePicture,
+            role = user.Role
+        };
     }
 }
-

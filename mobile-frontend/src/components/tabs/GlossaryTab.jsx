@@ -49,19 +49,10 @@ export function GlossaryTab({
   });
 
 
-  // Record reading activity when user taps a term (streak trigger)
-  const recordRead = useCallback(async (termId) => {
-    if (expandedId === termId) {
-      setExpandedId(null);
-      return;
-    }
-    setExpandedId(termId);
-
+  const triggerActivityRecord = useCallback(async () => {
     try {
       const res = await recordUserActivityDirect(user || USERNAME);
-      if (res && onStreakUpdate) {
-        onStreakUpdate(res.streak, res.recorded);
-      }
+      if (res && onStreakUpdate) onStreakUpdate(res.streak, res.recorded);
     } catch {
       fetch(`${API_BASE}/api/streak/record`, {
         method: 'POST',
@@ -74,31 +65,25 @@ export function GlossaryTab({
         })
         .catch(() => { });
     }
-  }, [expandedId, onStreakUpdate, user, USERNAME]);
+  }, [user, USERNAME, onStreakUpdate]);
+
+  // Record reading activity when user taps a term (streak trigger)
+  const recordRead = useCallback((termId) => {
+    if (expandedId === termId) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(termId);
+    triggerActivityRecord();
+  }, [expandedId, triggerActivityRecord]);
 
   // Record read for flashcard flip too
-  const handleFlashcardFlip = useCallback(async () => {
-    setFlipped(!flipped);
-    if (!flipped) {
-      try {
-        const res = await recordUserActivityDirect(user || USERNAME);
-        if (res && onStreakUpdate) {
-          onStreakUpdate(res.streak, res.recorded);
-        }
-      } catch {
-        fetch(`${API_BASE}/api/streak/record`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: USERNAME })
-        })
-          .then(r => r.ok && r.json())
-          .then(data => {
-            if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
-          })
-          .catch(() => { });
-      }
-    }
-  }, [flipped, onStreakUpdate, user, USERNAME]);
+  const handleFlashcardFlip = useCallback(() => {
+    setFlipped(prev => {
+      if (!prev) triggerActivityRecord();
+      return !prev;
+    });
+  }, [triggerActivityRecord]);
 
   return (
     <div className="space-y-5 animate-fadeIn pb-10 relative">

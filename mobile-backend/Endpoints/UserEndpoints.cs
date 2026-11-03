@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -53,7 +54,7 @@ namespace mobile_backend.Endpoints
                 var trimmed = req.PreferredName.Trim();
                 if (trimmed.Length > 10) trimmed = trimmed[..10];
 
-                var staff = await db.StaffUsers.FirstOrDefaultAsync(u => u.FullName == req.Username || u.Email == req.Username);
+                var staff = await FindStaffUserAsync(db, req.Username);
                 if (staff != null)
                 {
                     staff.PreferredName = trimmed;
@@ -76,8 +77,7 @@ namespace mobile_backend.Endpoints
                 if (string.IsNullOrWhiteSpace(req.Username))
                     return Results.BadRequest(new { error = "Username is required" });
 
-                var target = req.Username.Trim();
-                var staff = await db.StaffUsers.FirstOrDefaultAsync(u => string.Equals(u.Email, target, StringComparison.OrdinalIgnoreCase) || string.Equals(u.FullName, target, StringComparison.OrdinalIgnoreCase));
+                var staff = await FindStaffUserAsync(db, req.Username);
                 if (staff == null)
                     return Results.NotFound(new { error = "User not found" });
 
@@ -90,8 +90,7 @@ namespace mobile_backend.Endpoints
             app.MapMethods("/api/user/profile/{username}", HttpMethodConstants.Options, (string? username) => Results.Ok()).RequireCors("AllowAll");
             app.MapGet("/api/user/profile/{username}", async (string username, AppDbContext db) =>
             {
-                var target = (username ?? "").Trim();
-                var staff = await db.StaffUsers.FirstOrDefaultAsync(u => string.Equals(u.Email, target, StringComparison.OrdinalIgnoreCase) || string.Equals(u.FullName, target, StringComparison.OrdinalIgnoreCase));
+                var staff = await FindStaffUserAsync(db, username);
                 if (staff == null)
                     return Results.NotFound(new { error = "User not found" });
 
@@ -137,6 +136,13 @@ namespace mobile_backend.Endpoints
 
             return app;
         }
+
+        private static Task<StaffUser?> FindStaffUserAsync(AppDbContext db, string? target)
+        {
+            var key = (target ?? "").Trim();
+            return db.StaffUsers.FirstOrDefaultAsync(u =>
+                string.Equals(u.Email, key, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(u.FullName, key, StringComparison.OrdinalIgnoreCase));
+        }
     }
 }
-

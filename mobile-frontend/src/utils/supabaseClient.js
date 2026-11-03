@@ -4,7 +4,8 @@ import {
   resolveUserRole, 
   normalizeUser, 
   matchesUser,
-  buildStaffIndex
+  buildStaffIndex,
+  isExcludedLeaderboardAccount
 } from './rbac';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://avlypjdoahothehakchf.supabase.co';
@@ -139,41 +140,7 @@ export function calculateStreakFromDates(dates) {
  * Fetch monthly leaderboard directly from Supabase UserAnswers,
  * enriched with user streaks from UserActivities.
  */
-const MOCK_LEADERBOARD_NAMES = new Set([
-  'demo',
-  'demo user',
-  'demo-001',
-  'ka',
-  'evelien',
-  'quizwiz',
-  'coolcat',
-  'cameron',
-  'petrus'
-]);
-
-export const isExcludedLeaderboardAccount = (u, p, staff, staffId) => {
-  const s1 = (u || '').toLowerCase().trim();
-  const s2 = (p || '').toLowerCase().trim();
-  const sf = (staff?.FullName || '').toLowerCase().trim();
-  const sp = (staff?.PreferredName || '').toLowerCase().trim();
-  const se = (staff?.Email || '').toLowerCase().trim();
-  const sd = (staff?.Division || '').toUpperCase().trim();
-  const sid = staff?.Id ?? staffId;
-
-  // Direct mock or demo names
-  if (MOCK_LEADERBOARD_NAMES.has(s1) || MOCK_LEADERBOARD_NAMES.has(s2) || MOCK_LEADERBOARD_NAMES.has(sf) || MOCK_LEADERBOARD_NAMES.has(sp)) return true;
-
-  // Substrings identifying demo accounts
-  if (s1.includes('demo') || s2.includes('demo') || sf.includes('demo') || se.includes('demo')) return true;
-
-  // Deleted users
-  if (sf.includes('[deleted user]') || sd === 'DELETED' || se.startsWith('deleted_') || sid === 8 || sid === 9) return true;
-
-  // System admin or test accounts without division
-  if (se === 'admin@test.com' && (!staff?.Division || staff.Division.trim() === '')) return true;
-
-  return false;
-};
+export { isExcludedLeaderboardAccount };
 
 
 /**

@@ -45,6 +45,103 @@ export function PostImageSlider({ images, title, onImageClick }) {
   );
 }
 
+// ─── Chart Module-Level Helpers ───
+const MONTH_MAP = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+
+function ChartDot(props) {
+  const { cx, cy, index, dataLength } = props;
+  if (cx === undefined || cy === undefined) return null;
+  const isLast = index === dataLength - 1;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={isLast ? 5 : 4}
+      stroke="#ffffff"
+      strokeWidth={isLast ? 2.5 : 2}
+      fill="#10b981"
+    />
+  );
+}
+
+function ChartActiveDot(props) {
+  const { cx, cy } = props;
+  if (cx === undefined || cy === undefined) return null;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={14} fill="#10b981" fillOpacity={0.2} className="animate-ping" />
+      <circle cx={cx} cy={cy} r={6} fill="#10b981" stroke="#ffffff" strokeWidth={2.5} />
+    </g>
+  );
+}
+
+function ChartTooltip({ active, payload, term }) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/60 shadow-lg flex flex-col z-50">
+        <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-0.5">{payload[0].payload.fullName}</p>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <p className="text-white font-black text-[13px] tracking-tight">{payload[0].value}</p>
+        </div>
+        <p className="text-emerald-500 text-[8px] font-bold uppercase mt-px ml-3 tracking-wider">{term}</p>
+      </div>
+    );
+  }
+  return null;
+}
+
+function formatBigStat(termName, customFormat, value) {
+  const fmt = (customFormat || '').trim().toLowerCase();
+  const name = (termName || '').toUpperCase();
+  const isRM = fmt.includes('rm') || ['TOTAL REVENUE', 'PAT', 'EBIT', 'CAPEX', 'OPEX'].some(k => name.includes(k));
+  return isRM ? `RM ${value}` : `${value}`;
+}
+
+function formatFooter(termName, customFormat, value) {
+  const fmt = (customFormat || '').trim().toLowerCase();
+  const name = (termName || '').toUpperCase();
+
+  if (fmt === 'in %' || fmt === '%') return `${value}%`;
+  if (fmt === 'in rm mil') return `RM ${value} mil`;
+  if (fmt === 'in rm bil') return `RM ${value} bil`;
+  if (fmt === 'in rm') return `RM ${value}`;
+  if (fmt === 'in mins' || fmt === 'mins') return `${value} mins`;
+  if (fmt === 'in ltifr' || fmt === 'ltifr') return `LTIFR ${value}`;
+  if (fmt.startsWith('in ')) return `${value} ${customFormat.trim().slice(3).trim()}`;
+
+  if (name.includes('REVENUE')) return `RM ${value} bil`;
+  if (['PAT', 'EBIT', 'CAPEX', 'OPEX'].some(k => name.includes(k))) return `RM ${value} mil`;
+  if (['SAIDI', 'SAIFI', 'CAIDI', 'SYSTEM MINUTES', 'SYSTEM UNIT', 'MINUTES', 'MINS'].some(k => name.includes(k))) return `${value} mins`;
+  if (['SYSTEM LOSS', 'ASSET CAPITALISATION', 'AUDIT ISSUE', 'ROI', 'ROA', 'ROE', 'PERCENT', 'RATE', 'MARGIN', 'LOSS', 'CAPITALISATION'].some(k => name.includes(k))) return `${value}%`;
+  if (name.includes('SAFETY') || name.includes('LTIFR')) return `LTIFR ${value}`;
+  if (name.includes('RM') || name.includes('COST') || name.includes('PROFIT') || name.includes('EXPENSE')) return `RM ${value}`;
+
+  return `${value}`;
+}
+
+function getUnitLabel(termName, customFormat) {
+  if (customFormat && customFormat.trim()) {
+    const trimmed = customFormat.trim();
+    const lower = trimmed.toLowerCase();
+    if (lower === 'in %' || lower === '%') return 'in percentage (%)';
+    if (lower === 'in rm mil') return 'in million';
+    if (lower === 'in rm bil') return 'in billion';
+    if (lower === 'in rm') return 'in RM';
+    if (lower === 'in mins' || lower === 'mins') return 'in minutes (mins)';
+    if (lower === 'in ltifr' || lower === 'ltifr') return 'in rate (per 1M hours)';
+    return trimmed.startsWith('in ') ? trimmed : `in ${trimmed}`;
+  }
+  if (!termName) return '';
+  const name = termName.toUpperCase();
+  if (name.includes('REVENUE')) return 'in billion';
+  if (['PAT', 'EBIT', 'CAPEX', 'OPEX'].some(k => name.includes(k))) return 'in million';
+  if (['LOSS', 'CAPITALISATION', 'AUDIT', 'ROI', 'ROA', 'ROE', 'PERCENT', 'RATE', 'MARGIN'].some(k => name.includes(k))) return 'in percentage (%)';
+  if (['SAIDI', 'SAIFI', 'CAIDI', 'MINUTES', 'MINS', 'DURATION', 'SYSTEM UNIT'].some(k => name.includes(k))) return 'in minutes (mins)';
+  if (name.includes('SAFETY') || name.includes('LTIFR')) return 'in rate (per 1M hours)';
+  return '';
+}
+
 // ─── Corporate Performance Chart ───
 export function CorporatePerformanceChart({ chartData, term = '', description = '', yAxisFormat, chartType, formula }) {
   const [selectedYear, setSelectedYear] = useState(null);
@@ -72,15 +169,14 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
         const factor = (seed + idx * 7) % 20;
         return {
           month: m,
-          year: "2026",
+          year: '2026',
           value: isPct ? parseFloat((82 + factor * 0.8).toFixed(1)) : Math.round(1800 + factor * 160)
         };
       });
     }
   } else if (defaultMetric && defaultMetric.chartData) {
-    // If existing data lacks historical years (from 2022), merge historical baseline for past years
     const parsedYears = new Set(parsed.map(d => String(d.year)));
-    if (!parsedYears.has("2022") && defaultMetric.chartData.length > 0) {
+    if (!parsedYears.has('2022') && defaultMetric.chartData.length > 0) {
       const historicalPoints = defaultMetric.chartData.filter(d => !parsedYears.has(String(d.year)));
       parsed = [...historicalPoints, ...parsed];
     }
@@ -90,16 +186,11 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
     (formula && String(formula).toLowerCase().trim() === 'bar') ||
     ['CAPEX', 'OPEX', 'ASSET CAPITALISATION', 'ASSET CAP'].includes(normalizedTerm);
 
-  // Map month names to numbers for sorting
-  const monthMap = { 'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12 };
-  
-  // Get all unique years
-  const allYears = [...new Set(parsed.map(d => parseInt(d.year)))].sort((a,b) => b-a);
+  const allYears = [...new Set(parsed.map(d => parseInt(d.year)))].sort((a, b) => b - a);
   const activeYear = selectedYear || allYears[0];
 
-  // Filter and sort for the active year
   const dataForYear = parsed.filter(d => parseInt(d.year) === activeYear);
-  dataForYear.sort((a, b) => monthMap[a.month] - monthMap[b.month]);
+  dataForYear.sort((a, b) => MONTH_MAP[a.month] - MONTH_MAP[b.month]);
 
   const formattedData = dataForYear.map(d => ({
     name: `${d.month}`,
@@ -107,73 +198,7 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
     value: d.value
   }));
 
-  const getBigStatFormatter = (termName, customFormat) => {
-    const fmt = (customFormat || '').trim().toLowerCase();
-    const name = (termName || '').toUpperCase();
-
-    // Monetary values keep 'RM ' prefix without 'mil' / 'bil' suffix
-    const isRM = fmt.includes('rm') || 
-      ["TOTAL REVENUE", "PAT", "EBIT", "CAPEX", "OPEX"].some(k => name.includes(k));
-
-    if (isRM) {
-      return (v) => `RM ${v}`;
-    }
-
-    // All others return just the raw numeric value (no %, mins, etc.)
-    return (v) => `${v}`;
-  };
-
-  const getFooterFormatter = (termName, customFormat) => {
-    const fmt = (customFormat || '').trim().toLowerCase();
-    const name = (termName || '').toUpperCase();
-
-    if (fmt === 'in %' || fmt === '%') return (v) => `${v}%`;
-    if (fmt === 'in rm mil') return (v) => `RM ${v} mil`;
-    if (fmt === 'in rm bil') return (v) => `RM ${v} bil`;
-    if (fmt === 'in rm') return (v) => `RM ${v}`;
-    if (fmt === 'in mins' || fmt === 'mins') return (v) => `${v} mins`;
-    if (fmt === 'in ltifr' || fmt === 'ltifr') return (v) => `LTIFR ${v}`;
-    if (fmt.startsWith('in ')) {
-      const suffix = customFormat.trim().slice(3).trim();
-      return (v) => `${v} ${suffix}`;
-    }
-
-    if (name.includes("REVENUE")) return (v) => `RM ${v} bil`;
-    if (["PAT", "EBIT", "CAPEX", "OPEX"].some(k => name.includes(k))) return (v) => `RM ${v} mil`;
-    if (["SAIDI", "SAIFI", "CAIDI", "SYSTEM MINUTES", "SYSTEM UNIT", "MINUTES", "MINS"].some(k => name.includes(k))) return (v) => `${v} mins`;
-    if (["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE", "ROI", "ROA", "ROE", "PERCENT", "RATE", "MARGIN", "LOSS", "CAPITALISATION"].some(k => name.includes(k))) return (v) => `${v}%`;
-    if (name.includes("SAFETY") || name.includes("LTIFR")) return (v) => `LTIFR ${v}`;
-    if (name.includes("RM") || name.includes("COST") || name.includes("PROFIT") || name.includes("EXPENSE")) return (v) => `RM ${v}`;
-
-    return (v) => `${v}`;
-  };
-
-  const getUnitLabel = (termName, customFormat) => {
-    if (customFormat && customFormat.trim()) {
-      const trimmed = customFormat.trim();
-      const lower = trimmed.toLowerCase();
-      if (lower === 'in %' || lower === '%') return "in percentage (%)";
-      if (lower === 'in rm mil') return "in million";
-      if (lower === 'in rm bil') return "in billion";
-      if (lower === 'in rm') return "in RM";
-      if (lower === 'in mins' || lower === 'mins') return "in minutes (mins)";
-      if (lower === 'in ltifr' || lower === 'ltifr') return "in rate (per 1M hours)";
-      return trimmed.startsWith('in ') ? trimmed : `in ${trimmed}`;
-    }
-    if (!termName) return "";
-    const name = termName.toUpperCase();
-    if (name.includes("REVENUE")) return "in billion";
-    if (["PAT", "EBIT", "CAPEX", "OPEX"].some(k => name.includes(k))) return "in million";
-    if (["LOSS", "CAPITALISATION", "AUDIT", "ROI", "ROA", "ROE", "PERCENT", "RATE", "MARGIN"].some(k => name.includes(k))) return "in percentage (%)";
-    if (["SAIDI", "SAIFI", "CAIDI", "MINUTES", "MINS", "DURATION", "SYSTEM UNIT"].some(k => name.includes(k))) return "in minutes (mins)";
-    if (name.includes("SAFETY") || name.includes("LTIFR")) return "in rate (per 1M hours)";
-    return "";
-  };
-
-  const bigStatFormatter = getBigStatFormatter(term, yAxisLabel);
-  const footerFormatter = getFooterFormatter(term, yAxisLabel);
   const unitLabel = getUnitLabel(term, yAxisLabel);
-
   const lastData = formattedData[formattedData.length - 1];
   const firstData = formattedData[0];
   const growth = firstData && firstData.value !== 0 
@@ -182,71 +207,18 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
   const isPositive = growth >= 0;
   const isZero = growth === 0;
 
-  // Custom dot rendering for each month
-  const CustomDot = (props) => {
-    const { cx, cy, index } = props;
-    const isLast = index === formattedData.length - 1;
-    if (cx === undefined || cy === undefined) return null;
-    return (
-      <circle 
-        key={`dot-${index}`}
-        cx={cx} 
-        cy={cy} 
-        r={isLast ? 5 : 4} 
-        stroke="#ffffff" 
-        strokeWidth={isLast ? 2.5 : 2} 
-        fill="#10b981" 
-      />
-    );
-  };
-
-  // Custom active dot with a beautiful pulse effect for interaction
-  const CustomActiveDot = (props) => {
-    const { cx, cy } = props;
-    if (cx === undefined || cy === undefined) return null;
-    return (
-      <g>
-        <circle cx={cx} cy={cy} r={14} fill="#10b981" fillOpacity={0.2} className="animate-ping" />
-        <circle cx={cx} cy={cy} r={6} fill="#10b981" stroke="#ffffff" strokeWidth={2.5} />
-      </g>
-    );
-  };
-
-  // Custom stylish tooltip
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-slate-900/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/60 shadow-lg flex flex-col z-50">
-          <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-0.5">{payload[0].payload.fullName}</p>
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            <p className="text-white font-black text-[13px] tracking-tight">
-              {payload[0].value}
-            </p>
-          </div>
-          <p className="text-emerald-500 text-[8px] font-bold uppercase mt-px ml-3 tracking-wider">{term}</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div 
       className="mt-4 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm animate-fadeIn relative overflow-hidden group focus:outline-none flex flex-col justify-between h-full w-full"
       onClick={(e) => e.stopPropagation()}
       style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      
-      {/* Decorative gradient orb for premium feel */}
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
 
-      {/* Header section matching the aesthetic */}
       <div className="flex items-end justify-between mb-3 relative z-10">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[12px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{term}</span>
-            {/* Dropdown Year Filter */}
             {allYears.length > 0 && (
               <div className="relative inline-block focus:outline-none" onClick={(e) => e.stopPropagation()}>
                 <select 
@@ -273,7 +245,7 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
             {!term.toUpperCase().includes('AUDIT') && (
               <>
                 <span className="text-[28px] font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">
-                  {bigStatFormatter(lastData?.value ?? 0)}
+                  {formatBigStat(term, yAxisLabel, lastData?.value ?? 0)}
                 </span>
                 {!isZero && (
                   <span className={`text-[13px] font-bold flex items-center px-1.5 py-0.5 rounded-md ${isPositive ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400' : 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'}`}>
@@ -289,7 +261,6 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
         </div>
       </div>
       
-      {/* Definition Section */}
       {description && (
         <div className="mb-4 text-[12px] text-slate-500 dark:text-slate-400 font-medium italic border-l-2 border-emerald-500 pl-3 leading-relaxed relative z-10">
           {description}
@@ -321,7 +292,7 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
               {isBar ? (
                 <BarChart data={formattedData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }} style={{ outline: 'none' }}>
                   <Tooltip 
-                    content={CustomTooltip}
+                    content={(tooltipProps) => <ChartTooltip {...tooltipProps} term={term} />}
                     cursor={{ fill: '#e2e8f0', opacity: 0.4 }}
                   />
                   <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
@@ -349,7 +320,7 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
                     </linearGradient>
                   </defs>
                   <Tooltip 
-                    content={CustomTooltip}
+                    content={(tooltipProps) => <ChartTooltip {...tooltipProps} term={term} />}
                     cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.4 }}
                   />
                   <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
@@ -361,8 +332,8 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
                     strokeWidth={3.5}
                     fillOpacity={1} 
                     fill={`url(#colorValue-${(term || '').replace(/\s+/g, '')})`}
-                    activeDot={CustomActiveDot} 
-                    dot={CustomDot}
+                    activeDot={ChartActiveDot} 
+                    dot={(dotProps) => <ChartDot {...dotProps} dataLength={formattedData.length} />}
                     animationDuration={1800}
                     animationEasing="ease-out"
                     isAnimationActive={true}
@@ -373,16 +344,15 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
             </ResponsiveContainer>
           </div>
 
-          {/* Footer labels matching the aesthetic */}
           <div className="flex justify-between items-center mt-3 px-2 pt-3 border-t border-slate-200 dark:border-slate-700 border-dashed relative z-10">
             <div className="flex flex-col items-start">
               <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{firstData?.name}</span>
-              <span className="text-[10px] font-medium text-slate-400">{footerFormatter(firstData?.value ?? 0)}</span>
+              <span className="text-[10px] font-medium text-slate-400">{formatFooter(term, yAxisLabel, firstData?.value ?? 0)}</span>
             </div>
             
             <div className="flex flex-col items-end">
               <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{lastData?.name} (Latest)</span>
-              <span className="text-[10px] font-bold text-emerald-500/80">{footerFormatter(lastData?.value ?? 0)}</span>
+              <span className="text-[10px] font-bold text-emerald-500/80">{formatFooter(term, yAxisLabel, lastData?.value ?? 0)}</span>
             </div>
           </div>
         </>

@@ -130,7 +130,7 @@ function App() {
           console.warn("Direct streak fetch failed:", err);
         });
     } else {
-      setStreak(0);
+      setStreak(prev => (prev === 0 ? prev : 0));
       return Promise.resolve();
     }
   }, [user]);
