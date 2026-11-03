@@ -135,4 +135,21 @@ namespace mobile_backend.Models
         public string? Division { get; set; }
         public string? Path { get; set; }
     }
+
+    public static class HttpMethodConstants
+    {
+        public static readonly string[] Options = ["OPTIONS"];
+    }
+
+    public record ReadActivityRequest(string Username);
+
+    public class AuthRequest
+    {
+        public string? FullName { get; set; }
+        public string? PreferredName { get; set; }
+        public string? Email { get; set; }
+        public string? Password { get; set; }
+        public string? Division { get; set; }
+        public string? StaffId { get; set; }
+    }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export function EditPreferredNameModal({
@@ -8,14 +8,12 @@ export function EditPreferredNameModal({
   fullName = '',
   onSave
 }) {
-  const [tempName, setTempName] = useState(currentName);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      setTempName(currentName || '');
-    }
-  }, [isOpen, currentName]);
+  const [tempName, setTempName] = useState(currentName || '');
+  const [prevCurrent, setPrevCurrent] = useState(currentName);
+  if (currentName !== prevCurrent) {
+    setPrevCurrent(currentName);
+    setTempName(currentName || '');
+  }
 
   if (!isOpen) return null;
 

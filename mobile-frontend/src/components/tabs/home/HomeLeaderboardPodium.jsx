@@ -51,7 +51,7 @@ export function HomeLeaderboardPodium({
           </div>
           <div>
             <h2 className="text-[16px] font-extrabold text-white tracking-tight">Monthly Leaderboard</h2>
-            <p className="text-white/80 text-[11px] font-medium tracking-normal">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+            <p className="text-white/80 text-[11px] font-medium tracking-normal">{currentMonthLabel}</p>
           </div>
         </div>
         <button onClick={onViewAll} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold tracking-tight rounded-lg backdrop-blur-sm transition-all">

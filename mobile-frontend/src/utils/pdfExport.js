@@ -75,7 +75,7 @@ export function exportBookmarksToPdf(bookmarks = []) {
         let parsed = [];
         try {
           parsed = typeof bm.chartData === 'string' ? JSON.parse(bm.chartData) : bm.chartData;
-        } catch (e) {}
+        } catch {}
         if (!Array.isArray(parsed) || parsed.length === 0) {
           const isPct = ["SYSTEM LOSS", "ASSET CAPITALISATION", "AUDIT ISSUE", "ROI", "ROA", "ROE"].includes((titleStr || '').toUpperCase());
           parsed = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map(m => ({
@@ -124,7 +124,7 @@ export function exportBookmarksToPdf(bookmarks = []) {
         try {
           const p = typeof bm.additionalImages === 'string' ? JSON.parse(bm.additionalImages) : bm.additionalImages;
           if (Array.isArray(p)) allImgs.push(...p);
-        } catch (e) {}
+        } catch {}
       }
       allImgs.forEach(img => {
         pdfWin.document.write(`<img src="${img}" alt="${bm.title}" />`);

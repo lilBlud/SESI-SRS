@@ -5,7 +5,7 @@ export function useBookmarks() {
     try {
       const saved = localStorage.getItem('sesi_bookmarks');
       return saved ? JSON.parse(saved) : [];
-    } catch (e) { return []; }
+    } catch { return []; }
   });
 
   const toggleBookmark = (item, type) => {

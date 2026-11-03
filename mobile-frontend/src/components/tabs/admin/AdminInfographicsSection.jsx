@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
@@ -108,7 +108,15 @@ export default function AdminInfographicsSection({
     setIImages(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const addInfographic = async (e) => {
+  const cancelEditInfographic = useCallback(() => {
+    setIEditId(null);
+    setITitle('');
+    setIDesc('');
+    setIImages([]);
+    setICat('General');
+  }, []);
+
+  const addInfographic = useCallback(async (e) => {
     e.preventDefault();
     if (!iTitle.trim()) {
       setIMsg('❌ Title is required');
@@ -123,6 +131,7 @@ export default function AdminInfographicsSection({
     setIMsg('⏳ Optimizing & uploading poster...');
 
     try {
+      const nowIso = new Date().toISOString();
       const compressedImages = await Promise.all(iImages.map(ensureCompressed));
       const primaryImage = compressedImages[0] || '';
       const additional = compressedImages.length > 1 ? JSON.stringify(compressedImages.slice(1)) : '';
@@ -133,7 +142,7 @@ export default function AdminInfographicsSection({
         ImageUrl: primaryImage,
         AdditionalImages: additional,
         Category: iCat || 'General',
-        PostedAt: new Date().toISOString()
+        PostedAt: nowIso
       };
 
       let directSuccess = false;
@@ -196,15 +205,7 @@ export default function AdminInfographicsSection({
       setIPosting(false);
       setTimeout(() => setIMsg(''), 4000);
     }
-  };
-
-  const cancelEditInfographic = () => {
-    setIEditId(null);
-    setITitle('');
-    setIDesc('');
-    setIImages([]);
-    setICat('General');
-  };
+  }, [iTitle, iImages, iDesc, iCat, iEditId, onRefreshInfographics, cancelEditInfographic]);
 
   const editInfographic = (item) => {
     setIEditId(item.id);

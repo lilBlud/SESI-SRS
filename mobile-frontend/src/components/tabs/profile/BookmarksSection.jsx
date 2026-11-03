@@ -125,7 +125,7 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark }) {
                     try {
                       const parsed = typeof activeBookmark.additionalImages === 'string' ? JSON.parse(activeBookmark.additionalImages) : activeBookmark.additionalImages;
                       if (Array.isArray(parsed)) allImages.push(...parsed);
-                    } catch (e) { }
+                    } catch { }
                   }
 
                   return (
@@ -237,7 +237,7 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark }) {
           try {
             const parsed = typeof activeBookmark.additionalImages === 'string' ? JSON.parse(activeBookmark.additionalImages) : activeBookmark.additionalImages;
             if (Array.isArray(parsed)) allImages.push(...parsed);
-          } catch (e) { }
+          } catch { }
         }
         return (
           <div className="fixed inset-0 z-[110] flex flex-col bg-black animate-fadeIn" onClick={() => setImgViewerIdx(null)}>

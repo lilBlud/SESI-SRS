@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { DEFAULT_HISTORICAL_METRICS } from '../../data/historicalPerformanceData';
+import { DEFAULT_HISTORICAL_METRICS, getYAxisUnit } from '../../data/historicalPerformanceData';
 
 export function PostImageSlider({ images, title, onImageClick }) {
   const [idx, setIdx] = useState(0);
@@ -45,23 +45,6 @@ export function PostImageSlider({ images, title, onImageClick }) {
   );
 }
 
-// ─── Corporate Performance Helpers ───
-export const getYAxisUnit = (termName, customFormat) => {
-  if (customFormat && typeof customFormat === 'string' && customFormat.trim()) {
-    const trimmed = customFormat.trim();
-    return trimmed.toLowerCase().startsWith('in ') ? trimmed : `in ${trimmed}`;
-  }
-  if (!termName) return 'in %';
-  const name = termName.toUpperCase();
-  if (name.includes("REVENUE")) return "in RM bil";
-  if (["PAT", "EBIT", "CAPEX", "OPEX"].some(k => name.includes(k))) return "in RM mil";
-  if (["LOSS", "CAPITALISATION", "AUDIT", "ROI", "ROA", "ROE", "PERCENT", "RATE", "MARGIN"].some(k => name.includes(k))) return "in %";
-  if (["SAIDI", "SAIFI", "CAIDI", "MINUTES", "MINS", "DURATION", "SYSTEM UNIT"].some(k => name.includes(k))) return "in mins";
-  if (name.includes("SAFETY") || name.includes("LTIFR")) return "in LTIFR";
-  if (name.includes("RM") || name.includes("COST") || name.includes("PROFIT") || name.includes("EXPENSE")) return "in RM";
-  return "in %";
-};
-
 // ─── Corporate Performance Chart ───
 export function CorporatePerformanceChart({ chartData, term = '', description = '', yAxisFormat, chartType, formula }) {
   const [selectedYear, setSelectedYear] = useState(null);
@@ -71,7 +54,7 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
   let parsed = [];
   try {
     parsed = typeof chartData === 'string' ? JSON.parse(chartData) : chartData;
-  } catch (e) {
+  } catch {
     // ignore
   }
 
@@ -230,7 +213,7 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
   };
 
   // Custom stylish tooltip
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-slate-900/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/60 shadow-lg flex flex-col z-50">

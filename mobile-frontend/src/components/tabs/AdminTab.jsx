@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  getInfographicsDirect, 
-  getGlossaryDirect, 
-  getVisitorStatsDirect, 
-  getAllUsersDirect, 
-  updateUserRoleDirect, 
+import {
+  getInfographicsDirect,
+  getGlossaryDirect,
+  getVisitorStatsDirect,
+  getAllUsersDirect,
+  updateUserRoleDirect,
   deleteUserDirect,
-  supabase 
+  supabase
 } from '../../utils/supabaseClient';
 import { matchesUser } from '../../utils/rbac';
 import AdminTrafficSection from './admin/AdminTrafficSection';
@@ -98,7 +98,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
 
   const handleUpdateRole = async (targetIdOrEmail, newRole) => {
     // Optimistic update for instant UI feedback
-    setUsers(prev => prev.map(u => 
+    setUsers(prev => prev.map(u =>
       matchesUser(u, targetIdOrEmail) ? { ...u, role: newRole } : u
     ));
 
@@ -259,19 +259,27 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
             </p>
           )}
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-xs shrink-0"
+            aria-label="Exit Admin Panel"
+          >
+            <span>←</span> Exit
+          </button>
+        )}
       </div>
 
       {/* Section Tabs */}
       <div className="grid grid-cols-5 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
         {sections.map(s => (
-          <button 
-            key={s.id} 
-            onClick={() => setActiveSection(s.id)} 
-            className={`py-2 px-1 rounded-xl text-center transition-all flex flex-col items-center justify-center min-h-[46px] ${
-              activeSection === s.id 
-                ? 'bg-emerald-600 text-white shadow-md font-black' 
+          <button
+            key={s.id}
+            onClick={() => setActiveSection(s.id)}
+            className={`py-2 px-1 rounded-xl text-center transition-all flex flex-col items-center justify-center min-h-[46px] ${activeSection === s.id
+                ? 'bg-emerald-600 text-white shadow-md font-black'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold'
-            }`}
+              }`}
           >
             <div className="text-[11px] sm:text-[12px] leading-tight truncate">{s.label}</div>
             {s.count !== undefined && (

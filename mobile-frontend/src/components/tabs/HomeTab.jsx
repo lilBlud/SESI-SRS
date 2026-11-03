@@ -8,7 +8,6 @@ import { HomeHeroBanner, HomeAdminTrafficCard, HomeLeaderboardPodium } from './h
 export function HomeTab({
   user,
   streak,
-  glossary,
   setActiveTab,
   setActiveGlossaryCat,
   isDark,
@@ -50,7 +49,7 @@ export function HomeTab({
         setLeaderboard([]);
         setLoadingLb(false);
       });
-  }, [currentMonth]);
+  }, []);
 
   useEffect(() => {
     getInfographicsDirect()
@@ -226,7 +225,7 @@ export function HomeTab({
             try {
               const parsed = typeof post.additionalImages === 'string' ? JSON.parse(post.additionalImages) : post.additionalImages;
               if (Array.isArray(parsed)) allImages.push(...parsed);
-            } catch (e) { }
+            } catch { }
           }
 
           const hasImages = allImages.length > 0;

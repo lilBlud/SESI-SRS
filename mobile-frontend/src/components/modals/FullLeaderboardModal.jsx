@@ -61,7 +61,7 @@ export function FullLeaderboardModal({
           </button>
           <div className="flex-1 text-center pr-8">
             <h2 className="text-[17px] font-black text-white leading-tight">Full Leaderboard</h2>
-            <p className="text-[11px] text-white/80 font-medium">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+            <p className="text-[11px] text-white/80 font-medium">{currentMonthLabel}</p>
           </div>
         </div>
 

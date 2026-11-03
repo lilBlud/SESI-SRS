@@ -24,25 +24,3 @@ export const ProfileIcon = ({ active }) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
-
-// ─── Save post image helper ───
-export async function saveImage(url, filename) {
-  try {
-    // Fetch the image as a blob to bypass cross-origin download restrictions
-    const response = await fetch(url, { mode: 'cors' });
-    if (!response.ok) throw new Error('Network error');
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename || 'sesi-post.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(blobUrl);
-  } catch (err) {
-    console.error('Failed to download image:', err);
-    alert('Failed to save image automatically. You may need to right-click (or long-press) the image and save it manually.');
-  }
-}

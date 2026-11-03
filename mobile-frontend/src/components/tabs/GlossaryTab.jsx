@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { CATEGORIES, API_BASE, getColor, getCatMeta } from '../../utils/constants';
+import React, { useState, useCallback } from 'react';
+import { CATEGORIES, API_BASE, getColor } from '../../utils/constants';
 import { CorporatePerformanceChart } from '../ui';
 import { recordUserActivityDirect } from '../../utils/supabaseClient';
 import { FutureGenMapModal } from '../modals';
@@ -48,11 +48,6 @@ export function GlossaryTab({
     catCounts[item.cat] = (catCounts[item.cat] || 0) + 1;
   });
 
-  // Reset flashcards on filter change
-  useEffect(() => {
-    setFlashcardIdx(0);
-    setFlipped(false);
-  }, [search, cat, viewMode]);
 
   // Record reading activity when user taps a term (streak trigger)
   const recordRead = useCallback(async (termId) => {
@@ -201,7 +196,6 @@ export function GlossaryTab({
         <div className="space-y-3">
           {filtered.map((item) => {
             const clr = getColor(item.cat);
-            const catMeta = getCatMeta(item.cat);
             const isExpanded = expandedId === (item.id || item.term);
             const isPerfCard = item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]');
 
@@ -387,6 +381,7 @@ export function GlossaryTab({
       {/* FLASHCARDS View */}
       {viewMode === 'flashcards' && (
         <GlossaryFlashcardView
+          key={`${cat}-${search}`}
           filtered={filtered}
           flashcardIdx={flashcardIdx}
           setFlashcardIdx={setFlashcardIdx}

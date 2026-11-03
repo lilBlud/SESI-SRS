@@ -147,7 +147,8 @@ function App() {
     setShowInstallPrompt,
     deferredPrompt,
     dismissInstallPrompt,
-    triggerInstallPrompt
+    triggerInstallPrompt,
+    installApp
   } = useInstallPrompt(user);
 
   // Global refresh callback
@@ -242,14 +243,9 @@ function App() {
     try { localStorage.removeItem('sesi_passcode_unlocked'); } catch { }
     setIsPasscodeUnlocked(false);
     setUser(null);
+    setStreak(0);
   };
 
-
-  useEffect(() => {
-    if (user && (user.fullName === 'Demo User' || user.staffId === 'DEMO-001') && user.division !== 'IDD') {
-      handleUpdateUser({ division: 'IDD' });
-    }
-  }, [user, handleUpdateUser]);
 
   if (!isPasscodeUnlocked) {
     return (
@@ -434,10 +430,10 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} glossary={glossary} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
+        {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
         {activeTab === 'glossary' && <GlossaryTab key={`glossary-${refreshKey}`} user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
         {activeTab === 'quiz' && <QuizTab key={`quiz-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
-        {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} setActiveTab={setActiveTab} onUpdateUser={handleUpdateUser} />}
+        {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} />}
         {activeTab === 'admin' && (
           user?.role === 'Admin' ? (
             <Suspense fallback={
@@ -528,19 +524,7 @@ function App() {
               <button onClick={dismissInstallPrompt} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all active:scale-95">
                 Not Now
               </button>
-              <button onClick={() => {
-                if (deferredPrompt) {
-                  deferredPrompt.prompt();
-                  deferredPrompt.userChoice.then(({ outcome }) => {
-                    if (outcome === 'accepted') {
-                      setDeferredPrompt(null);
-                      setShowInstallPrompt(false);
-                    }
-                  });
-                } else {
-                  alert("To install on iOS: Tap the 'Share' icon in Safari (at the bottom), then select 'Add to Home Screen'.");
-                }
-              }} className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-500/30">
+              <button onClick={installApp} className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-500/30">
                 Install App
               </button>
             </div>

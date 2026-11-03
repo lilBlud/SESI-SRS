@@ -17,12 +17,12 @@ import {
   ProfilePhotoPickerModal
 } from './profile';
 
-export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }) {
+export function ProfileTab({ user, bookmarkActions, onUpdateUser }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };
   const [recentQuizzes, setRecentQuizzes] = useState([]);
   const [currentRank, setCurrentRank] = useState(null);
   const [totalScore, setTotalScore] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(user));
   const [filterMonth, setFilterMonth] = useState(''); // empty = All time
   const [activeMonths, setActiveMonths] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -91,12 +91,8 @@ export function ProfileTab({ user, bookmarkActions, setActiveTab, onUpdateUser }
   }, [USERNAME, user]);
 
   useEffect(() => {
-    setLoading(true);
     const userIdentifiers = extractUserTargets(user || USERNAME);
-    if (userIdentifiers.length === 0) {
-      setLoading(false);
-      return;
-    }
+    if (userIdentifiers.length === 0) return;
 
     Promise.all([
       getUserRecentAnswersDirect(userIdentifiers, filterMonth).catch(() => []),

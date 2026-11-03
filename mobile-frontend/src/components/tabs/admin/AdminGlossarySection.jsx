@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { getYAxisUnit } from '../../ui';
 import { DEFAULT_HISTORICAL_METRICS } from '../../../data/historicalPerformanceData';
 import { supabase } from '../../../utils/supabaseClient';
@@ -31,9 +31,29 @@ export default function AdminGlossarySection({
 
   const isPerfStudio = dictSubTab === 'corporate';
 
-  const addGlossaryTerm = async (e) => {
+  const cancelEditGlossaryTerm = useCallback(() => {
+    setGEditId(null);
+    setGTerm('');
+    setGFull('');
+    setGDesc('');
+    setGFormula('area');
+    setGNotations('');
+    setGMeanings('');
+    if (dictSubTab === 'corporate') {
+      setGCat('Corporate Performance');
+      setCYear('2026');
+    } else {
+      setGCat('IBR Framework');
+    }
+    setGChartData([]);
+    setGYAxisFormat('in %');
+    setShowForm(false);
+  }, [dictSubTab]);
+
+  const addGlossaryTerm = useCallback(async (e) => {
     e.preventDefault();
     const finalChartData = [...gChartData];
+    const nowIso = new Date().toISOString();
 
     const supabasePayload = {
       Term: gTerm.trim(),
@@ -44,7 +64,7 @@ export default function AdminGlossarySection({
       FormulaTermMeanings: isPerfStudio ? '' : (gMeanings || ''),
       Category: gCat || (isPerfStudio ? 'Corporate Performance' : 'IBR Framework'),
       ChartData: isPerfStudio && finalChartData.length > 0 ? JSON.stringify(finalChartData) : '',
-      CreatedAt: new Date().toISOString()
+      CreatedAt: nowIso
     };
 
     let directSuccess = false;
@@ -114,7 +134,7 @@ export default function AdminGlossarySection({
     }
 
     setTimeout(() => setGMsg(''), 3500);
-  };
+  }, [gTerm, isPerfStudio, gFull, gDesc, gFormula, gYAxisFormat, gNotations, gMeanings, gCat, gChartData, gEditId, onRefreshGlossary, onGlossaryChange, cancelEditGlossaryTerm]);
 
   const editGlossaryTerm = (t) => {
     setGEditId(t.id);
@@ -298,24 +318,6 @@ export default function AdminGlossarySection({
     }
   };
 
-  const cancelEditGlossaryTerm = () => {
-    setGEditId(null);
-    setGTerm('');
-    setGFull('');
-    setGDesc('');
-    setGFormula('area');
-    setGNotations('');
-    setGMeanings('');
-    if (dictSubTab === 'corporate') {
-      setGCat('Corporate Performance');
-      setCYear('2026');
-    } else {
-      setGCat('IBR Framework');
-    }
-    setGChartData([]);
-    setGYAxisFormat('in %');
-    setShowForm(false);
-  };
 
   const deleteGlossaryTerm = async (id) => {
     if (!confirm('Are you sure you want to delete this card / term?')) return;

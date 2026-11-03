@@ -47,12 +47,29 @@ export function useInstallPrompt(user) {
     setShowInstallPrompt(true);
   }, []);
 
+  const installApp = useCallback(async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try {
+        const choice = await deferredPrompt.userChoice;
+        if (choice?.outcome === 'accepted') {
+          setDeferredPrompt(null);
+          setShowInstallPrompt(false);
+        }
+      } catch {
+        setShowInstallPrompt(false);
+      }
+    } else {
+      alert("To install on iOS: Tap the 'Share' icon in Safari (at the bottom), then select 'Add to Home Screen'.");
+    }
+  }, [deferredPrompt]);
+
   return {
     showInstallPrompt,
     setShowInstallPrompt,
     deferredPrompt,
     dismissInstallPrompt,
-    triggerInstallPrompt
+    triggerInstallPrompt,
+    installApp
   };
 }
-

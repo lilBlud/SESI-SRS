@@ -37,7 +37,6 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
 
   // Load all available monthly quizzes and completion status
   const loadQuizzes = useCallback(async () => {
-    setLoadingQuizzes(true);
     try {
       const identifiers = extractUserTargets(user || USERNAME);
       const data = await getAvailableQuizzesWithStatusDirect(identifiers);
