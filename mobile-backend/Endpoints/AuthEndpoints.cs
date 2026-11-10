@@ -1,9 +1,7 @@
-using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using mobile_backend.Data;
 using mobile_backend.Models;
+using mobile_backend.Services;
 
 namespace mobile_backend.Endpoints
 {
@@ -11,13 +9,10 @@ namespace mobile_backend.Endpoints
     {
         public static WebApplication MapAuthEndpoints(this WebApplication app)
         {
-            app.MapPost("/api/auth/signup", async (AuthRequest req, AppDbContext db) =>
+            app.MapPost("/api/auth/signup", async (AuthRequest req, IUserService svc) =>
             {
                 if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
                     return Results.BadRequest(new { error = "Email and password required" });
-
-                if (await db.StaffUsers.AnyAsync(u => u.Email == req.Email))
-                    return Results.BadRequest(new { error = "Email already exists" });
 
                 var prefName = (req.PreferredName ?? "").Trim();
                 if (prefName.Length > 10) prefName = prefName[..10];
@@ -32,35 +27,19 @@ namespace mobile_backend.Endpoints
                     StaffId = req.StaffId ?? "",
                     Role = "Staff"
                 };
-                db.StaffUsers.Add(user);
-                await db.SaveChangesAsync();
 
-                return Results.Ok(ToUserDto(user));
+                var res = await svc.SignupAsync(user);
+                return res != null ? Results.Ok(res) : Results.BadRequest(new { error = "Email already exists" });
             }).RequireCors("AllowAll");
 
             app.MapMethods("/api/auth/login", HttpMethodConstants.Options, () => Results.Ok()).RequireCors("AllowAll");
-            app.MapPost("/api/auth/login", async (AuthRequest req, AppDbContext db) =>
+            app.MapPost("/api/auth/login", async (AuthRequest req, IUserService svc) =>
             {
-                var user = await db.StaffUsers.FirstOrDefaultAsync(u => u.Email == req.Email && u.PasswordHash == req.Password);
-                if (user == null)
-                    return Results.Unauthorized();
-
-                return Results.Ok(ToUserDto(user));
+                var res = await svc.LoginAsync(req.Email ?? "", req.Password ?? "");
+                return res != null ? Results.Ok(res) : Results.Unauthorized();
             }).RequireCors("AllowAll");
 
             return app;
         }
-
-        private static object ToUserDto(StaffUser user) => new
-        {
-            id = user.Id,
-            fullName = user.FullName,
-            preferredName = user.PreferredName,
-            email = user.Email,
-            division = user.Division,
-            staffId = user.StaffId,
-            profilePicture = user.ProfilePicture,
-            role = user.Role
-        };
     }
 }

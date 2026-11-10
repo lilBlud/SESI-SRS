@@ -1,12 +1,14 @@
 import React from 'react';
 import { LeaderboardAvatar } from '../../ui';
+import { currentMonthLabel } from '../../../utils/constants';
 
 export function HomeLeaderboardPodium({
   leaderboard = [],
   loadingLb,
   user,
   streak,
-  onViewAll
+  onViewAll,
+  onTakeQuiz
 }) {
   return (
     <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
@@ -65,10 +67,27 @@ export function HomeLeaderboardPodium({
             <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : leaderboard.length === 0 ? (
-          <div className="text-center py-8 px-4">
-            <div className="text-3xl mb-2">🎯</div>
-            <p className="text-slate-700 dark:text-slate-200 font-bold text-[13.5px] tracking-tight">No entries yet this month</p>
-            <p className="text-slate-500 dark:text-slate-400 text-[11.5px] mt-0.5">Be the first to take the quiz and claim the #1 spot!</p>
+          <div className="py-5 px-3.5 text-center flex flex-col items-center justify-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-center text-2xl shadow-inner">
+              🎯
+            </div>
+            <div>
+              <p className="text-slate-900 dark:text-white font-extrabold text-[14px] tracking-tight">
+                Podium is Wide Open!
+              </p>
+              <p className="text-slate-500 dark:text-slate-400 text-[11.5px] mt-0.5 leading-snug">
+                Be the first to take this month's quiz and claim #1!
+              </p>
+            </div>
+            {onTakeQuiz && (
+              <button
+                onClick={onTakeQuiz}
+                className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs rounded-xl shadow-md shadow-orange-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                <span>Take Monthly Quiz</span>
+                <span>⚡</span>
+              </button>
+            )}
           </div>
         ) : (
           <>
@@ -79,7 +98,7 @@ export function HomeLeaderboardPodium({
                 {leaderboard.length > 1 && (
                   <div className="flex flex-col items-center justify-end relative">
                     <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100 w-full text-center px-1 mb-2.5 tracking-tight truncate">
-                      {(leaderboard[1].displayName || leaderboard[1].username).split(' ')[0]}
+                      {(leaderboard[1].displayName || leaderboard[1].username || 'User').split(' ')[0]}
                     </div>
                     <LeaderboardAvatar
                       entry={leaderboard[1]}
@@ -105,20 +124,21 @@ export function HomeLeaderboardPodium({
                   <div className="flex flex-col items-center justify-end relative">
                     <div className="absolute -top-5 text-lg animate-bounce z-20 drop-shadow-md">👑</div>
                     <div className="text-[13px] font-extrabold text-slate-900 dark:text-white w-full text-center px-1 mb-2.5 tracking-tight truncate">
-                      {(leaderboard[0].displayName || leaderboard[0].username).split(' ')[0]}
+                      {(leaderboard[0].displayName || leaderboard[0].username || 'User').split(' ')[0]}
                     </div>
                     <LeaderboardAvatar
                       entry={leaderboard[0]}
                       user={user}
                       currentStreak={streak}
                       sizeClass="w-12 h-12"
-                      textClass="text-[16px] text-white"
-                      bgClass="bg-gradient-to-br from-yellow-300 to-amber-500"
-                      shadowClass="shadow-amber-500/40"
+                      textClass="text-[16px] text-amber-900 font-extrabold"
+                      bgClass="bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 ring-4 ring-yellow-400/30"
+                      shadowClass="shadow-yellow-500/50"
+                      delayClass="[animation-delay:0ms]"
                       isPodium={true}
                     />
-                    <div className="w-full rounded-t-lg flex flex-col items-center pt-7 pb-2 shadow-inner transition-all h-28 bg-gradient-to-b from-amber-200 to-amber-50 dark:from-amber-600/40 dark:to-amber-900/10 border-t-2 border-amber-300 dark:border-amber-500">
-                      <div className="font-extrabold text-[15px] text-amber-950 dark:text-amber-100 tabular-nums tracking-tight leading-none">{leaderboard[0].score}</div>
+                    <div className="w-full rounded-t-lg flex flex-col items-center pt-8 pb-2 shadow-inner transition-all h-28 bg-gradient-to-b from-amber-300 to-amber-100 dark:from-amber-600/40 dark:to-amber-900/20 border-t-2 border-amber-400 dark:border-amber-500">
+                      <div className="font-extrabold text-[16px] text-amber-950 dark:text-amber-100 tabular-nums tracking-tight leading-none">{leaderboard[0].score}</div>
                     </div>
                   </div>
                 )}
@@ -129,7 +149,7 @@ export function HomeLeaderboardPodium({
                 {leaderboard.length > 2 && (
                   <div className="flex flex-col items-center justify-end relative">
                     <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100 w-full text-center px-1 mb-2.5 tracking-tight truncate">
-                      {(leaderboard[2].displayName || leaderboard[2].username).split(' ')[0]}
+                      {(leaderboard[2].displayName || leaderboard[2].username || 'User').split(' ')[0]}
                     </div>
                     <LeaderboardAvatar
                       entry={leaderboard[2]}

@@ -1,5 +1,18 @@
 import React from 'react';
 
+const formatTimestampMY = (dateStr) => {
+  if (!dateStr) return '';
+  const iso = typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')
+    ? `${dateStr}Z`
+    : dateStr;
+  return new Date(iso).toLocaleTimeString('en-MY', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'Asia/Kuala_Lumpur'
+  });
+};
+
 export default function AdminTrafficSection({
   trafficData,
   visitorStats,
@@ -163,7 +176,7 @@ export default function AdminTrafficSection({
                 </div>
               </div>
               <div className="text-[10px] font-medium text-slate-400 shrink-0">
-                {new Date(v.visitedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                {formatTimestampMY(v.visitedAt)}
               </div>
             </div>
           ))}

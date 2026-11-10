@@ -29,6 +29,10 @@ cloudflared.exe
 # Video render artifacts
 brag-output/
 
+# Local build and publish directories
+publish-backend/
+mobile-backend/wwwroot/
+
 # Agents
 .agents/
 skills-lock.json

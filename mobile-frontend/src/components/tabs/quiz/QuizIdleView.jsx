@@ -93,14 +93,16 @@ export function QuizIdleView({
             {selectedYear === 'All' ? 'No quizzes published yet. Check back soon!' : `No quizzes found for ${selectedYear}.`}
           </div>
         ) : (
-          filteredQuizzes.map((quiz) => (
-            <QuizCard
-              key={quiz.month}
-              quiz={quiz}
-              isCurrent={quiz.month === currentMonth}
-              onStart={onStartQuiz}
-            />
-          ))
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            {filteredQuizzes.map((quiz) => (
+              <QuizCard
+                key={quiz.month}
+                quiz={quiz}
+                isCurrent={quiz.month === currentMonth}
+                onStart={onStartQuiz}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

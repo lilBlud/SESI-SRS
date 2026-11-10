@@ -79,7 +79,7 @@ export function ProfileHeroCard({
             </div>
           )}
           <div className="flex flex-col mt-1">
-            <span className="text-emerald-100 text-[12px] font-medium truncate">{user?.division || 'IDD'}</span>
+            <span className="text-emerald-100 text-[12px] font-medium truncate">{user?.division || 'Information & Digital'}</span>
             <span className="text-emerald-200/80 text-[11px]">{user?.staffId || 'DEMO-001'}</span>
           </div>
         </div>

@@ -1,11 +1,19 @@
 export const API_BASE = import.meta.env.VITE_API_BASE || "";
-export const currentMonth = new Date().toISOString().slice(0, 7);
+
+// Standardized to Malaysia (UTC+8) operational timezone
+const nowMalaysia = new Date(Date.now() + 8 * 3600 * 1000);
+export const currentMonth = nowMalaysia.toISOString().slice(0, 7);
+export const currentMonthLabel = nowMalaysia.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 export const formatMonthName = (m) => {
-  if (!m) return '';
-  const [y, mo] = m.split('-');
-  const date = new Date(parseInt(y, 10), parseInt(mo, 10) - 1);
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  if (!m || typeof m !== 'string' || !m.includes('-')) return '';
+  const parts = m.split('-');
+  if (parts.length < 2) return '';
+  const y = parseInt(parts[0], 10);
+  const mo = parseInt(parts[1], 10);
+  if (isNaN(y) || isNaN(mo) || mo < 1 || mo > 12) return '';
+  const date = new Date(Date.UTC(y, mo - 1, 1));
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 };
 
 // ─── Category Config (colours, emoji, labels) ───

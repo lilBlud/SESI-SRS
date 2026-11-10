@@ -9,6 +9,7 @@ import {
   supabase
 } from '../../utils/supabaseClient';
 import { matchesUser } from '../../utils/rbac';
+import { IS_LOCAL_SSMS } from '../../services/apiConfig';
 import AdminTrafficSection from './admin/AdminTrafficSection';
 import AdminUsersSection from './admin/AdminUsersSection';
 import AdminQuizSection from './admin/AdminQuizSection';
@@ -151,7 +152,8 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   };
 
   const fetchQuestions = useCallback(async () => {
-    try {
+    if (!IS_LOCAL_SSMS) {
+      try {
       const { data, error } = await supabase
         .from('QuizQuestions')
         .select('*')
@@ -173,6 +175,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
       }
     } catch (sbErr) {
       console.warn('Direct fetch questions error in AdminTab:', sbErr);
+      }
     }
 
     const res = await fetch(`${API_BASE}/api/admin/questions/${selectedMonth}`).catch(() => null);

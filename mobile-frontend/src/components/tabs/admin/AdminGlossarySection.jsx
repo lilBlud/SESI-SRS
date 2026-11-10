@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { getYAxisUnit } from '../../ui';
 import { DEFAULT_HISTORICAL_METRICS } from '../../../data/historicalPerformanceData';
 import { supabase } from '../../../utils/supabaseClient';
+import { IS_LOCAL_SSMS } from '../../../services/apiConfig';
 import { AdminGlossaryForm, AdminGlossaryCardList } from './glossary';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';

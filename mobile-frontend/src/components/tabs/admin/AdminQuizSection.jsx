@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
+import { IS_LOCAL_SSMS } from '../../../services/apiConfig';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 

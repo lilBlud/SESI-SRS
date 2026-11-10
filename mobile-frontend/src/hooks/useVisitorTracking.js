@@ -50,7 +50,7 @@ export function useVisitorTracking(user) {
     }
 
     const cleanUsername = user?.fullName || user?.preferredName || '';
-    const cleanDivision = user?.division || (user?.fullName ? 'IDD' : '');
+    const cleanDivision = user?.division || (user?.fullName ? 'Information & Digital' : '');
     const currentKey = `${visitorId}:${cleanUsername}:${cleanDivision}`;
 
     if (lastRecordedKeyRef.current === currentKey) {

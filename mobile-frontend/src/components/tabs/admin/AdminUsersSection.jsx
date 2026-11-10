@@ -211,7 +211,7 @@ export default function AdminUsersSection({
         </div>
       </div>
 
-      {/* ─── User List Roster ─── */}
+      {/* ─── User List Roster (Responsive Grid) ─── */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-10 text-slate-400 space-y-2">
           <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
@@ -224,7 +224,7 @@ export default function AdminUsersSection({
           <p className="text-[11px] text-slate-400">Try modifying your search or filter criteria.</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filteredUsers.map((u) => (
             <AdminUserCard
               key={u.id || u.email}
@@ -244,7 +244,7 @@ export default function AdminUsersSection({
         pendingRole={pendingRole}
         isUpdating={isUpdating}
         onConfirm={handleConfirmRoleChange}
-        onClose={() => {
+        onCancel={() => {
           setTargetUser(null);
           setPendingRole(null);
         }}

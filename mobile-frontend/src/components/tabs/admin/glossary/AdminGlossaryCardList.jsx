@@ -48,8 +48,8 @@ export function AdminGlossaryCardList({
         </select>
       </div>
 
-      {/* Cards List */}
-      <div className="space-y-3">
+      {/* Cards List in Responsive Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {filteredTerms.map(t => {
           let parsedChart = [];
           try {
@@ -139,7 +139,7 @@ export function AdminGlossaryCardList({
         })}
 
         {filteredTerms.length === 0 && (
-          <div className="text-center py-12 text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+          <div className="col-span-full text-center py-12 text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
             No matching {isPerfStudio ? 'performance cards' : 'definitions'} found.
           </div>
         )}

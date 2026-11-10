@@ -45,7 +45,7 @@ export default function PasscodeGate({ onUnlock, isDark = false }) {
   };
 
   return (
-    <div className={`relative w-full max-w-[430px] mx-auto min-h-[100dvh] overflow-hidden flex flex-col justify-between px-5 py-8 font-sans shadow-2xl select-none transition-colors duration-200 ${isDark ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`relative app-shell-frame min-h-[100dvh] overflow-hidden flex flex-col justify-between px-5 py-8 font-sans shadow-2xl select-none transition-colors duration-200 ${isDark ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       {/* ── Hardware Accelerated HD Topographic Background (SESI signature) with Smooth Cross-Fade ── */}
       <img
         src="/assets/hd_light_topo.jpg"

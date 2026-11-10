@@ -19,7 +19,7 @@ export default function LoginPage({ onLogin }) {
       fullName: 'Demo User',
       preferredName: 'Demo',
       email: 'demo@sesb.com.my',
-      division: 'IDD',
+      division: 'Information & Digital',
       staffId: 'DEMO-001',
       role: 'Staff'
     };
@@ -81,7 +81,7 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="relative w-full max-w-[430px] mx-auto h-[100dvh] overflow-hidden shadow-2xl bg-slate-900 flex flex-col font-sans">
+    <div className="relative app-shell-frame h-[100dvh] overflow-hidden shadow-2xl bg-slate-900 flex flex-col font-sans">
       {/* Background Image Area */}
       <div className="absolute inset-0 z-0 h-[55vh]">
         <img

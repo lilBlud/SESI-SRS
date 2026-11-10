@@ -114,41 +114,48 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser }) {
 
   return (
     <div className="space-y-6 animate-slideUp">
-      <div>
-        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">User Profile</span>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">My Activity</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">User Profile</span>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5 tracking-tight">My Activity &amp; Records</h1>
+        </div>
       </div>
 
-      {/* User Hero Card */}
-      <ProfileHeroCard
-        user={user}
-        username={USERNAME}
-        uploadingPhoto={uploadingPhoto}
-        onOpenPhotoModal={() => setShowPhotoModal(true)}
-        onOpenEditNameModal={() => setShowEditModal(true)}
-      />
+      {/* Responsive 2-column layout on desktop, stacked on mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Identity Card & Stats Badges (Sticky on desktop) */}
+        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 space-y-6">
+          <ProfileHeroCard
+            user={user}
+            username={USERNAME}
+            uploadingPhoto={uploadingPhoto}
+            onOpenPhotoModal={() => setShowPhotoModal(true)}
+            onOpenEditNameModal={() => setShowEditModal(true)}
+          />
 
-      {/* Stats Badges (Total Score + Standing) */}
-      <ProfileStatsBadges
-        loading={loading}
-        totalScore={totalScore}
-        currentRank={currentRank}
-      />
+          <ProfileStatsBadges
+            loading={loading}
+            totalScore={totalScore}
+            currentRank={currentRank}
+          />
+        </div>
 
-      {/* Recent Answers Section */}
-      <RecentQuestionsCarousel
-        loading={loading}
-        recentQuizzes={recentQuizzes}
-        filterMonth={filterMonth}
-        setFilterMonth={setFilterMonth}
-        activeMonths={activeMonths}
-      />
+        {/* Right Column: Recent Quizzes & Bookmarks */}
+        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+          <RecentQuestionsCarousel
+            loading={loading}
+            recentQuizzes={recentQuizzes}
+            filterMonth={filterMonth}
+            setFilterMonth={setFilterMonth}
+            activeMonths={activeMonths}
+          />
 
-      {/* Bookmarks Section with Integrated PDF Export */}
-      <BookmarksSection
-        bookmarks={bookmarks}
-        toggleBookmark={toggleBookmark}
-      />
+          <BookmarksSection
+            bookmarks={bookmarks}
+            toggleBookmark={toggleBookmark}
+          />
+        </div>
+      </div>
 
       {/* Edit Preferred Name Modal */}
       <EditPreferredNameModal

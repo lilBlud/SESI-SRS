@@ -42,7 +42,7 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[430px] h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 text-slate-900 dark:text-slate-100 antialiased"
+        className="app-shell-frame h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 text-slate-900 dark:text-slate-100 antialiased"
         onClick={e => e.stopPropagation()}
       >
         {/* Hardware Accelerated HD Background Image - Matches App Theme with Smooth Cross-Fade */}

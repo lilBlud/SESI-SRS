@@ -4,64 +4,21 @@ import { HomeTab, GlossaryTab, QuizTab, ProfileTab } from './components/tabs';
 const AdminTab = lazy(() => import('./components/tabs/AdminTab'));
 import LoginPage from './components/pages/LoginPage';
 import PasscodeGate from './components/pages/PasscodeGate';
-import { getGlossaryDirect, getUserProfileDirect, getUserStreakDirect } from './utils/supabaseClient.js';
+import { getGlossary } from './services/glossaryService';
+import { getUserStreak } from './services/userService';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
+import { DesktopSidebar, DesktopHeader } from './components/layout';
 import { useBookmarks } from './hooks/useBookmarks';
 import { useVisitorTracking } from './hooks/useVisitorTracking';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import { useInstallPrompt } from './hooks/useInstallPrompt';
+import { useAuth, useTheme } from './context';
 
 function App() {
-  const [isPasscodeUnlocked, setIsPasscodeUnlocked] = useState(() => {
-    try {
-      return localStorage.getItem('sesi_passcode_unlocked') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('sesi_user');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (!parsed.division || parsed.division === 'General' || parsed.fullName === 'Demo User' || parsed.staffId === 'DEMO-001' || parsed.email === 'demo@sesb.com.my') {
-          parsed.division = 'IDD';
-          if (parsed.email === 'demo@sesb.com.my' || parsed.fullName === 'Demo User') {
-            parsed.role = 'Staff';
-          }
-          try { localStorage.setItem('sesi_user', JSON.stringify(parsed)); } catch { }
-        }
-        return parsed;
-      }
-      return null;
-    } catch { return null; }
-  });
+  const { user, setUser, isPasscodeUnlocked, setIsPasscodeUnlocked, handleUpdateUser, login, logout } = useAuth();
+  const { isDark, toggleTheme: handleToggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('home');
   const [activeGlossaryCat, setActiveGlossaryCat] = useState('All');
-  const [isDark, setIsDark] = useState(() => {
-    try {
-      const saved = localStorage.getItem('sesi_theme');
-      if (saved) return saved === 'dark';
-      return Boolean(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    } catch {
-      return false;
-    }
-  });
-
-  const handleToggleTheme = useCallback(() => {
-    if (typeof document !== 'undefined' && document.startViewTransition) {
-      document.startViewTransition(() => {
-        setIsDark(prev => !prev);
-      });
-    } else {
-      document.documentElement.classList.add('theme-transitioning');
-      setIsDark(prev => !prev);
-      setTimeout(() => {
-        document.documentElement.classList.remove('theme-transitioning');
-      }, 350);
-    }
-  }, []);
   const [glossary, setGlossary] = useState(() => {
     try {
       const cached = localStorage.getItem('sesi_glossary_cache');
@@ -71,35 +28,13 @@ function App() {
     }
   });
   const [streak, setStreak] = useState(0);
-  const [streakToast, setStreakToast] = useState(null); // toast notification at root level
-
-
+  const [streakToast, setStreakToast] = useState(null);
   const bookmarkActions = useBookmarks();
-
-  const handleUpdateUser = useCallback((updatedData) => {
-    setUser(prev => {
-      const next = { ...prev, ...updatedData };
-      try { localStorage.setItem('sesi_user', JSON.stringify(next)); } catch { }
-      return next;
-    });
-  }, []);
-
-  // Visitor Tracking
   const { visitorStats, refreshVisitorStats } = useVisitorTracking(user);
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      try { localStorage.setItem('sesi_theme', 'dark'); } catch {}
-    } else {
-      document.documentElement.classList.remove('dark');
-      try { localStorage.setItem('sesi_theme', 'light'); } catch {}
-    }
-  }, [isDark]);
 
   // Fetch glossary from DB with offline localStorage persistence
   const fetchGlossary = useCallback(() => {
-    return getGlossaryDirect()
+    return getGlossary()
       .then(d => {
         if (d && d.length > 0) {
           setGlossary(d);
@@ -119,7 +54,7 @@ function App() {
   // Fetch streak on mount and whenever user logs in
   const fetchStreak = useCallback(() => {
     if (user) {
-      return getUserStreakDirect(user)
+      return getUserStreak(user)
         .then(res => {
           if (res && typeof res.streak === 'number') {
             setStreak(res.streak);
@@ -170,36 +105,7 @@ function App() {
     touchHandlers
   } = usePullToRefresh(handleGlobalRefresh);
 
-  // Sync latest user profile (including avatar, preferredName, and division if updated)
-  useEffect(() => {
-    if (user?.email || user?.fullName || user?.staffId) {
-      const u = user.email || user.fullName || user.staffId;
-      getUserProfileDirect(u)
-        .then(data => {
-          if (data) {
-            const updates = {};
-            if (data.profilePicture !== undefined && data.profilePicture !== user.profilePicture) {
-              updates.profilePicture = data.profilePicture;
-            }
-            if (data.preferredName !== undefined && data.preferredName !== user.preferredName) {
-              updates.preferredName = data.preferredName;
-            }
-            if (data.division && data.division !== user.division) {
-              updates.division = data.division;
-            }
-            if (data.role && data.role !== user.role) {
-              updates.role = data.role;
-            }
-            if (Object.keys(updates).length > 0) {
-              handleUpdateUser(updates);
-            }
-          }
-        })
-        .catch(err => {
-          console.warn("Direct profile sync failed:", err);
-        });
-    }
-  }, [user?.email, user?.fullName, user?.staffId, user?.division, user?.profilePicture, user?.preferredName, user?.role, handleUpdateUser]);
+  // Profile sync managed by AuthContext
 
 
   const [hasShownAlreadySaved, setHasShownAlreadySaved] = useState(false);
@@ -225,11 +131,7 @@ function App() {
   ];
 
   const handleLogin = (userData) => {
-    try { localStorage.setItem('sesi_user', JSON.stringify(userData)); } catch { }
-    try { sessionStorage.removeItem('dismissedInstallPrompt'); } catch { }
-    setUser(userData);
-    
-    // Trigger install popup 700ms after login if on browser (not installed app)
+    login(userData);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isIosStandalone = ('standalone' in window.navigator) && window.navigator.standalone === true;
     if (!isStandalone && !isIosStandalone) {
@@ -238,11 +140,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    try { localStorage.removeItem('sesi_user'); } catch { }
-    try { sessionStorage.removeItem('dismissedInstallPrompt'); } catch { }
-    try { localStorage.removeItem('sesi_passcode_unlocked'); } catch { }
-    setIsPasscodeUnlocked(false);
-    setUser(null);
+    logout();
     setStreak(0);
   };
 
@@ -264,7 +162,7 @@ function App() {
   }
 
   return (
-    <div className={`h-[100vh] overflow-hidden flex flex-col text-slate-900 transition-colors duration-200 w-full max-w-[430px] mx-auto relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
+    <div className={`h-[100dvh] overflow-hidden flex flex-col lg:flex-row text-slate-900 transition-colors duration-200 app-shell-frame relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
       {/* Hardware Accelerated HD Background Images with Smooth Cross-Fade */}
       <img
         src="/assets/hd_light_topo.jpg"
@@ -287,15 +185,39 @@ function App() {
         }`}
       />
 
-      {/* Root level Toast Notification */}
-      {streakToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-orange-500 text-white px-5 py-3 rounded-2xl shadow-xl shadow-orange-500/30 text-[13px] font-bold animate-scaleIn whitespace-nowrap">
-          {streakToast}
-        </div>
-      )}
+      {/* ─── DESKTOP SIDEBAR (hidden on mobile, visible on desktop >= 1024px) ─── */}
+      <DesktopSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        user={user}
+        streak={streak}
+        isDark={isDark}
+        toggleTheme={handleToggleTheme}
+        onLogout={handleLogout}
+      />
 
-      {/* ─── CRISP, SOLID TOP BAR ─── */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 safe-area-top shrink-0">
+      {/* ─── MAIN CONTENT VIEWPORT (Right column on desktop, full width on mobile) ─── */}
+      <div className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden relative">
+        {/* Root level Toast Notification */}
+        {streakToast && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-orange-500 text-white px-5 py-3 rounded-2xl shadow-xl shadow-orange-500/30 text-[13px] font-bold animate-scaleIn whitespace-nowrap">
+            {streakToast}
+          </div>
+        )}
+
+        {/* ─── DESKTOP HEADER (hidden on mobile, visible on desktop >= 1024px) ─── */}
+        <DesktopHeader
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          user={user}
+          streak={streak}
+          isDark={isDark}
+          toggleTheme={handleToggleTheme}
+          onLogout={handleLogout}
+        />
+
+        {/* ─── MOBILE TOP BAR (visible on mobile, hidden on desktop) ─── */}
+        <header className="lg:hidden sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 safe-area-top shrink-0">
         <div className="flex items-center justify-between px-4 h-16">
 
           {/* ─── LOGO AREA + BACK BUTTON ─── */}
@@ -392,7 +314,7 @@ function App() {
       <main
         ref={scrollContainerRef}
         {...touchHandlers}
-        className="flex-1 overflow-y-auto scroll-container px-4 pt-4 pb-20"
+        className="flex-1 overflow-y-auto scroll-container px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 lg:py-8 pb-24 lg:pb-12 w-full max-w-[1680px] 2xl:max-w-[1800px] mx-auto"
       >
         {/* Pull to Refresh Indicator */}
         {(pullDistance > 0 || isGlobalRefreshing) && (
@@ -472,7 +394,7 @@ function App() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-50 pb-3">
+      <nav className="lg:hidden app-shell-fixed-bottom bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-50 pb-3">
         <div className="flex items-center justify-around h-[68px] px-2">
           {tabs.map(({ id, label, Icon }) => (
             <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center justify-center w-[68px] h-[60px] mx-1 rounded-2xl transition-all ${activeTab === id ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'opacity-60'}`}>
@@ -484,6 +406,7 @@ function App() {
           ))}
         </div>
       </nav>
+      </div>
 
       {/* Install App Popup */}
       {showInstallPrompt && (

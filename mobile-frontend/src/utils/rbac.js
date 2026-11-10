@@ -92,7 +92,7 @@ export function resolveUserRole(rawUser, { adminSet = new Set(), staffSet = new 
   if (isExplicitStaff) return 'Staff';
 
   // 2. Explicit Admin grant override or DB Admin
-  const isExplicitAdmin = (idStr && adminSet.has(idStr)) || adminSet.has(email) || adminSet.has(fullName) || adminSet.has(staffId);
+  const isExplicitAdmin = (idStr && adminSet.has(idStr)) || adminSet.has(email) || adminSet.has(fullName) || adminSet.has(staffId) || DEFAULT_ADMIN_EMAILS.includes(email);
   if (dbRole === 'Admin' || isExplicitAdmin) return 'Admin';
 
   return 'Staff';
@@ -202,4 +202,60 @@ export function isExcludedLeaderboardAccount(u, p, staff, staffId) {
   if (se === 'admin@test.com' && (!sd || sd === '')) return true;
 
   return false;
+}
+
+
+/**
+ * Pure calculation of consecutive daily activity streak from ISO date strings.
+ */
+export function calculateStreakFromDates(dates) {
+  if (!dates || dates.length === 0) return 0;
+  const uniqueDates = [...new Set(dates.map(d => {
+    const dt = new Date(d);
+    const myTime = new Date(dt.getTime() + (8 * 3600 * 1000));
+    return myTime.toISOString().slice(0, 10);
+  }))].sort().reverse();
+
+  if (uniqueDates.length === 0) return 0;
+
+  const now = new Date();
+  const nowMy = new Date(now.getTime() + (8 * 3600 * 1000));
+  const yesterday = new Date(nowMy.getTime() - (24 * 3600 * 1000));
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+  if (uniqueDates[0] < yesterdayStr) return 0;
+
+  let streak = 0;
+  let curr = new Date(uniqueDates[0] + 'T00:00:00Z');
+
+  for (const dateStr of uniqueDates) {
+    const expectedStr = curr.toISOString().slice(0, 10);
+    if (dateStr === expectedStr) {
+      streak++;
+      curr = new Date(curr.getTime() - (24 * 3600 * 1000));
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+/**
+ * Extracts searchable identifiers from a user object or string array.
+ */
+export function extractUserTargets(userOrIdentifiers) {
+  if (!userOrIdentifiers) return [];
+  if (Array.isArray(userOrIdentifiers)) {
+    return userOrIdentifiers.map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
+  } else if (typeof userOrIdentifiers === 'object') {
+    return [
+      userOrIdentifiers.fullName,
+      userOrIdentifiers.preferredName,
+      userOrIdentifiers.username,
+      userOrIdentifiers.email
+    ].map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
+  } else {
+    return [String(userOrIdentifiers || '').trim().toLowerCase()].filter(Boolean);
+  }
 }

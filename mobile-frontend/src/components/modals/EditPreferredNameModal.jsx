@@ -10,6 +10,7 @@ export function EditPreferredNameModal({
 }) {
   const [tempName, setTempName] = useState(currentName || '');
   const [prevCurrent, setPrevCurrent] = useState(currentName);
+  const [saving, setSaving] = useState(false);
   if (currentName !== prevCurrent) {
     setPrevCurrent(currentName);
     setTempName(currentName || '');

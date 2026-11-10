@@ -33,7 +33,7 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
   const [isPracticeMode, setIsPracticeMode] = useState(false);
 
   const USERNAME = user?.preferredName || user?.fullName || user?.username || user?.email || "User";
-  const DIVISION = user?.division || "IDD";
+  const DIVISION = user?.division || "Information & Digital";
 
   // Load all available monthly quizzes and completion status
   const loadQuizzes = useCallback(async () => {

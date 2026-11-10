@@ -21,17 +21,18 @@ export function useInstallPrompt(user) {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  // Check standalone mode and show prompt if user is logged in
+  // Check standalone mode and show prompt if user is logged in (mobile devices only)
   useEffect(() => {
     if (user) {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
       const isIosStandalone = ('standalone' in window.navigator) && window.navigator.standalone === true;
       const hasDismissed = sessionStorage.getItem('dismissedInstallPrompt');
+      const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 1024;
 
       // Clear any legacy localStorage suppression
       try { localStorage.removeItem('dismissedInstallPrompt'); } catch {}
 
-      if (!isStandalone && !isIosStandalone && !hasDismissed) {
+      if (!isStandalone && !isIosStandalone && !hasDismissed && isMobileScreen) {
         const timer = setTimeout(() => setShowInstallPrompt(true), 1000);
         return () => clearTimeout(timer);
       }
@@ -60,7 +61,7 @@ export function useInstallPrompt(user) {
         setShowInstallPrompt(false);
       }
     } else {
-      alert("To install on iOS: Tap the 'Share' icon in Safari (at the bottom), then select 'Add to Home Screen'.");
+      setShowInstallPrompt(false);
     }
   }, [deferredPrompt]);
 

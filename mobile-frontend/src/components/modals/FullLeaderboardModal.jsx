@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { LeaderboardAvatar } from '../ui';
 import { extractUserTargets } from '../../utils/supabaseClient';
+import { currentMonthLabel } from '../../utils/constants';
 
 const DEFAULT_MEDALS = ['🥇', '🥈', '🥉'];
 
@@ -26,7 +27,7 @@ export function FullLeaderboardModal({
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-[430px] h-[100vh] flex flex-col bg-slate-100 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/50 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
+        className="app-shell-frame h-[100dvh] flex flex-col bg-slate-100 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/50 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
         onClick={e => e.stopPropagation()}
       >
         {/* Background Pattern with smooth cross-fade */}

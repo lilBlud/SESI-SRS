@@ -24,6 +24,50 @@
     letter-spacing: -0.01em;
     margin: 0;
     padding: 0;
+    background-color: #f1f5f9;
+    min-height: 100dvh;
+  }
+
+  .dark body {
+    background-color: #0b0f19;
+  }
+
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  /* Adaptive App Shell: Fluid on mobile/tablet, expands to full layout on desktop */
+  .app-shell-frame {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100dvh;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    isolation: isolate;
+  }
+
+  @media (max-width: 1023px) {
+    .app-shell-frame {
+      max-width: 540px;
+      box-shadow: 0 0 50px -10px rgba(0, 0, 0, 0.12);
+    }
+    .dark .app-shell-frame {
+      box-shadow: 0 0 50px -10px rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .app-shell-frame {
+      max-width: 100%;
+      box-shadow: none;
+      border: none;
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {
