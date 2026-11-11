@@ -44,5 +44,14 @@ describe('Dual-Database Provider Architecture', () => {
       expect(typeof supabaseProvider[method]).toBe('function');
     }
   });
+
+  it('supabaseProvider executes query methods without ReferenceError', async () => {
+    const summary = await supabaseProvider.getQuizSummary();
+    expect(Array.isArray(summary)).toBe(true);
+
+    const streakResult = await supabaseProvider.getUserStreak('non_existent_test_user');
+    expect(streakResult).toHaveProperty('streak');
+    expect(streakResult).toHaveProperty('dates');
+  });
 });
 

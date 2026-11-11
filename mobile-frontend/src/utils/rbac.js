@@ -251,9 +251,17 @@ export function extractUserTargets(userOrIdentifiers) {
   } else if (typeof userOrIdentifiers === 'object') {
     return [
       userOrIdentifiers.fullName,
+      userOrIdentifiers.FullName,
       userOrIdentifiers.preferredName,
+      userOrIdentifiers.PreferredName,
       userOrIdentifiers.username,
-      userOrIdentifiers.email
+      userOrIdentifiers.Username,
+      userOrIdentifiers.email,
+      userOrIdentifiers.Email,
+      userOrIdentifiers.staffId,
+      userOrIdentifiers.StaffId,
+      userOrIdentifiers.id,
+      userOrIdentifiers.Id
     ].map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
   } else {
     return [String(userOrIdentifiers || '').trim().toLowerCase()].filter(Boolean);

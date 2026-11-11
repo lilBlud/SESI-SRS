@@ -1,3 +1,4 @@
+import { supabase } from '../../apiConfig';
 import { 
   resolveUserRole, 
   normalizeUser, 
@@ -164,22 +165,43 @@ export const supabaseProvider = {
     return data;
   },
 
-  async getUserQuizStatus(month, username) {
-    const { data, error } = await supabase
+  async getUserQuizStatus(month, usernameOrTargets) {
+    const targets = extractUserTargets(usernameOrTargets);
+    if (!targets.length) return [];
+
+    let q = supabase
       .from('UserAnswers')
       .select('*')
-      .eq('Month', month)
-      .ilike('Username', username);
+      .eq('Month', month);
+
+    const filterClauses = targets.map(t => {
+      if (/^\d+$/.test(t)) {
+        return `staff_id.eq.${t},Username.ilike.%${t}%,PreferredName.ilike.%${t}%`;
+      }
+      return `Username.ilike.%${t}%,PreferredName.ilike.%${t}%`;
+    }).join(',');
+
+    q = q.or(filterClauses);
+    const { data, error } = await q;
     if (error) throw error;
     return data || [];
   },
 
-  async getUserRecentAnswers(username, month) {
+  async getUserRecentAnswers(target, month) {
+    const t = String(target || '').trim();
+    if (!t) return [];
+
     let q = supabase
       .from('UserAnswers')
       .select('*')
-      .ilike('Username', username)
       .order('DateAnswered', { ascending: false });
+
+    if (/^\d+$/.test(t)) {
+      q = q.or(`staff_id.eq.${t},Username.ilike.%${t}%,PreferredName.ilike.%${t}%`);
+    } else {
+      q = q.or(`Username.ilike.%${t}%,PreferredName.ilike.%${t}%`);
+    }
+
     if (month) q = q.eq('Month', month);
     const { data, error } = await q.limit(50);
     if (error) throw error;
@@ -196,12 +218,21 @@ export const supabaseProvider = {
     }));
   },
 
-  async getUserActiveMonths(username) {
-    const { data, error } = await supabase
+  async getUserActiveMonths(target) {
+    const t = String(target || '').trim();
+    if (!t) return [];
+
+    let q = supabase
       .from('UserAnswers')
-      .select('Month')
-      .ilike('Username', username)
-      .limit(500);
+      .select('Month');
+
+    if (/^\d+$/.test(t)) {
+      q = q.or(`staff_id.eq.${t},Username.ilike.%${t}%,PreferredName.ilike.%${t}%`);
+    } else {
+      q = q.or(`Username.ilike.%${t}%,PreferredName.ilike.%${t}%`);
+    }
+
+    const { data, error } = await q.limit(500);
     if (error) throw error;
     const months = new Set((data || []).map(d => d.Month).filter(Boolean));
     return Array.from(months).sort((a, b) => b.localeCompare(a));
@@ -222,7 +253,7 @@ export const supabaseProvider = {
 
     const matched = data.filter(a => {
       const u = String(a.Username ?? a.username ?? '').trim().toLowerCase();
-      const sid = a.staff_id != null ? String(a.staff_id) : '';
+      const sid = a.staff_id != null ? String(a.staff_id).trim() : '';
       return targets.includes(u) || (sid && targets.includes(sid));
     });
 
