@@ -53,5 +53,17 @@ describe('Dual-Database Provider Architecture', () => {
     expect(streakResult).toHaveProperty('streak');
     expect(streakResult).toHaveProperty('dates');
   });
+
+  it('getUserRecentAnswers fetches answers for staff record', async () => {
+    const user = {
+      id: 1,
+      fullName: 'Ahmad Azib Danish Ahmad Sanusi',
+      preferredName: 'developer',
+      email: 'azibdanish66@gmail.com'
+    };
+    const answers = await supabaseProvider.getUserRecentAnswers(user.fullName, '');
+    expect(answers.length).toBeGreaterThan(0);
+    expect(answers[0]).toHaveProperty('questionText');
+  });
 });
 
