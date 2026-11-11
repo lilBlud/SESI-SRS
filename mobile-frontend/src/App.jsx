@@ -7,7 +7,7 @@ import PasscodeGate from './components/pages/PasscodeGate';
 import { getGlossary } from './services/glossaryService';
 import { getUserStreak } from './services/userService';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
-import { DesktopSidebar, DesktopHeader } from './components/layout';
+import { DesktopSidebar, DesktopHeader, TopographicBackground } from './components/layout';
 import { useBookmarks } from './hooks/useBookmarks';
 import { useVisitorTracking } from './hooks/useVisitorTracking';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
@@ -163,27 +163,8 @@ function App() {
 
   return (
     <div className={`h-[100dvh] overflow-hidden flex flex-col lg:flex-row text-slate-900 transition-colors duration-200 app-shell-frame relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
-      {/* Hardware Accelerated HD Background Images with Smooth Cross-Fade */}
-      <img
-        src="/assets/hd_light_topo.jpg"
-        alt="Background Light"
-        className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
-          isDark ? 'opacity-0' : 'opacity-100'
-        }`}
-      />
-      <img
-        src="/assets/hd_dark_topo.jpg"
-        alt="Background Dark"
-        className={`absolute inset-0 w-full h-full object-cover object-center -z-20 pointer-events-none transition-opacity duration-350 ease-in-out ${
-          isDark ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
-      {/* Dark Mode Text Contrast Overlay */}
-      <div
-        className={`absolute inset-0 bg-slate-950/50 -z-10 pointer-events-none transition-opacity duration-350 ease-in-out ${
-          isDark ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
+      {/* High-Precision Scalable Vector Topographic Background with Ambient Mesh */}
+      <TopographicBackground isDark={isDark} />
 
       {/* ─── DESKTOP SIDEBAR (hidden on mobile, visible on desktop >= 1024px) ─── */}
       <DesktopSidebar
