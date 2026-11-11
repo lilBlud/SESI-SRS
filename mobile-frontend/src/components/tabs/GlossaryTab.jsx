@@ -197,8 +197,7 @@ export function GlossaryTab({
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* ── DESKTOP MASTER-DETAIL SPLIT VIEW (Visible >= 1024px) ────────── */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {viewMode !== 'flashcards' && (
-        <div className="hidden lg:grid lg:grid-cols-12 gap-8 items-start">
+      <div className="hidden lg:grid lg:grid-cols-12 gap-8 items-start">
           {/* ── Left Master Pane (col-span-5 or 4, 3 on 2xl): Category List + Search + Terms List ── */}
           <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-3 sticky top-6 space-y-4">
             {/* Search Box */}
@@ -272,15 +271,30 @@ export function GlossaryTab({
               </div>
 
               <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-1.5 space-y-0.5">
-                {filtered.map(item => {
-                  const isSelected = activeDetailItem && (activeDetailItem.id || activeDetailItem.term) === (item.id || item.term);
-                  const clr = getColor(item.cat);
-                  const hasChart = item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]');
+                {(() => {
+                  const safeIdx = Math.min(flashcardIdx, Math.max(0, filtered.length - 1));
+                  const activeFlashcard = filtered[safeIdx];
+                  return filtered.map(item => {
+                    const isSelected = viewMode === 'flashcards'
+                      ? activeFlashcard && (activeFlashcard.id || activeFlashcard.term) === (item.id || item.term)
+                      : activeDetailItem && (activeDetailItem.id || activeDetailItem.term) === (item.id || item.term);
+                    const clr = getColor(item.cat);
+                    const hasChart = item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]');
 
-                  return (
-                    <button
-                      key={item.id || item.term}
-                      onClick={() => recordRead(item.id || item.term)}
+                    return (
+                      <button
+                        key={item.id || item.term}
+                        onClick={() => {
+                          if (viewMode === 'flashcards') {
+                            const idx = filtered.findIndex(t => (t.id || t.term) === (item.id || item.term));
+                            if (idx !== -1) {
+                              setFlashcardIdx(idx);
+                              setFlipped(false);
+                            }
+                          } else {
+                            recordRead(item.id || item.term);
+                          }
+                        }}
                       className={`w-full text-left p-2.5 rounded-xl transition-all flex items-center justify-between group ${
                         isSelected
                           ? 'bg-emerald-500 text-white shadow-md'
@@ -315,14 +329,42 @@ export function GlossaryTab({
                       </div>
                     </button>
                   );
-                })}
+                });
+              })()}
               </div>
             </div>
           </div>
 
-          {/* ── Right Detail Pane (col-span-7 or 8, 9 on 2xl): Expansive Term Detail ── */}
+          {/* ── Right Detail Pane (col-span-7 or 8, 9 on 2xl): Expansive Term Detail or Flashcards ── */}
           <div className="lg:col-span-7 xl:col-span-8 2xl:col-span-9 space-y-6">
-            {activeDetailItem ? (
+            {viewMode === 'flashcards' ? (
+              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-lg ring-1 ring-black/5 dark:ring-white/10 space-y-4">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div>
+                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                      Interactive Flashcards
+                    </span>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                      Study Deck • {cat === 'All' ? 'All Domains' : cat}
+                    </h2>
+                  </div>
+                  <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+                    {filtered.length} Cards in Deck
+                  </span>
+                </div>
+                <GlossaryFlashcardView
+                  key={`desktop-${cat}-${search}`}
+                  filtered={filtered}
+                  flashcardIdx={flashcardIdx}
+                  setFlashcardIdx={setFlashcardIdx}
+                  flipped={flipped}
+                  setFlipped={setFlipped}
+                  onFlip={handleFlashcardFlip}
+                  isBookmarked={isBookmarked}
+                  toggleBookmark={toggleBookmark}
+                />
+              </div>
+            ) : activeDetailItem ? (
               (() => {
                 const item = activeDetailItem;
                 const clr = getColor(item.cat);
@@ -448,7 +490,6 @@ export function GlossaryTab({
             )}
           </div>
         </div>
-      )}
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* ── MOBILE VIEW / FALLBACK (Visible on screen < 1024px) ─────────── */}
@@ -649,19 +690,21 @@ export function GlossaryTab({
         )}
       </div>
 
-      {/* FLASHCARDS View (Active on both desktop & mobile when selected) */}
+      {/* FLASHCARDS View (Mobile Only: on desktop it renders in the right detail pane) */}
       {viewMode === 'flashcards' && (
-        <GlossaryFlashcardView
-          key={`${cat}-${search}`}
-          filtered={filtered}
-          flashcardIdx={flashcardIdx}
-          setFlashcardIdx={setFlashcardIdx}
-          flipped={flipped}
-          setFlipped={setFlipped}
-          onFlip={handleFlashcardFlip}
-          isBookmarked={isBookmarked}
-          toggleBookmark={toggleBookmark}
-        />
+        <div className="lg:hidden">
+          <GlossaryFlashcardView
+            key={`mobile-${cat}-${search}`}
+            filtered={filtered}
+            flashcardIdx={flashcardIdx}
+            setFlashcardIdx={setFlashcardIdx}
+            flipped={flipped}
+            setFlipped={setFlipped}
+            onFlip={handleFlashcardFlip}
+            isBookmarked={isBookmarked}
+            toggleBookmark={toggleBookmark}
+          />
+        </div>
       )}
 
       {/* Full-Screen Interactive Future Generation Map Modal */}

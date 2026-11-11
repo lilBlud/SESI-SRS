@@ -13,32 +13,53 @@ export function GlossaryFlashcardView({
 }) {
   if (filtered.length === 0) return null;
 
-  const safeIdx = Math.min(flashcardIdx, filtered.length - 1);
+  const safeIdx = Math.min(flashcardIdx, Math.max(0, filtered.length - 1));
   const card = filtered[safeIdx];
   const clr = getColor(card.cat);
+
+  // Keyboard navigation for desktop: Space to flip, Arrows to navigate
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        onFlip();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        setFlashcardIdx(i => Math.min(filtered.length - 1, i + 1));
+        setFlipped(false);
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        setFlashcardIdx(i => Math.max(0, i - 1));
+        setFlipped(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filtered.length, onFlip, setFlashcardIdx, setFlipped]);
 
   return (
     <div className="flex flex-col items-center w-full py-4">
       <div
-        className={`w-full max-w-md h-72 flashcard cursor-pointer ${flipped ? 'flipped' : ''}`}
+        className={`w-full max-w-md lg:max-w-2xl xl:max-w-3xl h-72 lg:h-[380px] xl:h-[420px] flashcard cursor-pointer ${flipped ? 'flipped' : ''}`}
         onClick={onFlip}
       >
-        <div className="flashcard-inner relative w-full h-full rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+        <div className="flashcard-inner relative w-full h-full rounded-3xl shadow-lg border border-slate-200/80 dark:border-slate-700/80">
           {/* Front */}
-          <div className={`flashcard-front absolute w-full h-full flex flex-col items-center justify-center ${clr.bg} rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700`}>
+          <div className={`flashcard-front absolute w-full h-full flex flex-col items-center justify-center ${clr.bg} rounded-3xl p-6 lg:p-10 shadow-sm border border-slate-200 dark:border-slate-700`}>
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4 bg-slate-100 dark:bg-slate-700/50 px-3 py-1 rounded-full">
-              Tap to reveal
+              Tap or press Space to reveal
             </span>
-            <h2 className={`text-3xl sm:text-4xl font-extrabold text-center tracking-tight ${clr.text}`}>{card.term}</h2>
+            <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-extrabold text-center tracking-tight ${clr.text}`}>{card.term}</h2>
             {card.full && !card.term.includes(' ') && (
-              <div className="mt-3 text-sm font-bold text-slate-700 dark:text-slate-200 text-center px-4 leading-snug">{card.full}</div>
+              <div className="mt-4 text-sm lg:text-base font-bold text-slate-700 dark:text-slate-200 text-center px-4 leading-snug max-w-lg">{card.full}</div>
             )}
           </div>
 
           {/* Back */}
-          <div className={`flashcard-back absolute w-full h-full flex flex-col items-center justify-between ${clr.bg} rounded-2xl p-4 sm:p-5 text-center overflow-hidden relative border border-slate-200 dark:border-slate-700 shadow-sm`}>
+          <div className={`flashcard-back absolute w-full h-full flex flex-col items-center justify-between ${clr.bg} rounded-3xl p-5 lg:p-8 text-center overflow-hidden relative border border-slate-200 dark:border-slate-700 shadow-sm`}>
             {/* Ambient Aurora Mesh Glow Animation */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl" aria-hidden="true">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl" aria-hidden="true">
               <div className={`absolute -top-10 -left-10 w-44 h-44 rounded-full blur-xl opacity-45 dark:opacity-35 animate-aurora-1 ${clr.pill}`} />
               <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full blur-xl opacity-40 dark:opacity-30 animate-aurora-2 bg-cyan-400 dark:bg-cyan-500" />
               <div className="absolute top-1/4 left-1/3 w-36 h-36 rounded-full blur-lg opacity-35 dark:opacity-25 animate-aurora-3 bg-fuchsia-400 dark:bg-emerald-500" />
@@ -49,22 +70,22 @@ export function GlossaryFlashcardView({
             {/* Back Content Container */}
             <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center overflow-y-auto px-3 py-1 text-center">
               <div className="w-full my-auto flex flex-col items-center justify-center text-center space-y-3">
-                <p className="text-[14px] sm:text-[14.5px] text-slate-900 dark:text-slate-50 font-semibold leading-relaxed whitespace-pre-wrap text-center max-w-sm">
+                <p className="text-[14px] sm:text-[14.5px] lg:text-[16px] text-slate-900 dark:text-slate-50 font-semibold leading-relaxed whitespace-pre-wrap text-center max-w-sm lg:max-w-xl">
                   {card.desc}
                 </p>
 
                 {card.formula && card.formula !== 'area' && card.formula !== 'bar' && (
                   <div className="w-full flex flex-col items-center justify-center text-center pt-2.5 border-t border-slate-300/40 dark:border-slate-700/40">
-                    <div className={`text-[13px] sm:text-[13.5px] font-bold text-center mb-1.5 leading-snug ${clr.text}`}>
+                    <div className={`text-[13px] sm:text-[13.5px] lg:text-[15px] font-bold text-center mb-1.5 leading-snug ${clr.text}`}>
                       📐 {card.formula}
                     </div>
                     {card.formulaNotations && (
-                      <div className="text-[11.5px] text-slate-800 dark:text-slate-200 mt-1 leading-normal text-center">
+                      <div className="text-[11.5px] lg:text-xs text-slate-800 dark:text-slate-200 mt-1 leading-normal text-center max-w-md">
                         <span className="font-bold text-slate-900 dark:text-white">Notations:</span> <span>{card.formulaNotations.replace(/\n/g, ', ')}</span>
                       </div>
                     )}
                     {card.formulaTermMeanings && (
-                      <div className="text-[11px] sm:text-[11.5px] text-slate-800 dark:text-slate-200 mt-1 leading-normal text-center max-w-xs">
+                      <div className="text-[11px] sm:text-[11.5px] lg:text-xs text-slate-800 dark:text-slate-200 mt-1 leading-normal text-center max-w-md">
                         <span className="font-bold text-slate-900 dark:text-white">Meanings:</span> <span>{card.formulaTermMeanings.replace(/\n/g, ' | ')}</span>
                       </div>
                     )}
@@ -97,19 +118,26 @@ export function GlossaryFlashcardView({
       </div>
 
       {/* Navigation Controls */}
-      <div className="w-full max-w-md flex justify-between items-center mt-6">
+      <div className="w-full max-w-md lg:max-w-2xl xl:max-w-3xl flex justify-between items-center mt-6">
         <button
           onClick={() => { setFlashcardIdx(i => Math.max(0, i - 1)); setFlipped(false); }}
           disabled={safeIdx === 0}
-          className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white rounded-lg text-xs font-bold disabled:opacity-50"
+          className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
         >
           ← Previous
         </button>
-        <span className="text-xs font-medium text-slate-500">{safeIdx + 1} of {filtered.length}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-600 dark:text-slate-300 tabular-nums">
+            {safeIdx + 1} of {filtered.length}
+          </span>
+          <span className="hidden sm:inline text-[11px] text-slate-400">
+            • Space to flip • Arrows to navigate
+          </span>
+        </div>
         <button
           onClick={() => { setFlashcardIdx(i => Math.min(filtered.length - 1, i + 1)); setFlipped(false); }}
           disabled={safeIdx === filtered.length - 1}
-          className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white rounded-lg text-xs font-bold disabled:opacity-50"
+          className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
         >
           Next →
         </button>
