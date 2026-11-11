@@ -157,48 +157,21 @@ export function HomeTab({
             />
           </div>
 
-          {/* ── Category Quick Access (Symmetrical multi-column grid) ── */}
-          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10">
-            <div className="flex items-center justify-between mb-3.5">
-              <h3 className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="text-base sm:text-lg">📂</span> Browse by Category
-              </h3>
-              <span className="text-xs lg:text-[13px] font-semibold text-slate-400 dark:text-slate-500">
-                {CATEGORIES.slice(1).length} Domains
-              </span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 sm:gap-3">
-              {CATEGORIES.slice(1).map(cat => {
-                const clr = getColor(cat.key);
-                return (
-                  <button
-                    key={cat.key}
-                    onClick={() => {
-                      if (setActiveGlossaryCat) setActiveGlossaryCat(cat.key);
-                      setActiveTab('glossary');
-                    }}
-                    className={`flex items-center gap-2.5 p-3 rounded-2xl text-left transition-all duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md ${clr.bg} border ${clr.border} min-w-0 overflow-hidden`}
-                  >
-                    <div className="w-6 flex items-center justify-center shrink-0">
-                      {cat.iconImage ? (
-                        <img src={cat.iconImage} alt={cat.label} className="h-6 w-auto object-contain scale-[1.3]" />
-                      ) : (
-                        <span className="text-lg">{cat.emoji}</span>
-                      )}
-                    </div>
-                    <span className={`text-xs sm:text-[12.5px] lg:text-[13px] font-bold ${clr.text} leading-snug break-words min-w-0 flex-1 hyphens-auto`}>{cat.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* ── Posts Section (Responsive 2-Column Grid on Desktop) ── */}
           <div id="posts" className="scroll-mt-28 space-y-4">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="text-base sm:text-lg">📰</span> Latest Regulatory Updates &amp; Posts
-              </h3>
+            <div className="flex items-center justify-between px-1">
+              <div>
+                <h3 className="text-base sm:text-lg lg:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                  <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                  </svg>
+                  Latest Regulatory Updates &amp; Posts
+                </h3>
+                <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Official announcements, infographic insights, and policy frameworks
+                </p>
+              </div>
+
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleRefresh}
@@ -217,25 +190,34 @@ export function HomeTab({
               </div>
             </div>
 
-            {/* Post Category Filter */}
-            <div className="relative">
-              <select
-                value={postCat}
-                onChange={(e) => setPostCat(e.target.value)}
-                className="w-full appearance-none bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-sm lg:text-base rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
-              >
-                {CATEGORIES.map(c => {
-                  const count = c.key === 'All' ? posts.length : (postCatCounts[c.key] || 0);
-                  return (
-                    <option key={c.key} value={c.key}>
-                      {c.emoji} {c.label} ({count})
-                    </option>
-                  );
-                })}
-              </select>
-              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-              </div>
+            {/* Sleek Horizontal Category Chips Filter */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-none no-scrollbar -mx-1 px-1">
+              {CATEGORIES.map(c => {
+                const isSelected = postCat === c.key;
+                const count = c.key === 'All' ? posts.length : (postCatCounts[c.key] || 0);
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => setPostCat(c.key)}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold whitespace-nowrap transition-all active:scale-95 shrink-0 border ${
+                      isSelected
+                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm'
+                        : 'bg-white dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/70 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>{c.label}</span>
+                    <span
+                      className={`text-[10.5px] px-1.5 py-0.5 rounded-md tabular-nums font-extrabold ${
+                        isSelected
+                          ? 'bg-white/20 dark:bg-slate-900/15 text-white dark:text-slate-900'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Posts Grid: 1 column on mobile, 2 columns on widescreen */}
@@ -336,7 +318,7 @@ export function HomeTab({
 
         {/* ─── RIGHT COLUMN: Sticky Leaderboard & Quick Widgets (4 cols on desktop, 5 on 2xl) ─── */}
         <div className="hidden lg:block lg:col-span-4 2xl:col-span-5 lg:sticky lg:top-6 space-y-6">
-          {/* Leaderboard Podium with Compact & Actionable Empty State */}
+          {/* Leaderboard Podium with Integrated Daily Challenge & Streak Strip */}
           <HomeLeaderboardPodium
             leaderboard={leaderboard}
             loadingLb={loadingLb}
@@ -345,53 +327,6 @@ export function HomeTab({
             onViewAll={() => setShowFullLb(true)}
             onTakeQuiz={() => setActiveTab('quiz')}
           />
-
-          {/* Daily Streak & Challenge Widget */}
-          <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent dark:from-emerald-950/40 dark:via-slate-900/60 dark:to-slate-900/90 rounded-[28px] p-5 ring-1 ring-emerald-500/20 dark:ring-emerald-500/30 shadow-md">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">🔥</span>
-                <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Daily Learning Goal</span>
-              </div>
-              <span className="text-xs lg:text-[13px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-3 py-1 rounded-full">
-                {streak > 0 ? `${streak} Day Streak` : 'Start Today'}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm lg:text-[14.5px] text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-              Complete today's quiz challenge or browse 3 glossary terms to maintain your daily streak!
-            </p>
-            <div className="flex items-center gap-2.5">
-              <button
-                onClick={() => setActiveTab('quiz')}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm lg:text-[14px] font-bold rounded-xl shadow-sm transition-all text-center active:scale-95"
-              >
-                Start Daily Quiz ⚡
-              </button>
-              <button
-                onClick={() => setActiveTab('glossary')}
-                className="py-3 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm lg:text-[14px] font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-center active:scale-95"
-              >
-                📖 Terms
-              </button>
-            </div>
-          </div>
-
-          {/* About SESB / SESI Info Card */}
-          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[28px] p-5 ring-1 ring-black/5 dark:ring-white/10 shadow-sm text-xs space-y-3 text-slate-600 dark:text-slate-400">
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-md bg-emerald-500 text-white flex items-center justify-center font-black text-xs">
-                S
-              </div>
-              <span className="font-bold text-slate-900 dark:text-white text-sm lg:text-base">About SESI SRS</span>
-            </div>
-            <p className="leading-relaxed text-xs lg:text-[13.5px]">
-              Sabah Electricity Supply Industry (SESI) Standard &amp; Regulatory System provides unified standards, formula calculations, and corporate performance metrics across Sabah's power grid.
-            </p>
-            <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs lg:text-[12.5px] text-slate-400">
-              <span>Future Gen 2026</span>
-              <span className="text-emerald-500 font-semibold">SESB Official</span>
-            </div>
-          </div>
         </div>
       </div>
 
