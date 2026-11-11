@@ -1,47 +1,134 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getColor, getCatMeta } from '../../../utils/constants';
 import { CorporatePerformanceChart, PostImageSlider, saveImage } from '../../ui';
 import { exportBookmarksToPdf, exportSingleTermToPdf } from '../../../utils/pdfExport';
 
-export function BookmarksSection({ bookmarks = [], toggleBookmark }) {
+export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab }) {
   const [activeBookmark, setActiveBookmark] = useState(null);
   const [imgViewerIdx, setImgViewerIdx] = useState(null);
+  const scrollRef = useRef(null);
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -260, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 260, behavior: 'smooth' });
+    }
+  };
 
   return (
-    <div className="pt-2 border-t border-slate-200/50 dark:border-slate-800/50">
+    <div className="space-y-3 pt-2">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🔖</span>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          </div>
           <div>
-            <h3 className="text-[17px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">Bookmarks</h3>
-            <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">Your saved posters and dictionary terms</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base sm:text-[17px] font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+                Saved Bookmarks
+              </h3>
+              {bookmarks.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80">
+                  {bookmarks.length}
+                </span>
+              )}
+            </div>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 font-normal">
+              Your saved posters and dictionary reference cards
+            </p>
           </div>
         </div>
 
-        {bookmarks.length > 0 && (
-          <button
-            onClick={() => exportBookmarksToPdf(bookmarks)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs shrink-0"
-            title="Download PDF Reference Guide of saved bookmarks"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span>Save as PDF</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {bookmarks.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => exportBookmarksToPdf(bookmarks)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs shrink-0"
+                title="Download PDF Reference Guide of saved bookmarks"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Save as PDF</span>
+              </button>
+
+              <div className="hidden sm:flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={scrollLeft}
+                  className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center transition-all active:scale-95 shadow-xs"
+                  title="Scroll Left"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={scrollRight}
+                  className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center transition-all active:scale-95 shadow-xs"
+                  title="Scroll Right"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Bookmarks Horizontal Scroll List */}
-      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide -mx-4 px-4">
-        {bookmarks.length === 0 ? (
-          <div className="w-full text-center py-8 text-slate-400 text-sm bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-            No bookmarks yet. Tap the bookmark icon on any poster or dictionary card to save it here.
+      {/* Bookmarks List or Empty State */}
+      {bookmarks.length === 0 ? (
+        <div className="w-full text-center py-10 px-4 bg-white dark:bg-slate-800/80 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700/80 flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-300 flex items-center justify-center mb-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
           </div>
-        ) : (
-          bookmarks.map((bm, idx) => {
+          <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            No Bookmarks Saved Yet
+          </p>
+          <p className="text-xs text-slate-400 mt-1 max-w-md">
+            Tap the bookmark icon on any infographic poster or glossary card to keep quick references in your profile.
+          </p>
+          {setActiveTab && (
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab('glossary')}
+                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all active:scale-95"
+              >
+                Explore Dictionary
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('home')}
+                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all active:scale-95 shadow-xs"
+              >
+                Browse Posters
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          ref={scrollRef}
+          className="flex gap-3.5 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0"
+        >
+          {bookmarks.map((bm, idx) => {
             if (bm.type === 'poster') {
               const img = bm.imageUrl || (bm.additionalImages && bm.additionalImages.length > 0 ? bm.additionalImages[0] : null);
               return (
@@ -100,9 +187,9 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark }) {
               );
             }
             return null;
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {/* Active Bookmark Full Modal */}
       {activeBookmark && createPortal(

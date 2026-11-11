@@ -1,15 +1,39 @@
 import React from 'react';
 
-export function ProfileStatsBadges({ loading, totalScore, currentRank }) {
-  if (loading) return null;
+export function ProfileStatsBadges({
+  loading,
+  totalScore = 0,
+  currentRank = null,
+  accuracyRate = 0,
+  questionsAnswered = 0,
+  correctCount = 0
+}) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {[1, 2, 3, 4].map(idx => (
+          <div
+            key={idx}
+            className="bg-white dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 shadow-xs animate-pulse flex items-center gap-3.5"
+          >
+            <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0" />
+            <div className="space-y-2 flex-1 min-w-0">
+              <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
+              <div className="h-6 w-12 bg-slate-200 dark:bg-slate-700 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="flex gap-3">
-      {/* Total Score with 3D Target */}
-      <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3">
-        <div className="relative w-14 h-14 rounded-xl bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center overflow-visible">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* 1. Total Score with 3D Target */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors flex items-center gap-3.5">
+        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center shrink-0 overflow-visible">
           {/* Rich 3D Target SVG */}
-          <svg className="w-9 h-9 animate-target-shake drop-shadow-md" viewBox="0 0 32 32" fill="none">
+          <svg className="w-8 h-8 sm:w-9 sm:h-9 animate-target-shake drop-shadow-md" viewBox="0 0 32 32" fill="none">
             <defs>
               <linearGradient id="targetBg" x1="0" y1="0" x2="32" y2="32">
                 <stop offset="0%" stopColor="#fed7aa" />
@@ -25,8 +49,8 @@ export function ProfileStatsBadges({ loading, totalScore, currentRank }) {
             <circle cx="16" cy="16" r="4.5" fill="url(#targetBullseye)" />
           </svg>
 
-          {/* Rich 3D Realistic Arrow SVG */}
-          <svg className="w-10 h-10 absolute animate-arrow-hit z-10 overflow-visible" viewBox="0 0 32 32" fill="none" style={{ filter: 'drop-shadow(-3px 5px 4px rgba(0,0,0,0.3))' }}>
+          {/* 3D Arrow */}
+          <svg className="w-9 h-9 sm:w-10 sm:h-10 absolute animate-arrow-hit z-10 overflow-visible" viewBox="0 0 32 32" fill="none" style={{ filter: 'drop-shadow(-3px 5px 4px rgba(0,0,0,0.3))' }}>
             <polygon points="24 8 29 3 27 1 22 6" fill="#b91c1c" />
             <polygon points="24 8 29 3 31 5 26 10" fill="#ef4444" />
             <line x1="18.5" y1="13.5" x2="29" y2="3" stroke="#92400e" strokeWidth="2.5" strokeLinecap="round" />
@@ -34,19 +58,24 @@ export function ProfileStatsBadges({ loading, totalScore, currentRank }) {
             <polygon points="16 16 21 16 18.5 13.5" fill="#94a3b8" />
           </svg>
         </div>
-        <div>
-          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Score</p>
-          <p className="text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight leading-none mt-0.5">
-            {totalScore}
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+            Total Score
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight leading-tight mt-0.5">
+            {Number(totalScore || 0).toLocaleString()}
+          </p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+            Official quiz pts
           </p>
         </div>
       </div>
 
-      {/* Standing Rank with 3D Trophy */}
-      <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3">
-        <div className="relative w-14 h-14 rounded-xl bg-indigo-100 dark:bg-indigo-950/30 flex items-center justify-center overflow-visible">
-          {/* Rich Realistic 3D Trophy SVG */}
-          <svg className="w-10 h-10 animate-trophy-bounce z-10 overflow-visible" viewBox="0 0 32 32" fill="none" style={{ filter: 'drop-shadow(0px 6px 4px rgba(0,0,0,0.3))' }}>
+      {/* 2. Standing Rank with 3D Trophy */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors flex items-center gap-3.5">
+        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-indigo-100 dark:bg-indigo-950/30 flex items-center justify-center shrink-0 overflow-visible">
+          {/* Rich 3D Trophy SVG */}
+          <svg className="w-9 h-9 sm:w-10 sm:h-10 animate-trophy-bounce z-10 overflow-visible" viewBox="0 0 32 32" fill="none" style={{ filter: 'drop-shadow(0px 6px 4px rgba(0,0,0,0.3))' }}>
             <defs>
               <linearGradient id="goldGleam" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#ca8a04" />
@@ -83,10 +112,58 @@ export function ProfileStatsBadges({ loading, totalScore, currentRank }) {
             <div className="absolute top-1/2 left-1/2 w-2 h-1 bg-emerald-400 rounded-sm animate-confetti-pop" style={{ '--tx': '14px', '--ty': '12px', '--rot': '135deg', animationDelay: '0.05s' }} />
           </div>
         </div>
-        <div>
-          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Standing</p>
-          <p className="text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight leading-none mt-0.5">
-            {currentRank ? `#${currentRank}` : '-'}
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+            Standing
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight leading-tight mt-0.5">
+            {currentRank ? `#${currentRank}` : '—'}
+          </p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+            {currentRank ? 'Current Leaderboard' : 'Take quiz to rank'}
+          </p>
+        </div>
+      </div>
+
+      {/* 3. Accuracy Rate with Precision Crosshair / Gauge */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors flex items-center gap-3.5">
+        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-emerald-100 dark:bg-emerald-950/30 flex items-center justify-center shrink-0">
+          <svg className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="4 2" />
+            <circle cx="12" cy="12" r="5" strokeWidth="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.5 12l1.7 1.7L15 10" stroke="currentColor" />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+            Accuracy Rate
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight leading-tight mt-0.5">
+            {accuracyRate}%
+          </p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+            {questionsAnswered > 0 ? `${correctCount} of ${questionsAnswered} correct` : 'No attempts yet'}
+          </p>
+        </div>
+      </div>
+
+      {/* 4. Total Questions Answered */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors flex items-center gap-3.5">
+        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-sky-100 dark:bg-sky-950/30 flex items-center justify-center shrink-0">
+          <svg className="w-6 h-6 sm:w-7 sm:h-7 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+            Questions Answered
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight leading-tight mt-0.5">
+            {questionsAnswered}
+          </p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+            Lifetime answers
           </p>
         </div>
       </div>

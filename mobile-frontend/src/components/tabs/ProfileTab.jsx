@@ -17,7 +17,7 @@ import {
   ProfilePhotoPickerModal
 } from './profile';
 
-export function ProfileTab({ user, bookmarkActions, onUpdateUser }) {
+export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };
   const [recentQuizzes, setRecentQuizzes] = useState([]);
   const [currentRank, setCurrentRank] = useState(null);
@@ -92,7 +92,10 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser }) {
 
   useEffect(() => {
     const userIdentifiers = extractUserTargets(user || USERNAME);
-    if (userIdentifiers.length === 0) return;
+    if (userIdentifiers.length === 0) {
+      setLoading(false);
+      return;
+    }
 
     Promise.all([
       getUserRecentAnswersDirect(userIdentifiers, filterMonth).catch(() => []),
@@ -107,55 +110,61 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser }) {
         setLoading(false);
       })
       .catch(err => {
-        console.warn("Direct profile data fetch failed:", err);
+        console.warn("[ProfileTab] Direct profile data fetch failed:", err);
         setLoading(false);
       });
   }, [filterMonth, USERNAME, user]);
 
+  const totalAnswered = recentQuizzes.length;
+  const correctCount = recentQuizzes.filter(q => q.isCorrect).length;
+  const accuracyRate = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+
   return (
-    <div className="space-y-6 animate-slideUp">
-      <div className="flex items-center justify-between">
-        <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">User Profile</span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5 tracking-tight">My Activity &amp; Records</h1>
-        </div>
+    <div className="space-y-6 sm:space-y-7 animate-slideUp">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          My Activity &amp; Records
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Review your quiz performance, standing, and saved learning materials.
+        </p>
       </div>
 
-      {/* Responsive 2-column layout on desktop, stacked on mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Identity Card & Stats Badges (Sticky on desktop) */}
-        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 space-y-6">
-          <ProfileHeroCard
-            user={user}
-            username={USERNAME}
-            uploadingPhoto={uploadingPhoto}
-            onOpenPhotoModal={() => setShowPhotoModal(true)}
-            onOpenEditNameModal={() => setShowEditModal(true)}
-          />
+      {/* Full-Width Executive Profile Card */}
+      <ProfileHeroCard
+        user={user}
+        username={USERNAME}
+        uploadingPhoto={uploadingPhoto}
+        onOpenPhotoModal={() => setShowPhotoModal(true)}
+        onOpenEditNameModal={() => setShowEditModal(true)}
+      />
 
-          <ProfileStatsBadges
-            loading={loading}
-            totalScore={totalScore}
-            currentRank={currentRank}
-          />
-        </div>
+      {/* 4-Stat Metric Grid */}
+      <ProfileStatsBadges
+        loading={loading}
+        totalScore={totalScore}
+        currentRank={currentRank}
+        accuracyRate={accuracyRate}
+        questionsAnswered={totalAnswered}
+        correctCount={correctCount}
+      />
 
-        {/* Right Column: Recent Quizzes & Bookmarks */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-          <RecentQuestionsCarousel
-            loading={loading}
-            recentQuizzes={recentQuizzes}
-            filterMonth={filterMonth}
-            setFilterMonth={setFilterMonth}
-            activeMonths={activeMonths}
-          />
+      {/* Recent Questions Carousel */}
+      <RecentQuestionsCarousel
+        loading={loading}
+        recentQuizzes={recentQuizzes}
+        filterMonth={filterMonth}
+        setFilterMonth={setFilterMonth}
+        activeMonths={activeMonths}
+      />
 
-          <BookmarksSection
-            bookmarks={bookmarks}
-            toggleBookmark={toggleBookmark}
-          />
-        </div>
-      </div>
+      {/* Bookmarks Section */}
+      <BookmarksSection
+        bookmarks={bookmarks}
+        toggleBookmark={toggleBookmark}
+        setActiveTab={setActiveTab}
+      />
 
       {/* Edit Preferred Name Modal */}
       <EditPreferredNameModal

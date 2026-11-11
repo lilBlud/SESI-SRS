@@ -356,7 +356,7 @@ function App() {
         {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
         {activeTab === 'glossary' && <GlossaryTab key={`glossary-${refreshKey}`} user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
         {activeTab === 'quiz' && <QuizTab key={`quiz-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
-        {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} />}
+        {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} setActiveTab={setActiveTab} />}
         {activeTab === 'admin' && (
           user?.role === 'Admin' ? (
             <Suspense fallback={
