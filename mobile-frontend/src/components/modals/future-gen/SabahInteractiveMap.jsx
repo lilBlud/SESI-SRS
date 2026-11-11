@@ -17,11 +17,11 @@ export function SabahInteractiveMap({
   isDark = false
 }) {
   return (
-    <div className="h-[310px] shrink-0 relative bg-[#EEF3F7] dark:bg-slate-900 px-1 py-1 overflow-hidden flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800">
+    <div className="h-[310px] lg:h-full w-full lg:flex-1 shrink-0 lg:shrink relative bg-[#EEF3F7] dark:bg-slate-900/90 px-2 py-2 lg:p-6 overflow-hidden flex items-center justify-center border-b lg:border-b-0">
       <svg
         viewBox={MAP_CONFIG.viewBox}
         className="w-full h-full select-none"
-        style={{ maxHeight: '100%' }}
+        style={{ maxHeight: '100%', maxWidth: '100%' }}
       >
         <defs>
           <filter id="pinShadow" x="-30%" y="-30%" width="160%" height="160%">
@@ -300,9 +300,30 @@ export function SabahInteractiveMap({
       </svg>
 
       {/* Tap Pin Hint */}
-      <div className="absolute top-1.5 left-2 bg-white dark:bg-slate-800 rounded-lg px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700 shadow-sm flex items-center gap-1 pointer-events-none">
+      <div className="absolute top-2.5 left-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-xl px-2.5 py-1 text-[10px] lg:text-[11px] font-bold text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center gap-1.5 pointer-events-none">
         <span className="animate-pulse">📍</span>
-        <span>Tap any pin for project breakdown</span>
+        <span>Interactive Sabah Grid: Click any project pin</span>
+      </div>
+
+      {/* Desktop Floating Legend Badge */}
+      <div className="hidden lg:flex flex-col gap-1.5 absolute bottom-4 left-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-md text-[10.5px] pointer-events-none">
+        <div className="font-extrabold uppercase tracking-wider text-slate-400 text-[9px]">Grid Infrastructure</div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-0.5 bg-red-600 rounded"></div>
+          <span className="font-bold text-slate-700 dark:text-slate-200">275 kV Backbone</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-0.5 bg-emerald-600 rounded"></div>
+          <span className="font-bold text-slate-700 dark:text-slate-200">132 kV Grid</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 border-t border-dashed border-red-600"></div>
+          <span className="font-bold text-slate-700 dark:text-slate-200">Future Strategic Link</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 bg-slate-500 rounded flex items-center justify-center text-white text-[8px] font-black">G</div>
+          <span className="font-bold text-slate-700 dark:text-slate-200">Existing Plant</span>
+        </div>
       </div>
     </div>
   );

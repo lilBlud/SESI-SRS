@@ -10,7 +10,7 @@ export function ProjectBreakdownCard({
   if (!selectedProject) return null;
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-slate-900 shadow-[0_-8px_25px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] z-20 custom-scrollbar flex flex-col justify-start">
+    <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-slate-900 shadow-[0_-8px_25px_rgba(0,0,0,0.08)] lg:shadow-none px-4 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] z-20 custom-scrollbar flex flex-col justify-start">
       {/* Drawer Handle & Navigation */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-1.5">
@@ -75,8 +75,20 @@ export function ProjectBreakdownCard({
         </div>
       </div>
 
+      {/* Key Project Parameters Grid */}
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+          <div className="text-[10px] font-bold text-slate-400 uppercase">Region / Location</div>
+          <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedProject.region} · {selectedProject.location}</div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+          <div className="text-[10px] font-bold text-slate-400 uppercase">Equity / Ownership</div>
+          <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedProject.equity || 'SE 100%'}</div>
+        </div>
+      </div>
+
       {/* Status and Description */}
-      <div className="mt-2 text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-200/60 dark:border-slate-700/60">
+      <div className="mt-2.5 text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3 border border-slate-200/60 dark:border-slate-700/60">
         <span className="font-bold text-slate-800 dark:text-slate-200">Status & Way Forward: </span>
         {selectedProject.status}
       </div>
