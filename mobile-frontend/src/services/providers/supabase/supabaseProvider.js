@@ -273,10 +273,10 @@ export const supabaseProvider = {
   async getAllUsers() {
     const { data, error } = await supabase
       .from('StaffUsers')
-      .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, CreatedAt, Role')
+      .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, CreatedAt')
       .order('FullName', { ascending: true });
     if (error) throw error;
-    return (data || []).map(u => normalizeUser(u, u.Role || 'Staff'));
+    return (data || []).map(u => normalizeUser(u, resolveUserRole(u)));
   },
 
   async getUserProfile(usernameOrEmail) {
@@ -286,7 +286,7 @@ export const supabaseProvider = {
       .select('*');
     if (error || !data) return null;
     const match = data.find(u => matchesUser(u, target));
-    return match ? normalizeUser(match, match.Role || 'Staff') : null;
+    return match ? normalizeUser(match, resolveUserRole(match)) : null;
   },
 
   async updateProfilePicture(usernameOrEmail, profilePicture) {

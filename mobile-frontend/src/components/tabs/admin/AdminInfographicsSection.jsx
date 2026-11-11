@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
-
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+import { API_BASE } from '../../../services/apiConfig';
 
 // ─── Module-Level Image Compression Helpers ───
 function scaleImage(img, maxDim = 1600, quality = 0.85) {
@@ -214,7 +213,7 @@ export default function AdminInfographicsSection({
       if (error) throw error;
     } catch (err) {
       console.warn("Direct Supabase delete failed, trying API:", err);
-      await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE' }).catch(() => null);
+      await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) }).catch(() => null);
     }
     if (onRefreshInfographics) onRefreshInfographics();
   };

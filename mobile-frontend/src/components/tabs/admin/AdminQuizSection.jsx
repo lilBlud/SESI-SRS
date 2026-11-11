@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
-import { IS_LOCAL_SSMS } from '../../../services/apiConfig';
-
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+import { IS_LOCAL_SSMS, API_BASE } from '../../../services/apiConfig';
 
 export default function AdminQuizSection({
   selectedMonth,
@@ -54,6 +52,7 @@ export default function AdminQuizSection({
     } else if (API_BASE) {
       try {
         const res = await fetch(`${API_BASE}/api/admin/questions`, {
+          signal: AbortSignal.timeout(4000),
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -97,7 +96,7 @@ export default function AdminQuizSection({
       console.warn("Direct Supabase deleteQuestion failed:", err);
     }
     if (API_BASE) {
-      await fetch(`${API_BASE}/api/admin/questions/${id}`, { method: 'DELETE' }).catch(() => null);
+      await fetch(`${API_BASE}/api/admin/questions/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) }).catch(() => null);
     }
     onRefreshQuestions();
   };

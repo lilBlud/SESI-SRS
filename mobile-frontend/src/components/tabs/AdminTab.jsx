@@ -9,14 +9,13 @@ import {
   supabase
 } from '../../utils/supabaseClient';
 import { matchesUser } from '../../utils/rbac';
-import { IS_LOCAL_SSMS } from '../../services/apiConfig';
+import { IS_LOCAL_SSMS, API_BASE } from '../../services/apiConfig';
 import AdminTrafficSection from './admin/AdminTrafficSection';
 import AdminUsersSection from './admin/AdminUsersSection';
 import AdminQuizSection from './admin/AdminQuizSection';
 import AdminGlossarySection from './admin/AdminGlossarySection';
 import AdminInfographicsSection from './admin/AdminInfographicsSection';
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
 const currentMonth = new Date().toISOString().slice(0, 7);
 const defaultMonth = currentMonth < '2026-01' ? '2026-01' : currentMonth;
 
@@ -48,9 +47,9 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
         console.warn('Direct fetch traffic failed in AdminTab:', e);
       }
 
-      if (!data) {
+      if (!data && API_BASE) {
         try {
-          const res = await fetch(`${API_BASE}/api/visitors/stats?t=${Date.now()}`);
+          const res = await fetch(`${API_BASE}/api/visitors/stats?t=${Date.now()}`, { signal: AbortSignal.timeout(3500) });
           if (res.ok) {
             data = await res.json();
           }
@@ -78,9 +77,9 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
         console.warn("Direct fetch users error in AdminTab:", err);
       }
 
-      if (!list) {
+      if (!list && API_BASE) {
         try {
-          const res = await fetch(`${API_BASE}/api/admin/users`);
+          const res = await fetch(`${API_BASE}/api/admin/users`, { signal: AbortSignal.timeout(3500) });
           if (res && res.ok) {
             list = await res.json();
           }
@@ -121,6 +120,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
 
         if (API_BASE && targetId) {
           const res = await fetch(`${API_BASE}/api/admin/users/${targetId}/role`, {
+          signal: AbortSignal.timeout(4000),
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ role: newRole })
@@ -178,7 +178,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
       }
     }
 
-    const res = await fetch(`${API_BASE}/api/admin/questions/${selectedMonth}`).catch(() => null);
+    const res = API_BASE ? await fetch(`${API_BASE}/api/admin/questions/${selectedMonth}`, { signal: AbortSignal.timeout(3500) }).catch(() => null) : null;
     if (res && res.ok) {
       const d = await res.json();
       setQuestions(d.questions || []);
@@ -196,7 +196,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
     } catch (e) {
       console.warn('Direct fetch glossary failed in AdminTab:', e);
     }
-    const res = await fetch(`${API_BASE}/api/admin/glossary?t=${Date.now()}`).catch(() => null);
+    const res = API_BASE ? await fetch(`${API_BASE}/api/admin/glossary?t=${Date.now()}`, { signal: AbortSignal.timeout(3500) }).catch(() => null) : null;
     if (res && res.ok) {
       setGlossaryTerms(await res.json());
     }
@@ -212,7 +212,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
     } catch (err) {
       console.warn('Direct Supabase fetch failed in AdminTab:', err);
     }
-    const res = await fetch(`${API_BASE}/api/admin/infographics`).catch(() => null);
+    const res = API_BASE ? await fetch(`${API_BASE}/api/admin/infographics`, { signal: AbortSignal.timeout(3500) }).catch(() => null) : null;
     if (res && res.ok) {
       setInfographics(await res.json());
     }

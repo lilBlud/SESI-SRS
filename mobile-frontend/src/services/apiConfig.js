@@ -4,8 +4,8 @@ const isLocalHost = typeof window !== 'undefined' && (window.location.hostname =
 
 export const API_BASE = (
   import.meta.env.DEV
-    ? (import.meta.env.VITE_API_BASE || 'http://localhost:5195')
-    : (isLocalHost ? '' : (import.meta.env.VITE_API_BASE || 'https://reliable-rider-arrival-approx.trycloudflare.com'))
+    ? (import.meta.env.VITE_API_BASE || '')
+    : (isLocalHost ? '' : (import.meta.env.VITE_API_BASE || ''))
 ).replace(/\/$/, '');
 
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://avlypjdoahothehakchf.supabase.co';

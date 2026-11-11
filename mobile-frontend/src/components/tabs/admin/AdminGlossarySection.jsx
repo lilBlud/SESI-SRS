@@ -2,10 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { getYAxisUnit } from '../../ui';
 import { DEFAULT_HISTORICAL_METRICS } from '../../../data/historicalPerformanceData';
 import { supabase } from '../../../utils/supabaseClient';
-import { IS_LOCAL_SSMS } from '../../../services/apiConfig';
+import { IS_LOCAL_SSMS, API_BASE } from '../../../services/apiConfig';
 import { AdminGlossaryForm, AdminGlossaryCardList } from './glossary';
-
-const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 export default function AdminGlossarySection({
   glossaryTerms,
@@ -108,12 +106,14 @@ export default function AdminGlossarySection({
         let res;
         if (gEditId) {
           res = await fetch(`${API_BASE}/api/admin/glossary/${gEditId}`, {
+          signal: AbortSignal.timeout(4000),
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
         } else {
           res = await fetch(`${API_BASE}/api/admin/glossary`, {
+          signal: AbortSignal.timeout(4000),
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -331,7 +331,7 @@ export default function AdminGlossarySection({
       console.warn("Direct Supabase delete glossary failed, trying API:", err);
       if (API_BASE) {
         try {
-          const res = await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE' });
+          const res = await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) });
           if (res.ok) deleted = true;
         } catch {}
       }
