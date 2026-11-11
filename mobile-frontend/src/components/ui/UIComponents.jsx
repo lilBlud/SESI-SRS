@@ -19,26 +19,17 @@ export function PostImageSlider({ images, title, onImageClick, aspectRatio = 'as
   };
 
   return (
-    <div className={`relative ${aspectRatio} w-full rounded-2xl overflow-hidden bg-slate-950 ring-1 ring-black/10 dark:ring-white/10 shadow-inner group select-none flex items-center justify-center`}>
-      {/* Ambient blurred backdrop so non-matching aspect ratios blend seamlessly */}
-      <img
-        src={images[currentIdx]}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none select-none"
-      />
-
-      {/* Subtle vignette gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none z-0" />
-
-      {/* Centered foreground poster image */}
+    <div className={`relative ${aspectRatio} w-full rounded-2xl overflow-hidden bg-slate-950 ring-1 ring-black/10 dark:ring-white/10 shadow-inner group select-none`}>
       <img
         src={images[currentIdx]}
         alt={`${title} ${currentIdx + 1}`}
-        className="relative z-10 max-w-full max-h-full object-contain mx-auto group-hover:scale-[1.02] transition-transform duration-500 cursor-pointer drop-shadow-md"
+        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500 cursor-pointer"
         loading="lazy"
         onClick={() => onImageClick && onImageClick(currentIdx)}
       />
+
+      {/* Subtle vignette gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30 pointer-events-none" />
 
       {/* Optional Floating Category Badge */}
       {category && (

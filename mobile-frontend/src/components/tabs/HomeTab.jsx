@@ -87,17 +87,30 @@ export function HomeTab({
 
   return (
     <div className="animate-slideUp">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* ─── LEFT COLUMN: Feed, Categories, Posts (8 cols on desktop, 7 on 2xl) ─── */}
-        <div className="lg:col-span-8 2xl:col-span-7 space-y-6">
-          {/* ── Hero Banner ── */}
+      {/* ─── TOP SECTION: Welcome Banner & Admin Traffic Card (Always Level & Equal Top Alignment) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch mb-6">
+        <div className={user?.role === 'Admin' ? "lg:col-span-8 2xl:col-span-7 flex flex-col" : "lg:col-span-12"}>
           <HomeHeroBanner
             greetingName={greetingName}
             isDark={isDark}
             onNavigateGlossary={() => setActiveTab('glossary')}
             onNavigateQuiz={() => setActiveTab('quiz')}
           />
+        </div>
+        {user?.role === 'Admin' && (
+          <div className="hidden lg:flex lg:col-span-4 2xl:col-span-5 flex-col">
+            <HomeAdminTrafficCard
+              isAdmin={true}
+              visitorStats={visitorStats}
+              onOpenAdmin={() => setActiveTab && setActiveTab('admin')}
+            />
+          </div>
+        )}
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* ─── LEFT COLUMN: Feed, Categories, Posts (8 cols on desktop, 7 on 2xl) ─── */}
+        <div className="lg:col-span-8 2xl:col-span-7 space-y-6">
           {/* ── Install App Banner (MOBILE ONLY: hidden on desktop >= 1024px) ── */}
           {typeof window !== 'undefined' && !window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone && triggerInstallPrompt && (
             <div
@@ -248,13 +261,14 @@ export function HomeTab({
                     className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 relative overflow-hidden transition-all flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex justify-between items-start mb-3">
+                      {/* Consistent Header Area with Standardized Height */}
+                      <div className="flex justify-between items-start mb-3 min-h-[64px] sm:min-h-[72px]">
                         <div className="pr-12">
-                          <span className={`text-[10.5px] font-bold uppercase tracking-wider ${clr.text} mb-1.5 flex items-center gap-1.5`}>
+                          <span className={`text-[10.5px] font-bold uppercase tracking-wider ${clr.text} mb-1 flex items-center gap-1.5`}>
                             <span className="text-sm">{clr.emoji}</span> {post.category || 'General'}
                           </span>
-                          <h2 className="text-[17px] sm:text-[18px] font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight">{post.title}</h2>
-                          {dateStr && <p className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 mt-1">{dateStr}</p>}
+                          <h2 className="text-[17px] sm:text-[18px] font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight line-clamp-2">{post.title}</h2>
+                          {dateStr && <p className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">{dateStr}</p>}
                         </div>
 
                         {/* Bookmark Toggle */}
@@ -273,21 +287,22 @@ export function HomeTab({
                         </button>
                       </div>
 
-                      {post.description && (
-                        <p className="mt-2 text-[13px] sm:text-[13.5px] text-slate-700 dark:text-slate-300 font-normal leading-relaxed mb-4">
-                          {post.description}
-                        </p>
-                      )}
-
-                      {/* Responsive Post Image Slider */}
+                      {/* Responsive Post Image Slider - positioned directly below the header */}
                       {hasImages && (
-                        <div className="space-y-2 mb-4">
+                        <div className="space-y-2 mb-3">
                           <PostImageSlider
                             images={allImages}
                             title={post.title}
                             onImageClick={(idx) => setImgViewerPost({ images: allImages, idx })}
                           />
                         </div>
+                      )}
+
+                      {/* Description / Caption placed cleanly below the poster image */}
+                      {post.description && (
+                        <p className="mt-2 text-[13px] sm:text-[13.5px] text-slate-700 dark:text-slate-300 font-normal leading-relaxed mb-3">
+                          {post.description}
+                        </p>
                       )}
                     </div>
 
@@ -321,13 +336,6 @@ export function HomeTab({
 
         {/* ─── RIGHT COLUMN: Sticky Leaderboard & Quick Widgets (4 cols on desktop, 5 on 2xl) ─── */}
         <div className="hidden lg:block lg:col-span-4 2xl:col-span-5 lg:sticky lg:top-6 space-y-6">
-          {/* Admin Traffic Card (if admin) */}
-          <HomeAdminTrafficCard
-            isAdmin={user?.role === 'Admin'}
-            visitorStats={visitorStats}
-            onOpenAdmin={() => setActiveTab && setActiveTab('admin')}
-          />
-
           {/* Leaderboard Podium with Compact & Actionable Empty State */}
           <HomeLeaderboardPodium
             leaderboard={leaderboard}

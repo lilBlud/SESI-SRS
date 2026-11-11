@@ -1,9 +1,9 @@
 import React from 'react';
 
-export function HomeHeroBanner({ greetingName, isDark, onNavigateGlossary, onNavigateQuiz }) {
+export function HomeHeroBanner({ greetingName, isDark, onNavigateGlossary, onNavigateQuiz, className = '' }) {
   return (
     <div
-      className="relative rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden mb-6 ring-1 ring-black/5 dark:ring-white/10"
+      className={`relative rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden ring-1 ring-black/5 dark:ring-white/10 h-full flex flex-col justify-between ${className}`}
     >
       {/* Background patterns with smooth cross-fade */}
       <div
@@ -30,13 +30,15 @@ export function HomeHeroBanner({ greetingName, isDark, onNavigateGlossary, onNav
       />
 
       {/* Content */}
-      <div className="relative z-10 p-6 sm:p-7 pt-5 min-h-[170px]">
-        <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight leading-snug text-slate-900 dark:text-white">
-          Welcome back, {greetingName}!
-        </h1>
-        <p className="text-emerald-800 dark:text-emerald-300 text-sm sm:text-base lg:text-[17px] mt-1.5 leading-normal font-semibold">
-          Energy Transition & Regulatory updates.
-        </p>
+      <div className="relative z-10 p-6 sm:p-7 pt-5 min-h-[170px] flex flex-col justify-between flex-1">
+        <div>
+          <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight leading-snug text-slate-900 dark:text-white">
+            Welcome back, {greetingName}!
+          </h1>
+          <p className="text-emerald-800 dark:text-emerald-300 text-sm sm:text-base lg:text-[17px] mt-1.5 leading-normal font-semibold">
+            Energy Transition & Regulatory updates.
+          </p>
+        </div>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onNavigateGlossary}

@@ -1,12 +1,12 @@
 import React from 'react';
 
-export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
+export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin, className = '' }) {
   if (!isAdmin) {
     return null;
   }
 
   return (
-    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl sm:rounded-[26px] p-4 sm:p-5 shadow-[0_4px_24px_rgba(0,0,0,0.06)] ring-1 ring-black/5 dark:ring-white/10">
+    <div className={`bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl sm:rounded-[26px] p-4 sm:p-5 shadow-[0_4px_24px_rgba(0,0,0,0.06)] ring-1 ring-black/5 dark:ring-white/10 h-full flex flex-col justify-between ${className}`}>
       <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-100 dark:border-slate-800">
         <span className="text-xs lg:text-[13px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-md flex items-center gap-1.5">
           <span>🔒</span> Admin Traffic View
@@ -19,7 +19,7 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
           Open Admin Dashboard →
         </button>
       </div>
-      <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 py-1">
+      <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 py-1 my-auto">
         {/* Visitors Today */}
         <div className="px-2 sm:px-4 min-w-0 flex flex-col items-center justify-center text-center">
           <div className="flex items-center justify-center gap-1.5 mb-2 min-w-0">
