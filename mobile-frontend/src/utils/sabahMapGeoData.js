@@ -321,7 +321,7 @@ export const TOWN_NODES = [
   { name: 'Ranau', x: 186.2, y: 164.2, dx: 0, dy: -6, anchor: 'middle' },
   { name: 'Papar', x: 108.2, y: 187.3, dx: -6, dy: 3, anchor: 'end' },
   { name: 'Beaufort', x: 88.3, y: 228.5, dx: 7, dy: 3, anchor: 'start' },
-  { name: 'Labuan', x: 34.7, y: 235.4, dx: 0, dy: 18, anchor: 'middle' },
+  { name: 'Labuan', x: 34.7, y: 235.4, dx: 0, dy: 22, anchor: 'middle' },
   { name: 'Lawas', x: 51.6, y: 281.6, dx: -6, dy: 3, anchor: 'end' },
   { name: 'Upper Padas', x: 85.0, y: 278.4, dx: 0, dy: 10, anchor: 'middle' },
   { name: 'Keningau', x: 132.8, y: 228.9, dx: 6, dy: 3, anchor: 'start' },
@@ -339,12 +339,11 @@ export const TOWN_NODES = [
  * Existing Plant Badges [G]
  */
 export const EXISTING_PLANTS = [
-  { x: 216, y: 60 },
   { x: 132, y: 147 },
-  { x: 21, y: 245 },
-  { x: 144, y: 228 },
+  { x: 12, y: 232 },
+  { x: 152, y: 250 },
   { x: 348, y: 182 },
-  { x: 375, y: 262 },
+  { x: 387, y: 275 },
   { x: 366, y: 302 },
   { x: 298, y: 350 }
 ];

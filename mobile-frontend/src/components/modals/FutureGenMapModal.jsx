@@ -213,34 +213,34 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
               />
             </div>
 
-            {/* ── RIGHT: Desktop Intelligence Sidebar & Breakdown Panel ── */}
-            <div className="w-full lg:w-[420px] xl:w-[460px] 2xl:w-[500px] lg:shrink-0 flex flex-col bg-white dark:bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-200/80 dark:border-slate-800 overflow-y-auto custom-scrollbar">
+            {/* ── RIGHT: Desktop Intelligence Sidebar & Breakdown Panel (Balanced 60/40 Split) ── */}
+            <div className="w-full lg:w-[560px] xl:w-[640px] 2xl:w-[700px] lg:shrink-0 flex flex-col bg-white dark:bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-200/80 dark:border-slate-800 overflow-y-auto custom-scrollbar">
               {/* Desktop Regional Reserve Margins */}
               <div className="hidden lg:flex p-4 pb-3 flex-col gap-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Regional Reserve Margins
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl p-2.5 flex flex-col justify-between">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl p-3 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-extrabold text-emerald-800 dark:text-emerald-300">West Coast</span>
-                      <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-300 bg-emerald-200/70 dark:bg-emerald-900/80 px-1.5 py-0.5 rounded">
+                      <span className="text-[12px] font-extrabold text-emerald-800 dark:text-emerald-300">West Coast</span>
+                      <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-300 bg-emerald-200/70 dark:bg-emerald-900/80 px-2 py-0.5 rounded-md">
                         +23.7% RM
                       </span>
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 font-medium">
                       881 MW Peak · 1,090 MW Cap
                     </div>
                   </div>
 
-                  <div className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200/80 dark:border-rose-800/60 rounded-xl p-2.5 flex flex-col justify-between">
+                  <div className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200/80 dark:border-rose-800/60 rounded-xl p-3 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-extrabold text-rose-800 dark:text-rose-300">East Coast</span>
-                      <span className="text-[10px] font-black text-rose-700 dark:text-rose-300 bg-rose-200/70 dark:bg-rose-900/80 px-1.5 py-0.5 rounded">
+                      <span className="text-[12px] font-extrabold text-rose-800 dark:text-rose-300">East Coast</span>
+                      <span className="text-[11px] font-black text-rose-700 dark:text-rose-300 bg-rose-200/70 dark:bg-rose-900/80 px-2 py-0.5 rounded-md">
                         -23.5% RM
                       </span>
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 font-medium">
                       421 MW Peak · 322 MW Cap
                     </div>
                   </div>
@@ -248,12 +248,12 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
               </div>
 
               {/* Desktop Quick Project Selector Chips (1 to 7) */}
-              <div className="hidden lg:block p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+              <div className="hidden lg:block p-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
                   <span>Sabah Generation Pipeline</span>
-                  <span className="text-[10px] font-semibold text-slate-400">{FUTURE_GEN_PROJECTS.length} Projects</span>
+                  <span className="text-[10px] font-bold text-slate-400">{FUTURE_GEN_PROJECTS.length} Projects Planned</span>
                 </div>
-                <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
                   {FUTURE_GEN_PROJECTS.map(p => {
                     const isSel = p.id === selectedProjectId;
                     const fuel = FUEL_TYPE_CONFIG[p.fuelType] || FUEL_TYPE_CONFIG.gas;
@@ -261,15 +261,15 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                       <button
                         key={p.id}
                         onClick={() => setSelectedProjectId(p.id)}
-                        className={`flex items-center justify-between p-2 rounded-xl text-left transition-all ${
+                        className={`flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${
                           isSel
-                            ? 'bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-700/60 shadow-xs'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-transparent'
+                            ? 'bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-700/60 shadow-xs ring-1 ring-rose-500/20'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800/60 bg-white/60 dark:bg-slate-900/60'
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-black shrink-0"
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-black shrink-0 shadow-2xs"
                             style={{ backgroundColor: fuel?.color || '#0F172A' }}
                           >
                             {p.pinNumber}
@@ -279,7 +279,7 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                               {p.name}
                             </div>
                             <div className="text-[10px] text-slate-400 truncate">
-                              {p.plantType} · {p.location}
+                              {p.plantType}
                             </div>
                           </div>
                         </div>
