@@ -40,14 +40,14 @@ export default function DesktopHeader({
           </button>
         )}
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-400 dark:text-slate-500">
             <span>SESI Platform</span>
             <span>/</span>
             <span className="capitalize text-emerald-600 dark:text-emerald-400 font-bold">
               {activeTab === 'glossary' ? 'Dictionary' : activeTab}
             </span>
           </div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
+          <h1 className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
             {current.title}
           </h1>
         </div>
@@ -57,9 +57,9 @@ export default function DesktopHeader({
       <div className="flex items-center gap-4">
         {/* Streak Pill */}
         {streak > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 border border-orange-200/70 dark:border-orange-800/60 shadow-xs">
-            <span className="text-sm">🔥</span>
-            <span className="text-xs font-black text-orange-600 dark:text-orange-400 tabular-nums">
+          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 border border-orange-200/70 dark:border-orange-800/60 shadow-xs">
+            <span className="text-base">🔥</span>
+            <span className="text-xs lg:text-[13px] font-black text-orange-600 dark:text-orange-400 tabular-nums">
               {streak} Days Streak
             </span>
           </div>
@@ -68,7 +68,7 @@ export default function DesktopHeader({
         {/* Dark Mode Quick Toggle */}
         <button
           onClick={toggleTheme}
-          className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition active:scale-95 border border-slate-200/80 dark:border-slate-700/80"
+          className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition active:scale-95 border border-slate-200/80 dark:border-slate-700/80 text-base"
           title="Toggle Theme"
           aria-label="Toggle theme"
         >
@@ -76,8 +76,8 @@ export default function DesktopHeader({
         </button>
 
         {/* User Badge */}
-        <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200 dark:border-slate-800">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
+        <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-800">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
             {user?.profilePicture ? (
               <img src={user.profilePicture} alt={displayName} className="w-full h-full object-cover rounded-xl" />
             ) : (
@@ -85,10 +85,10 @@ export default function DesktopHeader({
             )}
           </div>
           <div className="flex flex-col text-left">
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none">
+            <span className="text-xs lg:text-sm font-bold text-slate-800 dark:text-slate-100 leading-none">
               {displayName}
             </span>
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 leading-none">
+            <span className="text-[10px] lg:text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1 leading-none">
               {user?.role || 'Staff'}
             </span>
           </div>

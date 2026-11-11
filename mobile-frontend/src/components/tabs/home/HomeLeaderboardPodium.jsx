@@ -52,37 +52,37 @@ export function HomeLeaderboardPodium({
             </div>
           </div>
           <div>
-            <h2 className="text-[16px] font-extrabold text-white tracking-tight">Monthly Leaderboard</h2>
-            <p className="text-white/80 text-[11px] font-medium tracking-normal">{currentMonthLabel}</p>
+            <h2 className="text-base sm:text-lg lg:text-xl font-extrabold text-white tracking-tight">Monthly Leaderboard</h2>
+            <p className="text-white/80 text-xs lg:text-[13px] font-medium tracking-normal mt-0.5">{currentMonthLabel}</p>
           </div>
         </div>
-        <button onClick={onViewAll} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold tracking-tight rounded-lg backdrop-blur-sm transition-all">
+        <button onClick={onViewAll} className="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs lg:text-[13px] font-bold tracking-tight rounded-lg backdrop-blur-sm transition-all">
           View All →
         </button>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 sm:p-5">
         {loadingLb ? (
           <div className="flex items-center justify-center py-6">
             <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : leaderboard.length === 0 ? (
-          <div className="py-5 px-3.5 text-center flex flex-col items-center justify-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-center text-2xl shadow-inner">
+          <div className="py-6 px-4 text-center flex flex-col items-center justify-center space-y-3.5">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-center text-3xl shadow-inner">
               🎯
             </div>
             <div>
-              <p className="text-slate-900 dark:text-white font-extrabold text-[14px] tracking-tight">
+              <p className="text-slate-900 dark:text-white font-extrabold text-base sm:text-lg lg:text-xl tracking-tight">
                 Podium is Wide Open!
               </p>
-              <p className="text-slate-500 dark:text-slate-400 text-[11.5px] mt-0.5 leading-snug">
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm lg:text-[14px] mt-1 leading-snug">
                 Be the first to take this month's quiz and claim #1!
               </p>
             </div>
             {onTakeQuiz && (
               <button
                 onClick={onTakeQuiz}
-                className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs rounded-xl shadow-md shadow-orange-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3 px-5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs sm:text-sm lg:text-[14.5px] rounded-xl shadow-md shadow-orange-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 mt-2"
               >
                 <span>Take Monthly Quiz</span>
                 <span>⚡</span>

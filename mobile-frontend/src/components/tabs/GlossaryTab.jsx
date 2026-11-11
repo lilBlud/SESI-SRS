@@ -209,7 +209,7 @@ export function GlossaryTab({
                 <input
                   type="text"
                   placeholder="Search terms... (Press / to focus)"
-                  className="w-full pl-9 pr-14 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[13px] focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                  className="w-full pl-10 pr-14 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
@@ -221,7 +221,7 @@ export function GlossaryTab({
                     ✕
                   </button>
                 ) : (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500">
                     /
                   </span>
                 )}
@@ -229,8 +229,8 @@ export function GlossaryTab({
             </div>
 
             {/* Category Filter Chips / List */}
-            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-3 shadow-md ring-1 ring-black/5 dark:ring-white/10 max-h-48 overflow-y-auto space-y-1 scrollbar-hide">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
+            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-3.5 shadow-md ring-1 ring-black/5 dark:ring-white/10 max-h-52 overflow-y-auto space-y-1.5 scrollbar-hide">
+              <div className="text-xs lg:text-[13px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
                 Filter By Domain
               </div>
               <div className="grid grid-cols-2 gap-1.5">
@@ -242,17 +242,17 @@ export function GlossaryTab({
                     <button
                       key={c.key}
                       onClick={() => setCat(c.key)}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl text-[11.5px] font-bold transition-all text-left truncate ${
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs lg:text-[13.5px] font-bold transition-all text-left truncate ${
                         isActive
                           ? (clr ? `${clr.bg} ${clr.text} ring-1 ${clr.border}` : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30')
                           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
                       <span className="truncate flex items-center gap-1.5">
-                        <span className="text-xs">{c.emoji}</span>
+                        <span className="text-sm">{c.emoji}</span>
                         {c.label}
                       </span>
-                      <span className="text-[10px] opacity-70 ml-1 tabular-nums">({count})</span>
+                      <span className="text-[11px] opacity-70 ml-1 tabular-nums">({count})</span>
                     </button>
                   );
                 })}
@@ -261,16 +261,16 @@ export function GlossaryTab({
 
             {/* Scrollable Terms List */}
             <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl shadow-md ring-1 ring-black/5 dark:ring-white/10 overflow-hidden flex flex-col h-[calc(100vh-340px)] min-h-[400px]">
-              <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
-                <span className="text-[11.5px] font-bold text-slate-700 dark:text-slate-300">
+              <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
+                <span className="text-xs lg:text-sm font-bold text-slate-700 dark:text-slate-300">
                   Terms in <span className="text-emerald-600 dark:text-emerald-400">{cat}</span>
                 </span>
-                <span className="text-[11px] font-bold text-slate-400 tabular-nums">
+                <span className="text-xs lg:text-[13px] font-bold text-slate-400 tabular-nums">
                   {filtered.length} terms
                 </span>
               </div>
 
-              <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-1.5 space-y-0.5">
+              <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-2 space-y-1">
                 {(() => {
                   const safeIdx = Math.min(flashcardIdx, Math.max(0, filtered.length - 1));
                   const activeFlashcard = filtered[safeIdx];
@@ -295,19 +295,19 @@ export function GlossaryTab({
                             recordRead(item.id || item.term);
                           }
                         }}
-                      className={`w-full text-left p-2.5 rounded-xl transition-all flex items-center justify-between group ${
+                      className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between group ${
                         isSelected
                           ? 'bg-emerald-500 text-white shadow-md'
                           : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-800 dark:text-slate-200'
                       }`}
                     >
                       <div className="min-w-0 pr-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-[13px] font-bold tracking-tight truncate ${isSelected ? 'text-white' : ''}`}>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm lg:text-[15.5px] font-bold tracking-tight truncate ${isSelected ? 'text-white' : ''}`}>
                             {item.term}
                           </span>
                           {hasChart && (
-                            <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded ${
+                            <span className={`text-[10px] lg:text-[11px] font-extrabold px-1.5 py-0.5 rounded ${
                               isSelected ? 'bg-white/20 text-white' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
                             }`}>
                               CHART
@@ -315,13 +315,13 @@ export function GlossaryTab({
                           )}
                         </div>
                         {item.full && !item.term.includes(' ') && (
-                          <div className={`text-[11px] truncate mt-0.5 ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
+                          <div className={`text-xs lg:text-[13px] truncate mt-0.5 ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
                             {item.full}
                           </div>
                         )}
                       </div>
                       <div className="shrink-0 flex items-center gap-1.5">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                        <span className={`text-[11px] lg:text-xs font-bold px-2 py-0.5 rounded-md ${
                           isSelected ? 'bg-white/20 text-white' : `${clr.bg} ${clr.text}`
                         }`}>
                           {item.cat}
@@ -377,20 +377,20 @@ export function GlossaryTab({
                     <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg ${clr.bg} ${clr.text} border ${clr.border}`}>
+                          <span className={`text-xs lg:text-[13px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg ${clr.bg} ${clr.text} border ${clr.border}`}>
                             {clr.emoji} {item.cat}
                           </span>
                           {isPerfCard && (
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300/50 dark:border-emerald-700/50 flex items-center gap-1">
+                            <span className="text-xs lg:text-[13px] font-bold px-3 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300/50 dark:border-emerald-700/50 flex items-center gap-1.5">
                               📈 Corporate Performance Metric
                             </span>
                           )}
                         </div>
-                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                        <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                           {item.term}
                         </h1>
                         {item.full && (
-                          <h2 className="text-base font-semibold text-slate-500 dark:text-slate-400 mt-1">
+                          <h2 className="text-base lg:text-lg font-semibold text-slate-500 dark:text-slate-400 mt-1">
                             {item.full}
                           </h2>
                         )}
@@ -399,7 +399,7 @@ export function GlossaryTab({
                       {/* Bookmark Button */}
                       <button
                         onClick={() => toggleBookmark(item, 'glossary')}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl transition-all active:scale-95 text-xs font-bold ${
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl transition-all active:scale-95 text-xs lg:text-sm font-bold ${
                           bookmarked
                             ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
                             : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
@@ -414,10 +414,10 @@ export function GlossaryTab({
 
                     {/* Definition */}
                     <div className="space-y-2">
-                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      <div className="text-xs lg:text-[13px] font-bold uppercase tracking-wider text-slate-400">
                         Formal Definition &amp; Description
                       </div>
-                      <p className="text-[15px] text-slate-700 dark:text-slate-300 leading-relaxed font-normal whitespace-pre-wrap">
+                      <p className="text-[15px] lg:text-[17px] text-slate-700 dark:text-slate-300 leading-relaxed font-normal whitespace-pre-wrap">
                         {item.desc}
                       </p>
                     </div>
@@ -425,22 +425,22 @@ export function GlossaryTab({
                     {/* Formula Box (if exists) */}
                     {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
                       <div className={`${clr.bg} border ${clr.border} rounded-2xl p-5 space-y-3`}>
-                        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <div className="text-xs lg:text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                           <span>📐</span> Mathematical Formula
                         </div>
-                        <div className={`text-base font-bold font-mono ${clr.text} p-3 bg-white/70 dark:bg-slate-900/60 rounded-xl border border-black/5 dark:border-white/5`}>
+                        <div className={`text-base lg:text-lg font-bold font-mono ${clr.text} p-3.5 bg-white/70 dark:bg-slate-900/60 rounded-xl border border-black/5 dark:border-white/5`}>
                           {item.formula}
                         </div>
                         {item.formulaNotations && (
-                          <div className="text-xs text-slate-600 dark:text-slate-300">
+                          <div className="text-xs lg:text-[14px] text-slate-600 dark:text-slate-300">
                             <span className="font-bold">Notations: </span>
                             <span>{item.formulaNotations.replace(/\n/g, ', ')}</span>
                           </div>
                         )}
                         {item.formulaTermMeanings && (
                           <div className="pt-2 border-t border-black/5 dark:border-white/5">
-                            <div className="text-xs font-bold text-slate-500 mb-1">Term Meanings:</div>
-                            <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-1">
+                            <div className="text-xs lg:text-[13px] font-bold text-slate-500 mb-1">Term Meanings:</div>
+                            <ul className="text-xs lg:text-[14px] text-slate-700 dark:text-slate-300 space-y-1.5">
                               {item.formulaTermMeanings.split('\n').map((line, idx) => (
                                 <li key={idx} className="flex items-start gap-1.5">
                                   <span className="text-emerald-500 font-bold">•</span>

@@ -147,10 +147,10 @@ export function HomeTab({
           {/* ── Category Quick Access (Symmetrical multi-column grid) ── */}
           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10">
             <div className="flex items-center justify-between mb-3.5">
-              <h3 className="text-[13px] sm:text-[14px] font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="text-base">📂</span> Browse by Category
+              <h3 className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                <span className="text-base sm:text-lg">📂</span> Browse by Category
               </h3>
-              <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+              <span className="text-xs lg:text-[13px] font-semibold text-slate-400 dark:text-slate-500">
                 {CATEGORIES.slice(1).length} Domains
               </span>
             </div>
@@ -173,7 +173,7 @@ export function HomeTab({
                         <span className="text-lg">{cat.emoji}</span>
                       )}
                     </div>
-                    <span className={`text-[12px] font-bold ${clr.text} leading-tight tracking-tight`}>{cat.label}</span>
+                    <span className={`text-xs sm:text-[13px] lg:text-[14px] font-bold ${clr.text} leading-tight tracking-tight`}>{cat.label}</span>
                   </button>
                 );
               })}
@@ -183,8 +183,8 @@ export function HomeTab({
           {/* ── Posts Section (Responsive 2-Column Grid on Desktop) ── */}
           <div id="posts" className="scroll-mt-28 space-y-4">
             <div className="flex items-center justify-between px-2">
-              <h3 className="text-[14px] font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="text-base">📰</span> Latest Regulatory Updates &amp; Posts
+              <h3 className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                <span className="text-base sm:text-lg">📰</span> Latest Regulatory Updates &amp; Posts
               </h3>
               <div className="flex items-center gap-2">
                 <button
@@ -198,7 +198,7 @@ export function HomeTab({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </button>
-                <span className="text-[11.5px] font-bold text-slate-600 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg tabular-nums">
+                <span className="text-xs lg:text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg tabular-nums">
                   {filteredPosts.length} posts
                 </span>
               </div>
@@ -209,7 +209,7 @@ export function HomeTab({
               <select
                 value={postCat}
                 onChange={(e) => setPostCat(e.target.value)}
-                className="w-full appearance-none bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-[13px] rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                className="w-full appearance-none bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-sm lg:text-base rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
               >
                 {CATEGORIES.map(c => {
                   const count = c.key === 'All' ? posts.length : (postCatCounts[c.key] || 0);
@@ -341,27 +341,27 @@ export function HomeTab({
           {/* Daily Streak & Challenge Widget */}
           <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent dark:from-emerald-950/40 dark:via-slate-900/60 dark:to-slate-900/90 rounded-[28px] p-5 ring-1 ring-emerald-500/20 dark:ring-emerald-500/30 shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <span className="text-xl">🔥</span>
-                <span className="text-[13px] font-bold text-slate-900 dark:text-white">Daily Learning Goal</span>
+                <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Daily Learning Goal</span>
               </div>
-              <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs lg:text-[13px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-3 py-1 rounded-full">
                 {streak > 0 ? `${streak} Day Streak` : 'Start Today'}
               </span>
             </div>
-            <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+            <p className="text-xs sm:text-sm lg:text-[14.5px] text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
               Complete today's quiz challenge or browse 3 glossary terms to maintain your daily streak!
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <button
                 onClick={() => setActiveTab('quiz')}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[12px] font-bold rounded-xl shadow-sm transition-all text-center active:scale-95"
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm lg:text-[14px] font-bold rounded-xl shadow-sm transition-all text-center active:scale-95"
               >
                 Start Daily Quiz ⚡
               </button>
               <button
                 onClick={() => setActiveTab('glossary')}
-                className="py-2.5 px-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-[12px] font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-center active:scale-95"
+                className="py-3 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm lg:text-[14px] font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-center active:scale-95"
               >
                 📖 Terms
               </button>
@@ -370,16 +370,16 @@ export function HomeTab({
 
           {/* About SESB / SESI Info Card */}
           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[28px] p-5 ring-1 ring-black/5 dark:ring-white/10 shadow-sm text-xs space-y-3 text-slate-600 dark:text-slate-400">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-emerald-500 text-white flex items-center justify-center font-black text-[10px]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-emerald-500 text-white flex items-center justify-center font-black text-xs">
                 S
               </div>
-              <span className="font-bold text-slate-900 dark:text-white text-[12.5px]">About SESI SRS</span>
+              <span className="font-bold text-slate-900 dark:text-white text-sm lg:text-base">About SESI SRS</span>
             </div>
-            <p className="leading-relaxed text-[11.5px]">
+            <p className="leading-relaxed text-xs lg:text-[13.5px]">
               Sabah Electricity Supply Industry (SESI) Standard &amp; Regulatory System provides unified standards, formula calculations, and corporate performance metrics across Sabah's power grid.
             </p>
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs lg:text-[12.5px] text-slate-400">
               <span>Future Gen 2026</span>
               <span className="text-emerald-500 font-semibold">SESB Official</span>
             </div>
