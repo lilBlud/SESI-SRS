@@ -203,35 +203,6 @@ export function HomeLeaderboardPodium({
           </>
         )}
       </div>
-
-      {/* ─── Integrated Daily Learning Goal & Streak Strip ─── */}
-      <div className="px-5 py-3.5 bg-slate-50/90 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950/60 border border-orange-200/70 dark:border-orange-800/60 flex items-center justify-center shrink-0 shadow-xs">
-            <span className="text-base leading-none">🔥</span>
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs sm:text-[13px] font-extrabold text-slate-800 dark:text-slate-200 leading-tight truncate">
-              {streak > 0 ? `${streak} Day Streak Active` : 'Daily Quiz Challenge'}
-            </div>
-            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-              Keep momentum going
-            </div>
-          </div>
-        </div>
-
-        {onTakeQuiz && (
-          <button
-            onClick={onTakeQuiz}
-            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition active:scale-95 shrink-0 flex items-center gap-1.5"
-          >
-            <span>Daily Quiz</span>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </button>
-        )}
-      </div>
     </div>
   );
 }

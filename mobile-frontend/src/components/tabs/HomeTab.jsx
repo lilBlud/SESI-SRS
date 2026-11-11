@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PostImageSlider, saveImage } from '../ui';
 import { FullLeaderboardModal, ImageViewerModal, EditPreferredNameModal } from '../modals';
 import { currentMonth, CATEGORIES, getColor } from '../../utils/constants';
@@ -29,6 +29,20 @@ export function HomeTab({
   const realFullName = (user?.fullName || user?.username || user?.email || 'User').trim();
   const greetingName = preferredName || realFullName.split(' ')[0] || 'User';
   const USERNAME = preferredName || realFullName;
+
+  const catScrollRef = useRef(null);
+
+  const scrollCatLeft = () => {
+    if (catScrollRef.current) {
+      catScrollRef.current.scrollBy({ left: -260, behavior: 'smooth' });
+    }
+  };
+
+  const scrollCatRight = () => {
+    if (catScrollRef.current) {
+      catScrollRef.current.scrollBy({ left: 260, behavior: 'smooth' });
+    }
+  };
 
   const postCatCounts = posts.reduce((acc, p) => {
     const c = p.category || 'General';
@@ -190,34 +204,74 @@ export function HomeTab({
               </div>
             </div>
 
-            {/* Sleek Horizontal Category Chips Filter */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-none no-scrollbar -mx-1 px-1">
-              {CATEGORIES.map(c => {
-                const isSelected = postCat === c.key;
-                const count = c.key === 'All' ? posts.length : (postCatCounts[c.key] || 0);
-                return (
-                  <button
-                    key={c.key}
-                    onClick={() => setPostCat(c.key)}
-                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold whitespace-nowrap transition-all active:scale-95 shrink-0 border ${
-                      isSelected
-                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm'
-                        : 'bg-white dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/70 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <span>{c.label}</span>
-                    <span
-                      className={`text-[10.5px] px-1.5 py-0.5 rounded-md tabular-nums font-extrabold ${
+            {/* Sleek Horizontal Category Chips Filter with Navigation Controls */}
+            <div className="flex items-center gap-1.5 w-full">
+              {/* Left Scroll Arrow */}
+              <button
+                type="button"
+                onClick={scrollCatLeft}
+                className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition active:scale-95 shadow-xs shrink-0"
+                title="Scroll categories left"
+                aria-label="Scroll categories left"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Scrollable Container with onWheel support */}
+              <div
+                ref={catScrollRef}
+                onWheel={(e) => {
+                  if (e.deltaY) {
+                    e.currentTarget.scrollLeft += e.deltaY;
+                  }
+                }}
+                className="flex-1 flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none no-scrollbar scroll-smooth"
+              >
+                {CATEGORIES.map(c => {
+                  const isSelected = postCat === c.key;
+                  const count = c.key === 'All' ? posts.length : (postCatCounts[c.key] || 0);
+                  return (
+                    <button
+                      key={c.key}
+                      onClick={(e) => {
+                        setPostCat(c.key);
+                        e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                      }}
+                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold whitespace-nowrap transition-all active:scale-95 shrink-0 border ${
                         isSelected
-                          ? 'bg-white/20 dark:bg-slate-900/15 text-white dark:text-slate-900'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                          ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm'
+                          : 'bg-white dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/70 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span>{c.label}</span>
+                      <span
+                        className={`text-[10.5px] px-1.5 py-0.5 rounded-md tabular-nums font-extrabold ${
+                          isSelected
+                            ? 'bg-white/20 dark:bg-slate-900/15 text-white dark:text-slate-900'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right Scroll Arrow */}
+              <button
+                type="button"
+                onClick={scrollCatRight}
+                className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition active:scale-95 shadow-xs shrink-0"
+                title="Scroll categories right"
+                aria-label="Scroll categories right"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
 
             {/* Posts Grid: 1 column on mobile, 2 columns on widescreen */}
