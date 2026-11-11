@@ -29,7 +29,7 @@ export default function AdminRoleModal({
       }}
     >
       <div 
-        className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4 border border-slate-200 dark:border-slate-800"
+        className="bg-white dark:bg-slate-900 rounded-3xl p-6 lg:p-7 w-full max-w-md shadow-2xl space-y-4 border border-slate-200 dark:border-slate-800"
         role="dialog"
         aria-modal="true"
         aria-labelledby="role-modal-title"
@@ -43,11 +43,11 @@ export default function AdminRoleModal({
             {isGranting ? '🛡️' : '👤'}
           </div>
 
-          <h3 id="role-modal-title" className="text-lg font-black text-slate-900 dark:text-white">
+          <h3 id="role-modal-title" className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
             {isGranting ? 'Grant Admin Privileges?' : 'Revoke Admin Privileges?'}
           </h3>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
             {isGranting ? (
               <>
                 Are you sure you want to promote <strong className="text-slate-800 dark:text-slate-200">{targetUser.fullName}</strong> to <strong className="text-emerald-600">Administrator</strong>?
@@ -68,7 +68,7 @@ export default function AdminRoleModal({
           <button
             onClick={onClose}
             disabled={isUpdating}
-            className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition disabled:opacity-50"
+            className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-xs sm:text-sm font-bold transition disabled:opacity-50"
           >
             Cancel
           </button>
@@ -76,7 +76,7 @@ export default function AdminRoleModal({
           <button
             onClick={onConfirm}
             disabled={isUpdating}
-            className={`flex-1 py-2.5 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-3 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-md flex items-center justify-center gap-2 ${
               isGranting
                 ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
                 : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'

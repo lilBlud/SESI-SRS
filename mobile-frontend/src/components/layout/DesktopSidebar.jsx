@@ -109,7 +109,7 @@ export default function DesktopSidebar({
                   </svg>
                 </div>
                 <span className="truncate">Admin Control Panel</span>
-                <span className="ml-auto text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                <span className="ml-auto text-xs font-black px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
                   PRO
                 </span>
               </button>

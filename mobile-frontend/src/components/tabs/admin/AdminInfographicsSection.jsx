@@ -222,18 +222,18 @@ export default function AdminInfographicsSection({
   return (
     <div className="space-y-4">
       <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
-        <h2 className="text-[16px] font-bold mb-4">Post Infographic / Poster</h2>
+        <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-4">Post Infographic / Poster</h2>
         <form onSubmit={addInfographic} className="space-y-3">
           <input 
             required 
             placeholder="Title (e.g. IBR Overview 2026)" 
-            className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+            className="w-full p-3.5 rounded-xl border text-sm lg:text-base dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
             value={iTitle} 
             onChange={e => setITitle(e.target.value)} 
           />
           <div className="flex gap-3">
             <select 
-              className="flex-1 p-3 rounded-xl border text-sm font-bold dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+              className="flex-1 p-3.5 rounded-xl border text-sm lg:text-base font-bold dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
               value={iCat} 
               onChange={e => setICat(e.target.value)}
             >
@@ -254,7 +254,7 @@ export default function AdminInfographicsSection({
           <textarea 
             placeholder="Description (optional)" 
             rows={2} 
-            className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" 
+            className="w-full p-3.5 rounded-xl border text-sm lg:text-base dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" 
             value={iDesc} 
             onChange={e => setIDesc(e.target.value)} 
           />
@@ -269,10 +269,10 @@ export default function AdminInfographicsSection({
               onChange={handleImageUpload} 
               className="hidden" 
             />
-            <label htmlFor="image-upload" className="cursor-pointer text-sm font-bold text-emerald-600 dark:text-emerald-400">
+            <label htmlFor="image-upload" className="cursor-pointer text-sm lg:text-base font-bold text-emerald-600 dark:text-emerald-400">
               📸 Click to upload images (max 10)
             </label>
-            <p className="text-[11px] text-slate-400 mt-1">{iImages.length}/10 images selected</p>
+            <p className="text-xs lg:text-sm text-slate-400 mt-1">{iImages.length}/10 images selected</p>
             {iImages.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2 justify-center">
                 {iImages.map((img, idx) => (
@@ -367,11 +367,11 @@ export default function AdminInfographicsSection({
               <div className="p-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-bold text-[15px]">{item.title}</h3>
-                    {item.description && <p className="text-[12px] text-slate-500 mt-1">{item.description}</p>}
+                    <h3 className="font-bold text-base sm:text-lg lg:text-xl">{item.title}</h3>
+                    {item.description && <p className="text-xs sm:text-sm lg:text-base text-slate-500 mt-1">{item.description}</p>}
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 px-2 py-0.5 rounded font-bold uppercase">{item.category}</span>
-                      <span className="text-[10px] text-slate-400">{new Date(item.postedAt).toLocaleDateString()}</span>
+                      <span className="text-xs lg:text-[13px] bg-slate-100 dark:bg-slate-700 text-slate-500 px-2.5 py-1 rounded font-bold uppercase">{item.category}</span>
+                      <span className="text-xs lg:text-[13px] text-slate-400">{new Date(item.postedAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <div className="flex gap-2">

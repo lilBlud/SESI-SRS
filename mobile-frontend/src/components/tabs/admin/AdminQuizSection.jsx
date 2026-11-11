@@ -106,7 +106,7 @@ export default function AdminQuizSection({
     <div className="space-y-4">
       {/* Month picker */}
       <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 sm:p-5 shadow-sm">
-        <label className="block text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+        <label className="block text-xs lg:text-sm font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
           Managing Month
         </label>
         <div className="w-full">
@@ -122,33 +122,33 @@ export default function AdminQuizSection({
               }
               setSelectedMonth(val);
             }}
-            className="w-full box-border block px-3.5 py-2.5 rounded-xl border text-sm font-mono dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+            className="w-full box-border block px-4 py-3 rounded-xl border text-sm lg:text-base font-mono dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
           />
         </div>
       </div>
 
       {/* Counter */}
       <div className="rounded-2xl p-4 flex items-center gap-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200">
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl bg-emerald-500 text-white">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl bg-emerald-500 text-white">
           {qCount}
         </div>
         <div className="flex-1">
-          <div className="text-[13px] font-bold text-emerald-700 dark:text-emerald-400">
+          <div className="text-sm lg:text-base font-bold text-emerald-700 dark:text-emerald-400">
             Questions for {selectedMonth}
           </div>
         </div>
-        <div className="text-[13px] font-black text-slate-400">{qCount} Total</div>
+        <div className="text-sm lg:text-base font-black text-slate-400">{qCount} Total</div>
       </div>
 
       {/* Add question form */}
       <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
-        <h2 className="text-[16px] font-bold mb-4">Add New Question</h2>
+        <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-4">Add New Question</h2>
         <form onSubmit={addQuestion} className="space-y-3">
           <textarea
             required
             placeholder="Question text..."
             rows={2}
-            className="w-full p-3 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+            className="w-full p-3.5 rounded-xl border text-sm lg:text-base dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
             value={qText}
             onChange={e => setQText(e.target.value)}
           />
@@ -160,13 +160,13 @@ export default function AdminQuizSection({
               ['D', optD, setOptD]
             ].map(([l, v, s]) => (
               <div key={l} className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-black text-emerald-600">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs lg:text-sm font-black text-emerald-600">
                   {l}
                 </span>
                 <input
                   required
                   placeholder={`Option ${l}`}
-                  className="w-full pl-7 pr-2.5 py-2.5 rounded-xl border text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-8 pr-3 py-3 rounded-xl border text-sm lg:text-base dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   value={v}
                   onChange={e => s(e.target.value)}
                 />
@@ -174,14 +174,14 @@ export default function AdminQuizSection({
             ))}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Correct:</span>
+            <span className="text-sm lg:text-base font-bold text-slate-600 dark:text-slate-400">Correct:</span>
             <div className="flex gap-2">
               {['A', 'B', 'C', 'D'].map(o => (
                 <button
                   key={o}
                   type="button"
                   onClick={() => setCorrect(o)}
-                  className={`w-9 h-9 rounded-xl text-sm font-black transition-all ${
+                  className={`w-10 h-10 lg:w-11 lg:h-11 rounded-xl text-sm lg:text-base font-black transition-all ${
                     correct === o
                       ? 'bg-emerald-600 text-white shadow-md'
                       : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
@@ -206,7 +206,7 @@ export default function AdminQuizSection({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+            className="w-full py-3.5 lg:py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm lg:text-base rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
           >
             {isSubmitting ? 'Adding...' : '+ Add Question'}
           </button>
@@ -220,11 +220,11 @@ export default function AdminQuizSection({
             key={q.id}
             className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex gap-3 items-start"
           >
-            <div className="w-7 h-7 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-lg flex items-center justify-center text-[12px] font-black shrink-0 mt-0.5">
+            <div className="w-8 h-8 lg:w-9 lg:h-9 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center justify-center text-xs lg:text-sm font-black shrink-0 mt-0.5">
               {i + 1}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[13px] leading-snug">{q.questionText}</p>
+              <p className="font-semibold text-sm sm:text-[15px] lg:text-base leading-relaxed">{q.questionText}</p>
               <div className="mt-2 grid grid-cols-2 gap-1">
                 {[
                   ['A', q.optionA],
@@ -234,7 +234,7 @@ export default function AdminQuizSection({
                 ].map(([l, t]) => (
                   <div
                     key={l}
-                    className={`text-[11px] px-2 py-1 rounded-lg flex gap-1 ${
+                    className={`text-xs lg:text-[13.5px] px-2.5 py-1.5 rounded-lg flex gap-1 ${
                       q.correctOption === l
                         ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-bold'
                         : 'text-slate-500'

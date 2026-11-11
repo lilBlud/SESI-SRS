@@ -401,7 +401,7 @@ export default function AdminGlossarySection({
             setGCat('Corporate Performance');
             setGCategoryFilter('All');
           }}
-          className={`flex-1 py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-3 lg:py-3.5 px-4 rounded-xl font-black text-xs sm:text-sm lg:text-[15px] transition-all flex items-center justify-center gap-2 ${
             dictSubTab === 'corporate'
               ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-sm'
               : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -410,7 +410,7 @@ export default function AdminGlossarySection({
           <span>📊</span>
           <span>Corporate Studio</span>
           <span
-            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${
+            className={`text-xs lg:text-[13px] px-2 py-0.5 rounded-full font-bold ml-1 ${
               dictSubTab === 'corporate'
                 ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
@@ -438,7 +438,7 @@ export default function AdminGlossarySection({
             setGCat('IBR Framework');
             setGCategoryFilter('All');
           }}
-          className={`flex-1 py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-3 lg:py-3.5 px-4 rounded-xl font-black text-xs sm:text-sm lg:text-[15px] transition-all flex items-center justify-center gap-2 ${
             dictSubTab === 'dictionary'
               ? 'bg-emerald-600 text-white shadow-sm'
               : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -447,7 +447,7 @@ export default function AdminGlossarySection({
           <span>📖</span>
           <span>Dictionary Terms</span>
           <span
-            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${
+            className={`text-xs lg:text-[13px] px-2 py-0.5 rounded-full font-bold ml-1 ${
               dictSubTab === 'dictionary'
                 ? 'bg-emerald-700 text-white'
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
@@ -480,7 +480,7 @@ export default function AdminGlossarySection({
               setShowForm(true);
             }
           }}
-          className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs sm:text-sm rounded-xl active:scale-95 transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2"
+          className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs sm:text-sm lg:text-base rounded-xl active:scale-95 transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2"
         >
           <span>{showForm ? '✕ Close Form' : '+ Add New Card / Term'}</span>
         </button>
@@ -490,7 +490,7 @@ export default function AdminGlossarySection({
             type="button"
             onClick={syncDefaultHistoricalData}
             disabled={syncingData}
-            className="px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-xl active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+            className="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs sm:text-sm lg:text-[14px] rounded-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <span>{syncingData ? '⏳ Syncing Data...' : '⚡ Seed 2022–2026 Performance Data'}</span>
           </button>

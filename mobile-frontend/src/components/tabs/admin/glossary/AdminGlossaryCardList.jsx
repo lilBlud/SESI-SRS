@@ -22,7 +22,7 @@ export function AdminGlossaryCardList({
             placeholder={`Search ${isPerfStudio ? 'performance cards' : 'definitions'}...`}
             value={gFilter}
             onChange={e => setGFilter(e.target.value)}
-            className="w-full box-border block pl-9 pr-3 py-2.5 rounded-xl border text-xs sm:text-sm dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
+            className="w-full box-border block pl-10 pr-3 py-3 rounded-xl border text-xs sm:text-sm lg:text-base dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
           {gFilter && (
@@ -38,7 +38,7 @@ export function AdminGlossaryCardList({
         <select
           value={gCategoryFilter}
           onChange={e => setGCategoryFilter(e.target.value)}
-          className="px-3 py-2.5 rounded-xl border text-xs font-bold dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
+          className="px-4 py-3 rounded-xl border text-xs sm:text-sm lg:text-base font-bold dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
         >
           {availableCategories.map(cat => (
             <option key={cat} value={cat}>
@@ -68,21 +68,21 @@ export function AdminGlossaryCardList({
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base font-black text-slate-900 dark:text-white">{t.term}</span>
-                    {t.fullName && <span className="text-xs text-slate-400 font-medium">({t.fullName})</span>}
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    <span className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white">{t.term}</span>
+                    {t.fullName && <span className="text-xs sm:text-sm lg:text-base text-slate-400 font-medium">({t.fullName})</span>}
+                    <span className="text-xs lg:text-[13px] font-bold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                       {t.category}
                     </span>
                   </div>
-                  {t.description && <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{t.description}</p>}
+                  {t.description && <p className="text-xs sm:text-sm lg:text-[14.5px] text-slate-500 dark:text-slate-400 leading-relaxed">{t.description}</p>}
 
                   {isPerfCard && yearsWithData.length > 0 && (
                     <div className="flex items-center gap-1.5 pt-1 flex-wrap">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Years:</span>
+                      <span className="text-xs lg:text-[13px] font-extrabold uppercase tracking-wider text-slate-400">Years:</span>
                       {yearsWithData.map(y => (
                         <span
                           key={y}
-                          className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                          className="text-xs lg:text-[13px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                         >
                           {y}
                         </span>
@@ -97,7 +97,7 @@ export function AdminGlossaryCardList({
                     type="button"
                     onClick={() => onEditTerm(t)}
                     title="Edit Card"
-                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all text-xs font-bold"
+                    className="p-2.5 lg:p-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all text-xs lg:text-sm font-bold"
                   >
                     ✏️
                   </button>
