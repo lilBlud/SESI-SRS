@@ -136,15 +136,51 @@ export default function DesktopSidebar({
           </div>
         </div>
 
-        {/* Action Controls (Logout) */}
-        <div className="flex items-center justify-end px-1">
+        {/* Action Controls (Segmented Theme Switcher + Logout) */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          {/* Modern Segmented Theme Switcher */}
+          <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-xs">
+            <button
+              onClick={() => isDark && toggleTheme()}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                !isDark
+                  ? 'bg-white text-amber-600 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+              aria-label="Switch to light mode"
+              aria-pressed={!isDark}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              </svg>
+              <span>Light</span>
+            </button>
+            <button
+              onClick={() => !isDark && toggleTheme()}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                isDark
+                  ? 'bg-slate-700 text-amber-300 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+              aria-label="Switch to dark mode"
+              aria-pressed={isDark}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+              </svg>
+              <span>Dark</span>
+            </button>
+          </div>
+
+          {/* Logout Button */}
           <button
             onClick={onLogout}
-            className="flex items-center gap-1.5 text-xs lg:text-[13px] font-bold text-rose-500 hover:text-rose-600 transition active:scale-95 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30"
+            className="flex items-center gap-1.5 text-xs lg:text-[13px] font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition active:scale-95 px-2.5 py-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200/60 dark:hover:border-rose-900/40"
             aria-label="Logout"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             <span>Logout</span>
           </button>
