@@ -13,7 +13,7 @@ export default function DesktopHeader({
     home: { title: 'Executive Dashboard', subtitle: 'Energy Transition & Regulatory Updates' },
     glossary: { title: 'Regulatory & IBR Dictionary', subtitle: 'Formulas, Notations & Corporate Metrics' },
     dictionary: { title: 'Regulatory & IBR Dictionary', subtitle: 'Formulas, Notations & Corporate Metrics' },
-    quiz: { title: 'Knowledge Hub & Monthly Quiz', subtitle: 'Test your knowledge & climb the leaderboard' },
+    quiz: { title: 'Knowledge Hub', subtitle: 'Test your knowledge & climb the leaderboard' },
     profile: { title: 'My Staff Profile', subtitle: 'Badges, bookmarks & quiz performance' },
     admin: { title: 'Admin Control Center', subtitle: 'Manage users, quizzes, dictionary & traffic analytics' }
   };

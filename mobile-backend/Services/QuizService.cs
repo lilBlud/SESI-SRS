@@ -115,8 +115,8 @@ namespace mobile_backend.Services
 
         public async Task<List<UserAnswerDto>> GetUserRecentAnswersAsync(string username, string? month)
         {
-            var u = (username ?? "").Trim();
-            var query = db.UserAnswers.Where(a => string.Equals(a.Username, u, StringComparison.OrdinalIgnoreCase));
+            var u = (username ?? "").Trim().ToLower();
+            var query = db.UserAnswers.Where(a => (a.Username ?? "").ToLower() == u);
             if (!string.IsNullOrEmpty(month))
             {
                 query = query.Where(a => a.Month == month);
@@ -145,9 +145,9 @@ namespace mobile_backend.Services
 
         public async Task<List<string>> GetUserActiveMonthsAsync(string username)
         {
-            var u = (username ?? "").Trim();
+            var u = (username ?? "").Trim().ToLower();
             return await db.UserAnswers
-                .Where(a => string.Equals(a.Username, u, StringComparison.OrdinalIgnoreCase))
+                .Where(a => (a.Username ?? "").ToLower() == u)
                 .Select(a => a.Month)
                 .Distinct()
                 .OrderByDescending(m => m)

@@ -13,7 +13,7 @@ export default function DesktopSidebar({
   const tabs = [
     { id: 'home', label: 'Home Dashboard', Icon: HomeIcon },
     { id: 'glossary', label: 'Dictionary & IBR', Icon: BookIcon },
-    { id: 'quiz', label: 'Quiz & Knowledge Hub', Icon: QuizIcon },
+    { id: 'quiz', label: 'Knowledge Hub', Icon: QuizIcon },
     { id: 'profile', label: 'My Profile', Icon: ProfileIcon },
   ];
 
