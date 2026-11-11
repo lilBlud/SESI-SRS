@@ -47,9 +47,9 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
         console.warn('Direct fetch traffic failed in AdminTab:', e);
       }
 
-      if (!data && API_BASE) {
+      if (!data) {
         try {
-          const res = await fetch(`${API_BASE}/api/visitors/stats?t=${Date.now()}`, { signal: AbortSignal.timeout(3500) });
+          const res = await fetch((API_BASE || "") + `/api/visitors/stats?t=${Date.now()}`, { signal: AbortSignal.timeout(3500) });
           if (res.ok) {
             data = await res.json();
           }
@@ -77,9 +77,9 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
         console.warn("Direct fetch users error in AdminTab:", err);
       }
 
-      if (!list && API_BASE) {
+      if (!list) {
         try {
-          const res = await fetch(`${API_BASE}/api/admin/users`, { signal: AbortSignal.timeout(3500) });
+          const res = await fetch((API_BASE || "") + `/api/admin/users`, { signal: AbortSignal.timeout(3500) });
           if (res && res.ok) {
             list = await res.json();
           }
@@ -178,7 +178,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
       }
     }
 
-    const res = API_BASE ? await fetch(`${API_BASE}/api/admin/questions/${selectedMonth}`, { signal: AbortSignal.timeout(3500) }).catch(() => null) : null;
+    const res = await fetch((API_BASE || "") + `/api/admin/questions/${selectedMonth}`, { signal: AbortSignal.timeout(3500) }).catch(() => null);
     if (res && res.ok) {
       const d = await res.json();
       setQuestions(d.questions || []);
@@ -189,14 +189,14 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   const fetchGlossary = useCallback(async () => {
     try {
       const direct = await getGlossaryDirect();
-      if (direct && direct.length >= 0) {
+      if (direct && direct.length > 0) {
         setGlossaryTerms(direct);
         return;
       }
     } catch (e) {
       console.warn('Direct fetch glossary failed in AdminTab:', e);
     }
-    const res = API_BASE ? await fetch(`${API_BASE}/api/admin/glossary?t=${Date.now()}`, { signal: AbortSignal.timeout(3500) }).catch(() => null) : null;
+    const res = await fetch((API_BASE || "") + "/api/admin/glossary?t=" + Date.now(), { signal: AbortSignal.timeout(3500) }).catch(() => null);
     if (res && res.ok) {
       setGlossaryTerms(await res.json());
     }
@@ -205,14 +205,14 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   const fetchInfographics = useCallback(async () => {
     try {
       const direct = await getInfographicsDirect();
-      if (direct && direct.length >= 0) {
+      if (direct && direct.length > 0) {
         setInfographics(direct);
         return;
       }
     } catch (err) {
       console.warn('Direct Supabase fetch failed in AdminTab:', err);
     }
-    const res = API_BASE ? await fetch(`${API_BASE}/api/admin/infographics`, { signal: AbortSignal.timeout(3500) }).catch(() => null) : null;
+    const res = await fetch((API_BASE || "") + "/api/admin/infographics", { signal: AbortSignal.timeout(3500) }).catch(() => null);
     if (res && res.ok) {
       setInfographics(await res.json());
     }
