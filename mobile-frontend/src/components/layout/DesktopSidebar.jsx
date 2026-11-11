@@ -109,9 +109,6 @@ export default function DesktopSidebar({
                   </svg>
                 </div>
                 <span className="whitespace-nowrap font-bold">Admin Control Panel</span>
-                <span className="ml-auto text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 tracking-wider shrink-0">
-                  PRO
-                </span>
               </button>
             </div>
           )}

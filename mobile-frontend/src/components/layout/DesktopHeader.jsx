@@ -19,9 +19,6 @@ export default function DesktopHeader({
   };
 
   const current = titles[activeTab] || titles.home;
-  const preferredName = (user?.preferredName || '').trim();
-  const realFullName = (user?.fullName || user?.username || user?.email || 'User').trim();
-  const displayName = preferredName || realFullName;
 
   return (
     <header className="hidden lg:flex items-center justify-between px-8 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 transition-colors select-none">
@@ -74,25 +71,6 @@ export default function DesktopHeader({
         >
           {isDark ? '☀️' : '🌙'}
         </button>
-
-        {/* User Badge */}
-        <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-800">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
-            {user?.profilePicture ? (
-              <img src={user.profilePicture} alt={displayName} className="w-full h-full object-cover rounded-xl" />
-            ) : (
-              displayName.charAt(0).toUpperCase()
-            )}
-          </div>
-          <div className="flex flex-col text-left">
-            <span className="text-xs lg:text-sm font-bold text-slate-800 dark:text-slate-100 leading-none">
-              {displayName}
-            </span>
-            <span className="text-[10px] lg:text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1 leading-none">
-              {user?.role || 'Staff'}
-            </span>
-          </div>
-        </div>
       </div>
     </header>
   );
