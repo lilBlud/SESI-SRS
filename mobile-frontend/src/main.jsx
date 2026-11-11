@@ -6,6 +6,14 @@ import { ThemeProvider, BackendProvider, AuthProvider } from './context';
 import './index.css';
 
 if ('serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     for (const reg of registrations) {
       reg.update();
