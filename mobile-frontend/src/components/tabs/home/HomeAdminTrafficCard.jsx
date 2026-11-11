@@ -21,45 +21,50 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
       </div>
       <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800">
         {/* Visitors Today */}
-        <div className="flex items-center gap-3 sm:gap-4 pr-3 sm:pr-4">
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-xs lg:text-[12.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+        <div className="pr-3 sm:pr-4 min-w-0 flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 leading-tight">
               Visitors Today
-            </div>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight leading-none">
-                {(visitorStats?.todayVisits ?? 0).toLocaleString()}
-              </span>
-              <span className="text-xs lg:text-[13px] font-medium text-slate-500 dark:text-slate-400 truncate tabular-nums">
-                ({(visitorStats?.totalVisits ?? 0).toLocaleString()} total)
-              </span>
-            </div>
+            </span>
+          </div>
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight leading-none">
+              {(visitorStats?.todayVisits ?? 0).toLocaleString()}
+            </span>
+            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums">
+              ({(visitorStats?.totalVisits ?? 0).toLocaleString()} total)
+            </span>
           </div>
         </div>
 
         {/* Users */}
-        <div className="flex items-center gap-3 sm:gap-4 pl-3 sm:pl-4">
-          <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-xs lg:text-[12.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+        <div className="pl-3 sm:pl-4 min-w-0 flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 leading-tight">
               Users
-            </div>
-            <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight leading-none mt-0.5">
+            </span>
+          </div>
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight leading-none">
               {(visitorStats?.uniqueVisitors ?? 0).toLocaleString()}
-            </div>
+            </span>
+            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums">
+              total registered
+            </span>
           </div>
         </div>
       </div>

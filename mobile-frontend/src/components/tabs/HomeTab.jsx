@@ -154,7 +154,7 @@ export function HomeTab({
                 {CATEGORIES.slice(1).length} Domains
               </span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 sm:gap-3">
               {CATEGORIES.slice(1).map(cat => {
                 const clr = getColor(cat.key);
                 return (
@@ -164,7 +164,7 @@ export function HomeTab({
                       if (setActiveGlossaryCat) setActiveGlossaryCat(cat.key);
                       setActiveTab('glossary');
                     }}
-                    className={`flex items-center gap-2.5 p-3 rounded-2xl text-left transition-all duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md ${clr.bg} border ${clr.border}`}
+                    className={`flex items-center gap-2.5 p-3 rounded-2xl text-left transition-all duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md ${clr.bg} border ${clr.border} min-w-0 overflow-hidden`}
                   >
                     <div className="w-6 flex items-center justify-center shrink-0">
                       {cat.iconImage ? (
@@ -173,7 +173,7 @@ export function HomeTab({
                         <span className="text-lg">{cat.emoji}</span>
                       )}
                     </div>
-                    <span className={`text-xs sm:text-[13px] lg:text-[14px] font-bold ${clr.text} leading-tight tracking-tight`}>{cat.label}</span>
+                    <span className={`text-xs sm:text-[12.5px] lg:text-[13px] font-bold ${clr.text} leading-snug break-words min-w-0 flex-1 hyphens-auto`}>{cat.label}</span>
                   </button>
                 );
               })}

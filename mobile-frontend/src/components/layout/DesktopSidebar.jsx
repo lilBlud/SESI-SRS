@@ -26,7 +26,7 @@ export default function DesktopSidebar({
   return (
     <aside className="hidden lg:flex flex-col justify-between w-72 xl:w-80 shrink-0 h-screen sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800 transition-colors select-none">
       {/* ─── Top Brand & Logo ─── */}
-      <div className="p-6">
+      <div className="px-5 py-6">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center bg-white border border-slate-200 dark:border-slate-700 shadow-sm p-1 shrink-0">
             <img
@@ -39,7 +39,7 @@ export default function DesktopSidebar({
             <span className="text-lg lg:text-xl font-black tracking-tight leading-none text-emerald-600 dark:text-emerald-400">
               SESI INSIGHT
             </span>
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1.5 leading-tight truncate">
+            <span className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 mt-1 leading-snug">
               Sabah Electricity Supply Industry
             </span>
           </div>
@@ -62,14 +62,14 @@ export default function DesktopSidebar({
         )}
 
         {/* ─── Navigation Links ─── */}
-        <nav className="mt-6 space-y-2" aria-label="Desktop navigation">
+        <nav className="mt-6 space-y-1.5" aria-label="Desktop navigation">
           {tabs.map(({ id, label, Icon }) => {
             const isActive = activeTab === id;
             return (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-[14.5px] lg:text-[15.5px] font-bold transition-all duration-200 text-left group ${
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm lg:text-[14px] font-bold transition-all duration-200 text-left group ${
                   isActive
                     ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
@@ -78,7 +78,7 @@ export default function DesktopSidebar({
                 <div className={`shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-emerald-500'}`}>
                   <Icon active={isActive} />
                 </div>
-                <span className="truncate">{label}</span>
+                <span className="whitespace-nowrap">{label}</span>
                 {isActive && (
                   <div className="ml-auto w-2 h-2 rounded-full bg-white animate-pulse" />
                 )}
@@ -89,12 +89,12 @@ export default function DesktopSidebar({
           {/* Admin Control Panel Tab (Admins Only) */}
           {user?.role === 'Admin' && (
             <div className="pt-2">
-              <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 mb-2">
+              <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3.5 mb-2">
                 Administration
               </div>
               <button
                 onClick={() => setActiveTab('admin')}
-                className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-[14.5px] lg:text-[15.5px] font-bold transition-all duration-200 text-left group ${
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm lg:text-[14px] font-bold transition-all duration-200 text-left group ${
                   activeTab === 'admin'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
@@ -108,8 +108,8 @@ export default function DesktopSidebar({
                     <rect width="7" height="5" x="3" y="16" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <span className="truncate">Admin Control Panel</span>
-                <span className="ml-auto text-xs font-black px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                <span className="whitespace-nowrap font-bold">Admin Control Panel</span>
+                <span className="ml-auto text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 tracking-wider shrink-0">
                   PRO
                 </span>
               </button>
