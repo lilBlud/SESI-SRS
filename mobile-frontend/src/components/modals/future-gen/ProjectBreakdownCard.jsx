@@ -75,36 +75,60 @@ export function ProjectBreakdownCard({
         </div>
       </div>
 
-      {/* Key Project Parameters Grid */}
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-          <div className="text-[10px] font-bold text-slate-400 uppercase">Region / Location</div>
-          <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedProject.region} · {selectedProject.location}</div>
+      {/* Key Project Parameters Grid (4-Column Metric Grid on Desktop) */}
+      <div className="mt-3.5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Capacity</div>
+          <div className="text-[14px] font-black text-rose-600 dark:text-rose-400 mt-0.5">{selectedProject.capacity}</div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{selectedProject.plantType}</div>
         </div>
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-          <div className="text-[10px] font-bold text-slate-400 uppercase">Equity / Ownership</div>
-          <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedProject.equity || 'SE 100%'}</div>
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target COD</div>
+          <div className="text-[14px] font-black text-indigo-600 dark:text-indigo-400 mt-0.5">{selectedProject.cod}</div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{selectedProject.stage || 'Pipeline'}</div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Region & Location</div>
+          <div className="text-[13px] font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedProject.location}</div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{selectedProject.region}</div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Equity / Ownership</div>
+          <div className="text-[13px] font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedProject.equity || 'SE 100%'}</div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">SESB Stake</div>
         </div>
       </div>
 
       {/* Status and Description */}
-      <div className="mt-2.5 text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3 border border-slate-200/60 dark:border-slate-700/60">
-        <span className="font-bold text-slate-800 dark:text-slate-200">Status & Way Forward: </span>
+      <div className="mt-3 text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3.5 border border-slate-200/70 dark:border-slate-700/60">
+        <span className="font-extrabold text-slate-800 dark:text-slate-100">Status & Way Forward: </span>
         {selectedProject.status}
       </div>
 
-      {/* Watch Item Highlight Alert */}
-      {selectedProject.watchItem && (
-        <div className="mt-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-300/70 dark:border-amber-700/70 rounded-xl p-2.5 flex items-start gap-2">
-          <span className="text-sm shrink-0">⚠️</span>
+      {/* Watch Item Highlight Alert or Milestone Status */}
+      {selectedProject.watchItem ? (
+        <div className="mt-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300/70 dark:border-amber-700/70 rounded-xl p-3 flex items-start gap-2.5">
+          <span className="text-base shrink-0">⚠️</span>
           <div className="min-w-0">
-            <div className="text-[11px] font-black text-amber-900 dark:text-amber-200">
+            <div className="text-[12px] font-black text-amber-900 dark:text-amber-200">
               Watch Item: {selectedProject.watchItem.title}
             </div>
-            <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-0.5 leading-snug">
+            <p className="text-[11.5px] text-amber-800 dark:text-amber-300 mt-0.5 leading-snug">
               {selectedProject.watchItem.text}
             </p>
           </div>
+        </div>
+      ) : (
+        <div className="mt-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50 rounded-xl p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-[12px] font-bold text-emerald-800 dark:text-emerald-300">
+              Pipeline Status: On track for {selectedProject.cod} delivery
+            </span>
+          </div>
+          <span className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-md">
+            No Critical Blockers
+          </span>
         </div>
       )}
     </div>

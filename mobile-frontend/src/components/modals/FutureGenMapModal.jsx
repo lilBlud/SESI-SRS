@@ -204,8 +204,8 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
               </div>
             </div>
 
-            {/* ── LEFT: Dominant Interactive Map Viewport (Fills Full Height on Desktop) ── */}
-            <div className="flex-1 h-full min-h-0 flex flex-col relative overflow-hidden bg-[#EEF3F7] dark:bg-slate-950/60">
+            {/* ── LEFT: Interactive Map Viewport (50% Split on Desktop) ── */}
+            <div className="w-full lg:w-1/2 h-full min-h-0 flex flex-col relative overflow-hidden bg-[#EEF3F7] dark:bg-slate-950/60 lg:border-r border-slate-200/80 dark:border-slate-800">
               <SabahInteractiveMap
                 selectedProjectId={selectedProjectId}
                 onSelectProject={setSelectedProjectId}
@@ -213,14 +213,14 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
               />
             </div>
 
-            {/* ── RIGHT: Desktop Intelligence Sidebar & Breakdown Panel (Balanced 60/40 Split) ── */}
-            <div className="w-full lg:w-[560px] xl:w-[640px] 2xl:w-[700px] lg:shrink-0 flex flex-col bg-white dark:bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-200/80 dark:border-slate-800 overflow-y-auto custom-scrollbar">
+            {/* ── RIGHT: Desktop Intelligence Sidebar & Breakdown Panel (50% Equal Split) ── */}
+            <div className="w-full lg:w-1/2 lg:shrink-0 flex flex-col bg-white dark:bg-slate-900 border-t lg:border-t-0 overflow-y-auto custom-scrollbar">
               {/* Desktop Regional Reserve Margins */}
               <div className="hidden lg:flex p-4 pb-3 flex-col gap-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Regional Reserve Margins
                 </div>
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl p-3 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                       <span className="text-[12px] font-extrabold text-emerald-800 dark:text-emerald-300">West Coast</span>
@@ -263,11 +263,11 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                         onClick={() => setSelectedProjectId(p.id)}
                         className={`flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${
                           isSel
-                            ? 'bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-700/60 shadow-xs ring-1 ring-rose-500/20'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800/60 bg-white/60 dark:bg-slate-900/60'
+                            ? 'bg-rose-50/90 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-700/60 shadow-xs ring-2 ring-rose-500/20'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800/70 bg-white/70 dark:bg-slate-900/60 shadow-2xs'
                         }`}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <span
                             className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-black shrink-0 shadow-2xs"
                             style={{ backgroundColor: fuel?.color || '#0F172A' }}
@@ -275,11 +275,11 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                             {p.pinNumber}
                           </span>
                           <div className="truncate">
-                            <div className={`text-[12px] font-bold truncate ${isSel ? 'text-rose-900 dark:text-rose-200' : 'text-slate-800 dark:text-slate-200'}`}>
+                            <div className={`text-[12px] font-bold truncate ${isSel ? 'text-rose-950 dark:text-rose-100' : 'text-slate-800 dark:text-slate-200'}`}>
                               {p.name}
                             </div>
-                            <div className="text-[10px] text-slate-400 truncate">
-                              {p.plantType}
+                            <div className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
+                              {p.plantType} · {p.location}
                             </div>
                           </div>
                         </div>
@@ -287,7 +287,7 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                           <div className="text-[11px] font-black text-rose-600 dark:text-rose-400">
                             {p.capacity}
                           </div>
-                          <div className="text-[9px] text-slate-400 font-semibold">
+                          <div className="text-[9px] text-slate-400 font-bold">
                             COD {p.cod}
                           </div>
                         </div>
