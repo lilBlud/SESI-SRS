@@ -229,11 +229,16 @@ export function GlossaryTab({
             </div>
 
             {/* Category Filter Chips / List */}
-            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-3.5 shadow-md ring-1 ring-black/5 dark:ring-white/10 max-h-52 overflow-y-auto space-y-1.5 scrollbar-hide">
-              <div className="text-xs lg:text-[13px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
-                Filter By Domain
+            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-3 shadow-md ring-1 ring-black/5 dark:ring-white/10 max-h-56 overflow-y-auto space-y-1 scrollbar-thin">
+              <div className="flex items-center justify-between px-2 py-1">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Filter By Domain
+                </span>
+                <span className="text-[11px] font-bold text-slate-400">
+                  {CATEGORIES.length} domains
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="space-y-1">
                 {CATEGORIES.map(c => {
                   const isActive = cat === c.key;
                   const count = c.key === 'All' ? glossary.length : (catCounts[c.key] || 0);
@@ -241,18 +246,29 @@ export function GlossaryTab({
                   return (
                     <button
                       key={c.key}
+                      type="button"
                       onClick={() => setCat(c.key)}
-                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs lg:text-[13.5px] font-bold transition-all text-left truncate ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs lg:text-[13px] font-bold transition-all text-left group ${
                         isActive
-                          ? (clr ? `${clr.bg} ${clr.text} ring-1 ${clr.border}` : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30')
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          ? (clr ? `${clr.bg} ${clr.text} ring-1 ${clr.border} shadow-xs` : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30 shadow-xs')
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      <span className="truncate flex items-center gap-1.5">
-                        <span className="text-sm">{c.emoji}</span>
-                        {c.label}
+                      <span className="flex items-center gap-2 min-w-0 pr-2">
+                        {c.iconImage ? (
+                          <img src={c.iconImage} alt={c.label} className="w-4 h-4 object-contain shrink-0" />
+                        ) : (
+                          <span className="text-sm shrink-0">{c.emoji}</span>
+                        )}
+                        <span className="whitespace-normal leading-snug">{c.label}</span>
                       </span>
-                      <span className="text-[11px] opacity-70 ml-1 tabular-nums">({count})</span>
+                      <span className={`text-[11px] font-semibold tabular-nums shrink-0 px-2 py-0.5 rounded-full ${
+                        isActive
+                          ? 'bg-white/80 dark:bg-slate-900/60 font-bold'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
+                      }`}>
+                        {count}
+                      </span>
                     </button>
                   );
                 })}
