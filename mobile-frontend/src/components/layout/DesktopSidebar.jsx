@@ -136,17 +136,8 @@ export default function DesktopSidebar({
           </div>
         </div>
 
-        {/* Action Controls (Theme + Logout) */}
-        <div className="flex items-center justify-between px-1">
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-2 text-xs lg:text-[13px] font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
-            aria-label="Toggle dark mode"
-          >
-            <span className="text-base">{isDark ? '☀️' : '🌙'}</span>
-            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-          </button>
-
+        {/* Action Controls (Logout) */}
+        <div className="flex items-center justify-end px-1">
           <button
             onClick={onLogout}
             className="flex items-center gap-1.5 text-xs lg:text-[13px] font-bold text-rose-500 hover:text-rose-600 transition active:scale-95 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30"
