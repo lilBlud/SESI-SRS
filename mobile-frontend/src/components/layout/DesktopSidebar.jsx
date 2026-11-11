@@ -150,12 +150,12 @@ export default function DesktopSidebar({
           <button
             onClick={onLogout}
             className="flex items-center gap-1.5 text-xs lg:text-[13px] font-bold text-rose-500 hover:text-rose-600 transition active:scale-95 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30"
-            aria-label="Sign out"
+            aria-label="Logout"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <span>Exit</span>
+            <span>Logout</span>
           </button>
         </div>
       </div>
