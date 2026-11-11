@@ -43,7 +43,7 @@ export function RecentQuestionsCarousel({
           <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide -mx-4 px-[6vw] md:-mx-[calc(50%-175px)] md:px-[calc(50%-175px)]">
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
           {recentQuizzes.length === 0 ? (
             <div className="w-full text-center py-8 text-slate-400 text-sm bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
               {filterMonth ? `No questions answered in ${formatMonth(filterMonth)}.` : "You haven't answered any questions yet."}
@@ -54,18 +54,18 @@ export function RecentQuestionsCarousel({
               return (
                 <div
                   key={idx}
-                  className="w-[85%] max-w-[300px] shrink-0 snap-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 flex flex-col justify-between gap-2"
+                  className="w-[280px] shrink-0 snap-start bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 flex flex-col justify-between gap-2 border border-slate-200/80 dark:border-slate-800"
                 >
                   <div className="flex justify-between items-start">
                     <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight pr-4 line-clamp-3">
                       {ans.questionText}
                     </div>
-                    <div className={`text-[11px] font-bold px-2 py-0.5 rounded shrink-0 ${ans.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                    <div className={`text-[11px] font-bold px-2 py-0.5 rounded shrink-0 ${ans.isCorrect ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300'}`}>
                       {ans.isCorrect ? 'Correct' : 'Wrong'}
                     </div>
                   </div>
                   <div className="flex justify-between items-end mt-2">
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
                       {date} • {ans.timeTakenSeconds}s taken
                     </div>
                     <div className="font-black text-emerald-600 dark:text-emerald-400 text-[14px]">

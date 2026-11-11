@@ -25,38 +25,43 @@ export function QuizIdleView({
   );
 
   return (
-    <div className="animate-slideUp space-y-5">
-      {/* ─── Hero Header ─── */}
-      <div className="text-center pt-4">
-        <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/25 animate-float">
-          <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
+    <div className="animate-slideUp space-y-6">
+      {/* ─── Unified Hero & Streak Card ─── */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+        {/* Left: Knowledge Hub Icon + Title & Subtitle */}
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0 animate-float">
+            <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+              Monthly Knowledge Hub
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-[13px] font-medium mt-1">
+              Sharpen your energy regulatory knowledge
+            </p>
+          </div>
         </div>
-        <h2 className="text-[22px] sm:text-[24px] font-extrabold tracking-tight text-slate-900 dark:text-white mt-4">
-          Monthly Knowledge Hub
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 text-[13px] font-medium mt-1">
-          Sharpen your energy regulatory knowledge
-        </p>
-      </div>
 
-      {/* ─── Streak Banner ─── */}
-      <div className={`rounded-2xl p-4 flex items-center gap-3 ${streak > 0 ? 'bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
-        <div className="text-3xl">{streak > 0 ? '🔥' : '💤'}</div>
-        <div>
-          <div className="font-bold text-[15px] tracking-tight text-slate-900 dark:text-white">
-            {streak > 0 ? `${streak}-Day Streak!` : 'No Streak Yet'}
+        {/* Right: Compact Streak Card */}
+        <div className={`rounded-2xl p-3.5 sm:p-4 flex items-center gap-3 shrink-0 md:min-w-[280px] md:max-w-xs ${streak > 0 ? 'bg-orange-50 dark:bg-orange-950/20 border border-orange-200/80 dark:border-orange-800/80' : 'bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80'}`}>
+          <div className="text-2xl sm:text-3xl shrink-0">{streak > 0 ? '🔥' : '💤'}</div>
+          <div className="min-w-0">
+            <div className="font-extrabold text-[13.5px] sm:text-[14.5px] tracking-tight text-slate-900 dark:text-white truncate">
+              {streak > 0 ? `${streak}-Day Streak!` : 'No Streak Yet'}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal mt-0.5 leading-snug">
+              {streak > 0 ? 'Keep reading daily to maintain streak!' : 'Tap terms in Dictionary to start streak.'}
+            </p>
           </div>
-          <p className="text-[12px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">
-            {streak > 0 ? 'Keep reading daily to maintain your streak!' : 'Tap terms in the Dictionary to start your streak.'}
-          </p>
+          {streak >= 7 && (
+            <div className="ml-auto text-[10.5px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold shrink-0">
+              🏆 Week!
+            </div>
+          )}
         </div>
-        {streak >= 7 && (
-          <div className="ml-auto text-[11px] bg-orange-500 text-white px-2 py-1 rounded-full font-bold">
-            🏆 Week!
-          </div>
-        )}
       </div>
 
       {/* ─── Monthly Quizzes Section ─── */}
