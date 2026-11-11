@@ -19,11 +19,11 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
           Open Admin Dashboard →
         </button>
       </div>
-      <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800">
+      <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 py-1">
         {/* Visitors Today */}
-        <div className="pr-3 sm:pr-4 min-w-0 flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
+        <div className="px-2 sm:px-4 min-w-0 flex flex-col items-center justify-center text-center">
+          <div className="flex items-center justify-center gap-1.5 mb-2 min-w-0">
+            <div className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
@@ -35,7 +35,7 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
               Visitors Today
             </span>
           </div>
-          <div className="flex items-baseline gap-1.5 flex-wrap">
+          <div className="flex items-baseline justify-center gap-1.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight leading-none">
               {(visitorStats?.todayVisits ?? 0).toLocaleString()}
             </span>
@@ -46,9 +46,9 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
         </div>
 
         {/* Users */}
-        <div className="pl-3 sm:pl-4 min-w-0 flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+        <div className="px-2 sm:px-4 min-w-0 flex flex-col items-center justify-center text-center">
+          <div className="flex items-center justify-center gap-1.5 mb-2 min-w-0">
+            <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
@@ -58,7 +58,7 @@ export function HomeAdminTrafficCard({ isAdmin, visitorStats, onOpenAdmin }) {
               Users
             </span>
           </div>
-          <div className="flex items-baseline gap-1.5 flex-wrap">
+          <div className="flex items-baseline justify-center gap-1.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight leading-none">
               {(visitorStats?.uniqueVisitors ?? 0).toLocaleString()}
             </span>
