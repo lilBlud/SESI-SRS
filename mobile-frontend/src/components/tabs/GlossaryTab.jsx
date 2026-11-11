@@ -235,7 +235,7 @@ export function GlossaryTab({
                   Filter By Domain
                 </span>
                 <span className="text-[11px] font-bold text-slate-400">
-                  {CATEGORIES.length} domains
+                  {CATEGORIES.slice(1).length} domains
                 </span>
               </div>
               <div className="space-y-1">

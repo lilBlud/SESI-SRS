@@ -14,33 +14,15 @@ export async function recordQuizAnswer(payload) {
 }
 
 export async function getUserRecentAnswers(userOrIdentifiers, month) {
-  const targets = extractUserTargets(userOrIdentifiers);
-  if (!targets.length) return [];
-  const results = await Promise.all(
-    targets.map(t => dataProvider.getUserRecentAnswers(t, month).catch(() => []))
-  );
-  const seen = new Set();
-  const merged = [];
-  for (const list of results) {
-    for (const a of (list || [])) {
-      const k = a.id ?? a.Id ?? `${a.month}-${a.questionId}`;
-      if (!seen.has(k)) {
-        seen.add(k);
-        merged.push(a);
-      }
-    }
-  }
-  return merged;
+  if (!userOrIdentifiers) return [];
+  const results = await dataProvider.getUserRecentAnswers(userOrIdentifiers, month).catch(() => []);
+  return Array.isArray(results) ? results : [];
 }
 
 export async function getUserActiveMonths(userOrIdentifiers) {
-  const targets = extractUserTargets(userOrIdentifiers);
-  if (!targets.length) return [];
-  const results = await Promise.all(
-    targets.map(t => dataProvider.getUserActiveMonths(t).catch(() => []))
-  );
-  const months = new Set(results.flat().filter(Boolean));
-  return Array.from(months).sort((a, b) => b.localeCompare(a));
+  if (!userOrIdentifiers) return [];
+  const results = await dataProvider.getUserActiveMonths(userOrIdentifiers).catch(() => []);
+  return Array.isArray(results) ? results : [];
 }
 
 export async function getUserMonthlyQuizStatus(userOrIdentifiers, month) {
@@ -57,24 +39,9 @@ export async function getUserMonthlyQuizStatus(userOrIdentifiers, month) {
 }
 
 export async function getAvailableQuizzesWithStatus(userOrIdentifiers) {
-  const targets = extractUserTargets(userOrIdentifiers);
-
   let rawAnswers = [];
   try {
-    const answerPromises = (targets.length > 0 ? targets : ['']).map(t =>
-      t ? dataProvider.getUserRecentAnswers(t).catch(() => []) : Promise.resolve([])
-    );
-    const answersNested = await Promise.all(answerPromises);
-    const seenIds = new Set();
-    for (const arr of answersNested) {
-      for (const ans of (arr || [])) {
-        const idKey = ans.id ?? ans.Id ?? `${ans.month}-${ans.questionId}`;
-        if (!seenIds.has(idKey)) {
-          seenIds.add(idKey);
-          rawAnswers.push(ans);
-        }
-      }
-    }
+    rawAnswers = await getUserRecentAnswers(userOrIdentifiers);
   } catch (err) {
     console.warn("Could not load user answers for quizzes:", err);
   }

@@ -246,10 +246,11 @@ export function calculateStreakFromDates(dates) {
  */
 export function extractUserTargets(userOrIdentifiers) {
   if (!userOrIdentifiers) return [];
+  let raw = [];
   if (Array.isArray(userOrIdentifiers)) {
-    return userOrIdentifiers.map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
+    raw = userOrIdentifiers;
   } else if (typeof userOrIdentifiers === 'object') {
-    return [
+    raw = [
       userOrIdentifiers.fullName,
       userOrIdentifiers.FullName,
       userOrIdentifiers.preferredName,
@@ -262,8 +263,10 @@ export function extractUserTargets(userOrIdentifiers) {
       userOrIdentifiers.StaffId,
       userOrIdentifiers.id,
       userOrIdentifiers.Id
-    ].map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
+    ];
   } else {
-    return [String(userOrIdentifiers || '').trim().toLowerCase()].filter(Boolean);
+    raw = [userOrIdentifiers];
   }
+  const cleaned = raw.map(t => String(t || '').trim().toLowerCase()).filter(Boolean);
+  return Array.from(new Set(cleaned));
 }

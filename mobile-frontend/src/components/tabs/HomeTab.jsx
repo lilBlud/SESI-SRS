@@ -9,7 +9,6 @@ export function HomeTab({
   user,
   streak,
   setActiveTab,
-  setActiveGlossaryCat,
   isDark,
   bookmarkActions,
   onUpdateUser,
@@ -206,11 +205,11 @@ export function HomeTab({
 
             {/* Sleek Horizontal Category Chips Filter with Navigation Controls */}
             <div className="flex items-center gap-1.5 w-full">
-              {/* Left Scroll Arrow */}
+              {/* Left Scroll Arrow (Desktop / Tablet only) */}
               <button
                 type="button"
                 onClick={scrollCatLeft}
-                className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition active:scale-95 shadow-xs shrink-0"
+                className="hidden sm:flex w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white items-center justify-center transition active:scale-95 shadow-xs shrink-0"
                 title="Scroll categories left"
                 aria-label="Scroll categories left"
               >
@@ -219,12 +218,14 @@ export function HomeTab({
                 </svg>
               </button>
 
-              {/* Scrollable Container with onWheel support */}
+              {/* Scrollable Container with horizontal-only onWheel */}
               <div
                 ref={catScrollRef}
                 onWheel={(e) => {
-                  if (e.deltaY) {
+                  if (e.shiftKey && e.deltaY) {
                     e.currentTarget.scrollLeft += e.deltaY;
+                  } else if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                    e.currentTarget.scrollLeft += e.deltaX;
                   }
                 }}
                 className="flex-1 flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none no-scrollbar scroll-smooth"
@@ -260,11 +261,11 @@ export function HomeTab({
                 })}
               </div>
 
-              {/* Right Scroll Arrow */}
+              {/* Right Scroll Arrow (Desktop / Tablet only) */}
               <button
                 type="button"
                 onClick={scrollCatRight}
-                className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition active:scale-95 shadow-xs shrink-0"
+                className="hidden sm:flex w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white items-center justify-center transition active:scale-95 shadow-xs shrink-0"
                 title="Scroll categories right"
                 aria-label="Scroll categories right"
               >

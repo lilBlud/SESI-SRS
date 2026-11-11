@@ -20,6 +20,13 @@ async function request(path, options = {}) {
   return res.json();
 }
 
+function resolveUsername(userOrUsername) {
+  if (typeof userOrUsername === 'object' && userOrUsername !== null) {
+    return userOrUsername.preferredName || userOrUsername.fullName || userOrUsername.username || '';
+  }
+  return String(userOrUsername || '').trim();
+}
+
 export const ssmsProvider = {
   name: 'SSMS (Local SQL Server)',
 
@@ -119,11 +126,13 @@ export const ssmsProvider = {
     });
   },
 
-  async getUserQuizStatus(month, username) {
+  async getUserQuizStatus(month, userOrUsername) {
+    const username = resolveUsername(userOrUsername);
     return await request(`/api/quiz-status/${encodeURIComponent(month)}/${encodeURIComponent(username)}`);
   },
 
-  async getUserRecentAnswers(username, month) {
+  async getUserRecentAnswers(userOrUsername, month) {
+    const username = resolveUsername(userOrUsername);
     const path = month
       ? `/api/profile/${encodeURIComponent(username)}/recent-answers?month=${encodeURIComponent(month)}`
       : `/api/profile/${encodeURIComponent(username)}/recent-answers`;
@@ -141,18 +150,21 @@ export const ssmsProvider = {
     }));
   },
 
-  async getUserActiveMonths(username) {
+  async getUserActiveMonths(userOrUsername) {
+    const username = resolveUsername(userOrUsername);
     const data = await request(`/api/profile/${encodeURIComponent(username)}/active-months`);
     return Array.isArray(data) ? data.sort((a, b) => b.localeCompare(a)) : [];
   },
 
   // ─── Streaks & Activities ───
-  async getUserStreak(username) {
+  async getUserStreak(userOrUsername) {
+    const username = resolveUsername(userOrUsername);
     const json = await request(`/api/streak/${encodeURIComponent(username)}`);
     return { streak: Number(json.streak || 0), dates: json.dates || [] };
   },
 
-  async recordUserActivity(username) {
+  async recordUserActivity(userOrUsername) {
+    const username = resolveUsername(userOrUsername);
     const json = await request('/api/streak/record', {
       method: 'POST',
       body: JSON.stringify({ username })

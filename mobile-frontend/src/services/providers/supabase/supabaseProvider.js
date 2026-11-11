@@ -11,6 +11,26 @@ import {
 
 export { calculateStreakFromDates, extractUserTargets };
 
+/**
+ * Builds safe, exact PostgREST filter clauses without unconstrained substring wildcards.
+ * Strips PostgREST grammar delimiters (commas, parentheses, quotes) to prevent injection
+ * or HTTP 400 syntax parse errors.
+ */
+function buildSafeUserFilterClauses(targets) {
+  const clauses = [];
+  for (const t of targets) {
+    if (/^\d+$/.test(t)) {
+      clauses.push(`staff_id.eq.${t}`);
+    } else {
+      const safe = t.replace(/[,()"\\]/g, '').trim();
+      if (safe) {
+        clauses.push(`Username.ilike.${safe}`, `PreferredName.ilike.${safe}`);
+      }
+    }
+  }
+  return clauses.join(',');
+}
+
 export const supabaseProvider = {
   name: 'Supabase Cloud (Production)',
 
@@ -174,32 +194,27 @@ export const supabaseProvider = {
       .select('*')
       .eq('Month', month);
 
-    const filterClauses = targets.map(t => {
-      if (/^\d+$/.test(t)) {
-        return `staff_id.eq.${t},Username.ilike.%${t}%,PreferredName.ilike.%${t}%`;
-      }
-      return `Username.ilike.%${t}%,PreferredName.ilike.%${t}%`;
-    }).join(',');
-
-    q = q.or(filterClauses);
+    const clauses = buildSafeUserFilterClauses(targets);
+    if (clauses) {
+      q = q.or(clauses);
+    }
     const { data, error } = await q;
     if (error) throw error;
     return data || [];
   },
 
-  async getUserRecentAnswers(target, month) {
-    const t = String(target || '').trim();
-    if (!t) return [];
+  async getUserRecentAnswers(userOrTarget, month) {
+    const targets = extractUserTargets(userOrTarget);
+    if (!targets.length) return [];
 
     let q = supabase
       .from('UserAnswers')
       .select('*')
       .order('DateAnswered', { ascending: false });
 
-    if (/^\d+$/.test(t)) {
-      q = q.or(`staff_id.eq.${t},Username.ilike.%${t}%,PreferredName.ilike.%${t}%`);
-    } else {
-      q = q.or(`Username.ilike.%${t}%,PreferredName.ilike.%${t}%`);
+    const clauses = buildSafeUserFilterClauses(targets);
+    if (clauses) {
+      q = q.or(clauses);
     }
 
     if (month) q = q.eq('Month', month);
@@ -218,18 +233,17 @@ export const supabaseProvider = {
     }));
   },
 
-  async getUserActiveMonths(target) {
-    const t = String(target || '').trim();
-    if (!t) return [];
+  async getUserActiveMonths(userOrTarget) {
+    const targets = extractUserTargets(userOrTarget);
+    if (!targets.length) return [];
 
     let q = supabase
       .from('UserAnswers')
       .select('Month');
 
-    if (/^\d+$/.test(t)) {
-      q = q.or(`staff_id.eq.${t},Username.ilike.%${t}%,PreferredName.ilike.%${t}%`);
-    } else {
-      q = q.or(`Username.ilike.%${t}%,PreferredName.ilike.%${t}%`);
+    const clauses = buildSafeUserFilterClauses(targets);
+    if (clauses) {
+      q = q.or(clauses);
     }
 
     const { data, error } = await q.limit(500);

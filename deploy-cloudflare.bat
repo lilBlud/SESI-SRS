@@ -17,6 +17,12 @@ if %errorlevel% neq 0 (
 echo.
 echo [2/2] Deploying to Cloudflare Pages (sesi--srs)...
 call npx wrangler pages deploy dist --project-name sesi--srs
+if %errorlevel% neq 0 (
+    echo.
+    echo [ERROR] Deployment failed! Please review wrangler errors above.
+    pause
+    exit /b %errorlevel%
+)
 
 echo.
 echo ========================================================

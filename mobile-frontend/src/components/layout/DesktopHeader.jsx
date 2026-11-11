@@ -3,11 +3,7 @@ import React from 'react';
 export default function DesktopHeader({
   activeTab,
   setActiveTab,
-  user,
-  streak,
-  isDark,
-  toggleTheme,
-  onLogout
+  streak
 }) {
   const titles = {
     home: { title: 'Executive Dashboard', subtitle: 'Energy Transition & Regulatory Updates' },

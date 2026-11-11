@@ -190,11 +190,7 @@ function App() {
         <DesktopHeader
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          user={user}
           streak={streak}
-          isDark={isDark}
-          toggleTheme={handleToggleTheme}
-          onLogout={handleLogout}
         />
 
         {/* ─── MOBILE TOP BAR (visible on mobile, hidden on desktop) ─── */}
@@ -334,7 +330,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} setActiveGlossaryCat={setActiveGlossaryCat} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
+        {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
         {activeTab === 'glossary' && <GlossaryTab key={`glossary-${refreshKey}`} user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
         {activeTab === 'quiz' && <QuizTab key={`quiz-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
         {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} setActiveTab={setActiveTab} />}
