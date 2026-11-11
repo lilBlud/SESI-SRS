@@ -115,10 +115,6 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
       });
   }, [filterMonth, USERNAME, user]);
 
-  const totalAnswered = recentQuizzes.length;
-  const correctCount = recentQuizzes.filter(q => q.isCorrect).length;
-  const accuracyRate = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
-
   return (
     <div className="space-y-6 sm:space-y-7 animate-slideUp">
       {/* Page Header */}
@@ -140,14 +136,11 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
         onOpenEditNameModal={() => setShowEditModal(true)}
       />
 
-      {/* 4-Stat Metric Grid */}
+      {/* 2-Stat Metric Grid */}
       <ProfileStatsBadges
         loading={loading}
         totalScore={totalScore}
         currentRank={currentRank}
-        accuracyRate={accuracyRate}
-        questionsAnswered={totalAnswered}
-        correctCount={correctCount}
       />
 
       {/* Recent Questions Carousel */}
