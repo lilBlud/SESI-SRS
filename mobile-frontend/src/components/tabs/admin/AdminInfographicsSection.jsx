@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
 import { API_BASE } from '../../../services/apiConfig';
+import { PostImageSlider } from '../../ui';
+import { ImageViewerModal } from '../../modals';
 
 // ─── Module-Level Image Compression Helpers ───
 function scaleImage(img, maxDim = 1600, quality = 0.85) {
@@ -68,6 +70,7 @@ export default function AdminInfographicsSection({
   const [iEditId, setIEditId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [viewerData, setViewerData] = useState(null); // { images, idx }
 
   const availableCategories = [
     'All',
@@ -85,7 +88,8 @@ export default function AdminInfographicsSection({
     'ReSET2030'
   ];
 
-  const filteredInfographics = (infographics || []).filter(item => {
+  const list = Array.isArray(infographics) ? infographics : (infographics?.value || []);
+  const filteredInfographics = list.filter(item => {
     if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -430,13 +434,15 @@ export default function AdminInfographicsSection({
           </div>
         ) : (
           filteredInfographics.map(item => {
-            let additionalCount = 0;
+            const allImages = [];
+            if (item.imageUrl) allImages.push(item.imageUrl);
             if (item.additionalImages) {
               try {
                 const parsed = typeof item.additionalImages === 'string' ? JSON.parse(item.additionalImages) : item.additionalImages;
-                if (Array.isArray(parsed)) additionalCount = parsed.length;
+                if (Array.isArray(parsed)) allImages.push(...parsed);
               } catch {}
             }
+            const hasImages = allImages.length > 0;
 
             return (
               <div
@@ -444,35 +450,15 @@ export default function AdminInfographicsSection({
                 className="group bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
-                  {/* Poster Image with 16:9 Aspect Ratio and Overlays */}
-                  {item.imageUrl ? (
-                    <div className="relative w-full aspect-video bg-slate-950 overflow-hidden">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={e => { e.target.style.display = 'none'; }}
-                      />
-                      {/* Gradient overlay for text contrast */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
-
-                      {/* Floating Category Tag */}
-                      <div className="absolute top-3 left-3">
-                        <span className="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-900/80 text-white backdrop-blur-md border border-white/20 shadow-sm">
-                          {item.category}
-                        </span>
-                      </div>
-
-                      {/* Multiple Images Indicator Badge */}
-                      {additionalCount > 0 && (
-                        <div className="absolute top-3 right-3">
-                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-black/70 text-white backdrop-blur-md border border-white/20 shadow-sm flex items-center gap-1.5">
-                            <span>📷</span>
-                            <span>+{additionalCount} photos</span>
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                  {/* Poster Image Slider with 16:9 Aspect Ratio and Navigation Chevrons */}
+                  {hasImages ? (
+                    <PostImageSlider
+                      images={allImages}
+                      title={item.title}
+                      aspectRatio="aspect-video"
+                      category={item.category}
+                      onImageClick={(idx) => setViewerData({ images: allImages, idx })}
+                    />
                   ) : (
                     <div className="w-full aspect-video bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-4xl">
                       🖼️
@@ -536,6 +522,15 @@ export default function AdminInfographicsSection({
           })
         )}
       </div>
+
+      {/* Fullscreen Image Viewer Lightbox Modal */}
+      <ImageViewerModal
+        isOpen={Boolean(viewerData)}
+        onClose={() => setViewerData(null)}
+        images={viewerData?.images || []}
+        currentIndex={viewerData?.idx || 0}
+        onChangeIndex={(newIdx) => setViewerData(prev => prev ? ({ ...prev, idx: newIdx }) : null)}
+      />
     </div>
   );
 }

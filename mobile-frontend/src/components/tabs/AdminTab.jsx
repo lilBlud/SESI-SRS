@@ -214,7 +214,8 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
     }
     const res = await fetch((API_BASE || "") + "/api/admin/infographics", { signal: AbortSignal.timeout(3500) }).catch(() => null);
     if (res && res.ok) {
-      setInfographics(await res.json());
+      const d = await res.json();
+      setInfographics(Array.isArray(d) ? d : (d.value || []));
     }
   }, []);
 

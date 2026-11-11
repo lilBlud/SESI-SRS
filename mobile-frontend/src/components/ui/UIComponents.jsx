@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { DEFAULT_HISTORICAL_METRICS, getYAxisUnit } from '../../data/historicalPerformanceData';
 
-export function PostImageSlider({ images, title, onImageClick }) {
+export function PostImageSlider({ images, title, onImageClick, aspectRatio = 'aspect-[4/5]', category = null }) {
   const [idx, setIdx] = useState(0);
   if (!images || images.length === 0) return null;
+
+  const currentIdx = Math.min(Math.max(0, idx), images.length - 1);
 
   const handlePrev = (e) => {
     e.stopPropagation();
@@ -17,26 +19,78 @@ export function PostImageSlider({ images, title, onImageClick }) {
   };
 
   return (
-    <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 ring-1 ring-black/5 dark:ring-white/10 shadow-inner group">
-      <img src={images[idx]} alt={`${title} ${idx + 1}`} className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500 cursor-pointer" loading="lazy" onClick={() => onImageClick(idx)} />
+    <div className={`relative ${aspectRatio} w-full rounded-2xl overflow-hidden bg-slate-950 ring-1 ring-black/10 dark:ring-white/10 shadow-inner group select-none`}>
+      <img
+        src={images[currentIdx]}
+        alt={`${title} ${currentIdx + 1}`}
+        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500 cursor-pointer"
+        loading="lazy"
+        onClick={() => onImageClick && onImageClick(currentIdx)}
+      />
+
+      {/* Subtle vignette gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30 pointer-events-none" />
+
+      {/* Optional Floating Category Badge */}
+      {category && (
+        <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none">
+          <span className="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-900/80 text-white backdrop-blur-md border border-white/20 shadow-sm">
+            {category}
+          </span>
+        </div>
+      )}
 
       {images.length > 1 && (
         <>
-          <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm z-10">
-            {idx + 1}/{images.length}
+          {/* Top-Right Page Indicator */}
+          <div className="absolute top-2.5 right-2.5 bg-black/70 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-sm z-20 flex items-center gap-1.5 pointer-events-none">
+            <span>📷</span>
+            <span>{currentIdx + 1}/{images.length}</span>
           </div>
 
-          <button onClick={handlePrev} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 active:bg-black/60 text-white p-2 rounded-full backdrop-blur-md transition-all active:scale-95 z-10">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <button onClick={handleNext} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 active:bg-black/60 text-white p-2 rounded-full backdrop-blur-md transition-all active:scale-95 z-10">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+          {/* Left / Previous Chevron Button */}
+          <button
+            type="button"
+            onClick={handlePrev}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 bg-black/55 hover:bg-black/80 text-white rounded-full backdrop-blur-md border border-white/20 flex items-center justify-center transition-all duration-200 active:scale-90 shadow-md z-20 hover:scale-105"
+            aria-label="Previous poster image"
+            title="Previous image"
+          >
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
 
-          {/* Pagination Dots */}
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+          {/* Right / Next Chevron Button */}
+          <button
+            type="button"
+            onClick={handleNext}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 bg-black/55 hover:bg-black/80 text-white rounded-full backdrop-blur-md border border-white/20 flex items-center justify-center transition-all duration-200 active:scale-90 shadow-md z-20 hover:scale-105"
+            aria-label="Next poster image"
+            title="Next image"
+          >
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Pagination Dots at Bottom */}
+          <div className="absolute bottom-2.5 left-0 right-0 flex justify-center items-center gap-1.5 z-20 pointer-events-auto">
             {images.map((_, dotIdx) => (
-              <div key={dotIdx} className={`h-1.5 rounded-full transition-all duration-300 ${dotIdx === idx ? 'w-4 bg-white shadow-[0_0_4px_rgba(0,0,0,0.5)]' : 'w-1.5 bg-white/50'}`} />
+              <button
+                key={dotIdx}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIdx(dotIdx);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  dotIdx === currentIdx
+                    ? 'w-5 bg-white shadow-sm ring-1 ring-black/20'
+                    : 'w-1.5 bg-white/50 hover:bg-white/80'
+                }`}
+                aria-label={`Go to image ${dotIdx + 1}`}
+              />
             ))}
           </div>
         </>
