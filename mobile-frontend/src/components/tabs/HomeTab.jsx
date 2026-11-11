@@ -88,8 +88,8 @@ export function HomeTab({
   return (
     <div className="animate-slideUp">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* ─── LEFT COLUMN: Feed, Categories, Posts (8 cols on desktop) ─── */}
-        <div className="lg:col-span-8 space-y-6">
+        {/* ─── LEFT COLUMN: Feed, Categories, Posts (8 cols on desktop, 7 on 2xl) ─── */}
+        <div className="lg:col-span-8 2xl:col-span-7 space-y-6">
           {/* ── Hero Banner ── */}
           <HomeHeroBanner
             greetingName={greetingName}
@@ -319,8 +319,8 @@ export function HomeTab({
           </div>
         </div>
 
-        {/* ─── RIGHT COLUMN: Sticky Leaderboard & Quick Widgets (4 cols on desktop) ─── */}
-        <div className="hidden lg:block lg:col-span-4 lg:sticky lg:top-6 space-y-6">
+        {/* ─── RIGHT COLUMN: Sticky Leaderboard & Quick Widgets (4 cols on desktop, 5 on 2xl) ─── */}
+        <div className="hidden lg:block lg:col-span-4 2xl:col-span-5 lg:sticky lg:top-6 space-y-6">
           {/* Admin Traffic Card (if admin) */}
           <HomeAdminTrafficCard
             isAdmin={user?.role === 'Admin'}

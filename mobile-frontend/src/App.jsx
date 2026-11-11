@@ -314,9 +314,10 @@ function App() {
       <main
         ref={scrollContainerRef}
         {...touchHandlers}
-        className="flex-1 overflow-y-auto scroll-container px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 lg:py-8 pb-24 lg:pb-12 w-full max-w-[1680px] 2xl:max-w-[1800px] mx-auto"
+        className="flex-1 overflow-y-auto scroll-container px-4 sm:px-6 lg:px-8 py-4 lg:py-8 pb-24 lg:pb-12 w-full"
       >
-        {/* Pull to Refresh Indicator */}
+        <div className="w-full max-w-[2400px] mx-auto">
+          {/* Pull to Refresh Indicator */}
         {(pullDistance > 0 || isGlobalRefreshing) && (
           <div
             style={{
@@ -392,6 +393,7 @@ function App() {
             </div>
           )
         )}
+        </div>
       </main>
 
       <nav className="lg:hidden app-shell-fixed-bottom bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-50 pb-3">
