@@ -18,13 +18,10 @@ export function ProfileHeroCard({
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
         {/* Left: Avatar & Identity Details */}
         <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-          {/* Avatar with Camera Trigger */}
+          {/* Avatar Display */}
           <div className="relative shrink-0">
-            <button
-              type="button"
-              onClick={onOpenPhotoModal}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/20 flex items-center justify-center border-2 border-white/30 text-2xl sm:text-3xl font-black shadow-inner overflow-hidden relative group hover:opacity-95 transition-all active:scale-95"
-              title="Change Profile Photo"
+            <div
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/20 flex items-center justify-center border-2 border-white/30 text-2xl sm:text-3xl font-black shadow-inner overflow-hidden relative select-none"
             >
               {user?.profilePicture ? (
                 <img
@@ -45,20 +42,7 @@ export function ProfileHeroCard({
                   </svg>
                 </div>
               )}
-            </button>
-
-            {/* Camera Action Badge */}
-            <button
-              type="button"
-              onClick={onOpenPhotoModal}
-              className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white text-emerald-800 shadow-md flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-emerald-600/30 z-10"
-              title="Upload Photo"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
+            </div>
           </div>
 
           {/* User Details */}
@@ -79,16 +63,7 @@ export function ProfileHeroCard({
                   Staff
                 </span>
               )}
-              <button
-                type="button"
-                onClick={onOpenEditNameModal}
-                className="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-95 shrink-0"
-                title="Edit Preferred Name"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
+
             </div>
 
             {user?.preferredName && user?.preferredName !== username && (

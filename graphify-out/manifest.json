@@ -324,9 +324,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/profile/ProfileHeroCard.jsx": {
-    "mtime": 1794452721.577479,
-    "seen": 1794452839.6661181,
-    "ast_hash": "e1b1500a51cae0abbc413e50b47f275d",
+    "mtime": 1794465371.2024636,
+    "seen": 1794465395.8163445,
+    "ast_hash": "7c4090fef069b13e9355989a44f06fce",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/profile/ProfilePhotoPickerModal.jsx": {
