@@ -26,57 +26,57 @@ export default function AdminTrafficSection({
   return (
     <div className="space-y-4">
       {/* Main 3 Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Total Visits */}
-        <div className="bg-white dark:bg-slate-800 p-4 lg:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs lg:text-[13px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <div className="bg-white dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Total Visits
             </span>
-            <span className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base lg:text-lg font-black">
+            <span className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-black">
               👥
             </span>
           </div>
-          <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight">
             {totalVisits.toLocaleString()}
           </div>
-          <div className="text-xs lg:text-[13px] font-medium text-slate-400 mt-2 flex items-center gap-1">
+          <div className="text-[10.5px] font-medium text-slate-400 mt-1 flex items-center gap-1">
             <span>Cumulative across all platforms</span>
           </div>
         </div>
 
         {/* Today Visits */}
-        <div className="bg-white dark:bg-slate-800 p-4 lg:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs lg:text-[13px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <div className="bg-white dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Visitors Today
             </span>
-            <span className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-black">
+            <span className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-black">
               📈
             </span>
           </div>
-          <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 leading-tight tracking-tight">
             {todayVisits.toLocaleString()}
           </div>
-          <div className="text-xs lg:text-[13px] font-medium text-slate-400 mt-2">
+          <div className="text-[10.5px] font-medium text-slate-400 mt-1">
             Activity in the last 24 hours
           </div>
         </div>
 
         {/* Users */}
-        <div className="bg-white dark:bg-slate-800 p-4 lg:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs lg:text-[13px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <div className="bg-white dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Users
             </span>
-            <span className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base lg:text-lg font-black">
+            <span className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-black">
               👤
             </span>
           </div>
-          <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight">
             {uniqueVisitors.toLocaleString()}
           </div>
-          <div className="text-xs lg:text-[13px] font-medium text-slate-400 mt-2">
+          <div className="text-[10.5px] font-medium text-slate-400 mt-1">
             Distinct devices & staff accounts
           </div>
         </div>
@@ -84,11 +84,11 @@ export default function AdminTrafficSection({
 
       {/* Division Traffic Breakdown */}
       {trafficData?.divisionBreakdown && trafficData.divisionBreakdown.length > 0 && (
-        <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3.5">
+        <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-slate-700/80 shadow-xs space-y-2.5">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base lg:text-lg font-black text-slate-900 dark:text-white">🏢 Traffic by Division</h3>
-              <p className="text-xs lg:text-sm text-slate-400 mt-1">Distribution of visits across organizational departments</p>
+              <h3 className="text-sm sm:text-[15px] font-bold text-slate-900 dark:text-white">🏢 Traffic by Division</h3>
+              <p className="text-[11px] text-slate-400">Distribution of visits across organizational departments</p>
             </div>
             <button
               type="button"
@@ -133,14 +133,14 @@ export default function AdminTrafficSection({
       )}
 
       {/* Recent Visitor Activity Log */}
-      <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+      <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-slate-700/80 shadow-xs space-y-2.5">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base lg:text-lg font-black text-slate-900 dark:text-white">🕒 Recent Visitor Logs</h3>
-            <p className="text-xs lg:text-sm text-slate-400 mt-1">Real-time log of latest platform visits</p>
+            <h3 className="text-sm sm:text-[15px] font-bold text-slate-900 dark:text-white">🕒 Recent Visitor Logs</h3>
+            <p className="text-[11px] text-slate-400">Real-time log of latest platform visits</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs lg:text-[13px] font-extrabold uppercase tracking-wider text-slate-400">
+            <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
               Latest {trafficData?.recentVisits?.length || 0}
             </span>
             <button
@@ -165,17 +165,17 @@ export default function AdminTrafficSection({
 
         <div className="divide-y divide-slate-100 dark:divide-slate-700/60 max-h-80 overflow-y-auto">
           {trafficData?.recentVisits?.map(v => (
-            <div key={v.id} className="py-3 flex items-center justify-between gap-3 text-xs lg:text-sm">
+            <div key={v.id} className="py-1.5 flex items-center justify-between gap-2.5 text-xs">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs lg:text-sm shrink-0 font-bold text-slate-600 dark:text-slate-300">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs shrink-0 font-bold text-slate-600 dark:text-slate-300">
                   👤
                 </div>
                 <div className="min-w-0">
-                  <div className="font-bold text-slate-800 dark:text-slate-200 truncate text-xs lg:text-sm">{v.username}</div>
-                  <div className="text-xs text-slate-400 truncate mt-0.5">{v.division}</div>
+                  <div className="font-bold text-slate-800 dark:text-slate-200 truncate text-xs">{v.username}</div>
+                  <div className="text-[10.5px] text-slate-400 truncate leading-none mt-0.5">{v.division}</div>
                 </div>
               </div>
-              <div className="text-xs lg:text-[13px] font-medium text-slate-400 shrink-0">
+              <div className="text-[11px] font-medium text-slate-400 shrink-0">
                 {formatTimestampMY(v.visitedAt)}
               </div>
             </div>

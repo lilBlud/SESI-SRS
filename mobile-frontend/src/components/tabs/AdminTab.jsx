@@ -251,22 +251,24 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   return (
     <div className="space-y-4 animate-slideUp pb-10">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-0.5">
         <div>
-          <span className="text-xs lg:text-[13px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
-            <span>🛡️</span> Admin Workspace
-          </span>
-          <h1 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mt-1">Control Panel</h1>
+          <div className="lg:hidden">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+              <span>🛡️</span> Admin Workspace
+            </span>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">Control Panel</h1>
+          </div>
           {currentUser && (
-            <p className="text-xs lg:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Logged in as <span className="font-semibold text-slate-600 dark:text-slate-300">{currentUser.fullName || currentUser.email}</span> (Administrator)
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Logged in as <span className="font-semibold text-slate-700 dark:text-slate-200">{currentUser.fullName || currentUser.email}</span> (Administrator)
             </p>
           )}
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs lg:text-sm font-bold transition flex items-center gap-1.5 active:scale-95 shadow-xs shrink-0"
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-2xs shrink-0"
             aria-label="Exit Admin Panel"
           >
             <span>←</span> Exit
@@ -275,19 +277,19 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
       </div>
 
       {/* Section Tabs */}
-      <div className="grid grid-cols-5 gap-1.5 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+      <div className="grid grid-cols-5 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
         {sections.map(s => (
           <button
             key={s.id}
             onClick={() => setActiveSection(s.id)}
-            className={`py-2.5 lg:py-3.5 px-2 rounded-xl text-center transition-all flex flex-col items-center justify-center min-h-[48px] lg:min-h-[58px] ${activeSection === s.id
-                ? 'bg-emerald-600 text-white shadow-md font-black'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold'
+            className={`py-1.5 lg:py-2 px-1.5 rounded-lg text-center transition-all flex flex-col items-center justify-center min-h-[38px] lg:min-h-[42px] ${activeSection === s.id
+                ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
               }`}
           >
-            <div className="text-xs sm:text-sm lg:text-[15px] font-bold leading-tight truncate">{s.label}</div>
+            <div className="text-xs font-bold leading-tight truncate">{s.label}</div>
             {s.count !== undefined && (
-              <div className={`text-[10px] sm:text-xs lg:text-[13px] font-semibold mt-0.5 ${activeSection === s.id ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
+              <div className={`text-[10px] font-medium leading-none mt-0.5 ${activeSection === s.id ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
                 ({s.count})
               </div>
             )}

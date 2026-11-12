@@ -291,9 +291,9 @@ function App() {
       <main
         ref={scrollContainerRef}
         {...touchHandlers}
-        className="flex-1 overflow-y-auto scroll-container px-4 sm:px-6 lg:px-8 py-4 lg:py-8 pb-24 lg:pb-12 w-full"
+        className="flex-1 overflow-y-auto scroll-container px-4 sm:px-5 lg:px-6 py-4 lg:py-4 pb-24 lg:pb-8 w-full"
       >
-        <div className="w-full max-w-[2400px] mx-auto">
+        <div className="w-full max-w-[1360px] mx-auto">
           {/* Pull to Refresh Indicator */}
         {(pullDistance > 0 || isGlobalRefreshing) && (
           <div

@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/App.jsx": {
-    "mtime": 1794452743.9521215,
-    "seen": 1794452839.6648843,
-    "ast_hash": "13b87555fb9891bc94214f818fba4cc8",
+    "mtime": 1794464929.8863463,
+    "seen": 1794465086.20286,
+    "ast_hash": "64b2a55a9b960df61651290a6bd7a93b",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/modals/EditPreferredNameModal.jsx": {
@@ -180,21 +180,21 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/AdminTab.jsx": {
-    "mtime": 1794452721.5584795,
-    "seen": 1794452839.6654158,
-    "ast_hash": "66ff896d60ca577e8c88c08096d089b0",
+    "mtime": 1794464686.6386466,
+    "seen": 1794465086.2042212,
+    "ast_hash": "68ed21e91ae74634c1c54087ebb330f0",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/GlossaryTab.jsx": {
-    "mtime": 1794452721.5594804,
-    "seen": 1794452839.6654181,
-    "ast_hash": "259950aa58f938413c380bcaa193dd3e",
+    "mtime": 1794464826.6710875,
+    "seen": 1794465086.2042234,
+    "ast_hash": "2783ec745b9781efcd6518a1001024cb",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/HomeTab.jsx": {
-    "mtime": 1794452786.7648835,
-    "seen": 1794452839.6654203,
-    "ast_hash": "bf7cf604c4734566ab0a48ab8ae1cf80",
+    "mtime": 1794464930.2401543,
+    "seen": 1794465086.2042253,
+    "ast_hash": "25184ff204a97573fb47f97ca474df2c",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/ProfileTab.jsx": {
@@ -234,9 +234,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminTrafficSection.jsx": {
-    "mtime": 1794452721.5684814,
-    "seen": 1794452839.6654344,
-    "ast_hash": "5017c274652442f962ae187e1886995f",
+    "mtime": 1794464721.8166943,
+    "seen": 1794465086.2047946,
+    "ast_hash": "2e2253908eaf5dc79c748033b1a0ce11",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/admin/AdminUserCard.jsx": {
@@ -294,9 +294,9 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/home/HomeHeroBanner.jsx": {
-    "mtime": 1794452721.5744803,
-    "seen": 1794452839.6658702,
-    "ast_hash": "17cfbfb2c541a2238580294711ba2389",
+    "mtime": 1794464930.2797687,
+    "seen": 1794465086.2056675,
+    "ast_hash": "87c771f6bc238f719f795031135fe399",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/tabs/home/HomeLeaderboardPodium.jsx": {
@@ -750,15 +750,15 @@
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/layout/DesktopHeader.jsx": {
-    "mtime": 1794452721.5484836,
-    "seen": 1794452839.6648872,
-    "ast_hash": "b19e8a783def47aeed8844ae33d1b15b",
+    "mtime": 1794464929.963582,
+    "seen": 1794465086.2028625,
+    "ast_hash": "63b21cfcc005f3e998af1bc1a9060fe6",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/layout/DesktopSidebar.jsx": {
-    "mtime": 1794452816.0593896,
-    "seen": 1794452839.66489,
-    "ast_hash": "f7785fb5ddfd0347861c1fd3a72de52c",
+    "mtime": 1794464930.164289,
+    "seen": 1794465086.202865,
+    "ast_hash": "0814cb9ad685a1c744cf94c66ff300fa",
     "semantic_hash": ""
   },
   "mobile-frontend/src/components/layout/TopographicBackground.jsx": {

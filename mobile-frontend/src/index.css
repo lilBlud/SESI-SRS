@@ -76,6 +76,11 @@
   }
 
   @media (min-width: 1024px) {
+    html {
+      zoom: 100%;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
     .app-shell-frame {
       max-width: 100%;
       box-shadow: none;

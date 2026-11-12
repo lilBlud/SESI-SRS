@@ -197,9 +197,9 @@ export function GlossaryTab({
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* ── DESKTOP MASTER-DETAIL SPLIT VIEW (Visible >= 1024px) ────────── */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="hidden lg:grid lg:grid-cols-12 gap-8 items-start">
+      <div className="hidden lg:grid lg:grid-cols-12 gap-5 items-start">
           {/* ── Left Master Pane (col-span-5 or 4, 3 on 2xl): Category List + Search + Terms List ── */}
-          <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-3 sticky top-6 space-y-4">
+          <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-3 sticky top-4 space-y-3">
             {/* Search Box */}
             <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-3 shadow-md ring-1 ring-black/5 dark:ring-white/10">
               <div className="relative">
@@ -388,7 +388,7 @@ export function GlossaryTab({
                 const bookmarked = isBookmarked(item.id || item.term, 'glossary');
 
                 return (
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-lg ring-1 ring-black/5 dark:ring-white/10 space-y-6 animate-fadeIn">
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-5 sm:p-6 shadow-md ring-1 ring-black/5 dark:ring-white/10 space-y-4 animate-fadeIn">
                     {/* Detail Card Header */}
                     <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                       <div>
@@ -402,11 +402,11 @@ export function GlossaryTab({
                             </span>
                           )}
                         </div>
-                        <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                        <h1 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                           {item.term}
                         </h1>
                         {item.full && (
-                          <h2 className="text-base lg:text-lg font-semibold text-slate-500 dark:text-slate-400 mt-1">
+                          <h2 className="text-sm lg:text-base font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
                             {item.full}
                           </h2>
                         )}
@@ -433,18 +433,18 @@ export function GlossaryTab({
                       <div className="text-xs lg:text-[13px] font-bold uppercase tracking-wider text-slate-400">
                         Formal Definition &amp; Description
                       </div>
-                      <p className="text-[15px] lg:text-[17px] text-slate-700 dark:text-slate-300 leading-relaxed font-normal whitespace-pre-wrap">
+                      <p className="text-sm lg:text-[14.5px] text-slate-700 dark:text-slate-300 leading-relaxed font-normal whitespace-pre-wrap">
                         {item.desc}
                       </p>
                     </div>
 
                     {/* Formula Box (if exists) */}
                     {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
-                      <div className={`${clr.bg} border ${clr.border} rounded-2xl p-5 space-y-3`}>
+                      <div className={`${clr.bg} border ${clr.border} rounded-xl p-3.5 space-y-2`}>
                         <div className="text-xs lg:text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                           <span>📐</span> Mathematical Formula
                         </div>
-                        <div className={`text-base lg:text-lg font-bold font-mono ${clr.text} p-3.5 bg-white/70 dark:bg-slate-900/60 rounded-xl border border-black/5 dark:border-white/5`}>
+                        <div className={`text-sm lg:text-base font-bold font-mono ${clr.text} p-2.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-black/5 dark:border-white/5`}>
                           {item.formula}
                         </div>
                         {item.formulaNotations && (
