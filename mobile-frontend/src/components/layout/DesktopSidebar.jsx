@@ -28,7 +28,7 @@ export default function DesktopSidebar({
       {/* ─── Top Brand & Logo ─── */}
       <div className="px-5 py-6">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center bg-white border border-slate-200 dark:border-slate-700 shadow-sm p-1 shrink-0">
+          <div className="w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center bg-white dark:bg-white/95 border border-slate-200/90 dark:border-slate-700/80 shadow-xs p-1 shrink-0">
             <img
               src="/assets/logo.png"
               alt="SESB Logo"

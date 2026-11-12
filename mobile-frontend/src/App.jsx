@@ -209,7 +209,7 @@ function App() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
               </button>
             )}
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-slate-200 dark:border-slate-700 shrink-0 shadow-xs p-0.5">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white dark:bg-white/95 border border-slate-200/90 dark:border-slate-700/80 shadow-xs shrink-0 p-1">
               <img
                 src="/assets/logo.png"
                 alt="S&S Logo"

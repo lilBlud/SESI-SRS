@@ -131,7 +131,7 @@ export function HomeTab({
               className="lg:hidden cursor-pointer bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-blue-500/15 dark:from-emerald-950/50 dark:via-teal-950/40 dark:to-blue-950/50 border border-emerald-500/30 dark:border-emerald-500/40 rounded-2xl p-3.5 flex items-center justify-between shadow-xs hover:bg-emerald-500/20 transition-all group active:scale-[0.99]"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-200 dark:border-slate-700 shrink-0 shadow-md flex items-center justify-center p-0.5">
+                <div className="w-10 h-10 rounded-xl overflow-hidden bg-white dark:bg-white/95 border border-slate-200/90 dark:border-slate-700/80 shrink-0 shadow-xs flex items-center justify-center p-1">
                   <img src="/assets/logo.png" alt="SESI App Logo" className="w-full h-full object-contain" />
                 </div>
                 <div className="min-w-0">
