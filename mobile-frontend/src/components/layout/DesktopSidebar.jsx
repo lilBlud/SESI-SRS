@@ -45,22 +45,6 @@ export default function DesktopSidebar({
           </div>
         </div>
 
-        {/* ─── Streak Banner on Desktop ─── */}
-        {streak > 0 && (
-          <div className="mt-5 p-3 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200/60 dark:border-orange-800/40 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="text-xl">🔥</span>
-              <div>
-                <div className="text-xs font-bold text-orange-900 dark:text-orange-200 leading-none">Learning Streak</div>
-                <div className="text-[11px] text-orange-700 dark:text-orange-400 mt-0.5">{streak} Days Active</div>
-              </div>
-            </div>
-            <span className="px-2.5 py-0.5 text-xs font-black bg-orange-500 text-white rounded-full">
-              {streak}d
-            </span>
-          </div>
-        )}
-
         {/* ─── Navigation Links ─── */}
         <nav className="mt-6 space-y-1.5" aria-label="Desktop navigation">
           {tabs.map(({ id, label, Icon }) => {
