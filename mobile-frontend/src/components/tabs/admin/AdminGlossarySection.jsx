@@ -67,22 +67,24 @@ export default function AdminGlossarySection({
     };
 
     let directSuccess = false;
-    try {
-      if (gEditId) {
-        const { error } = await supabase
-          .from('GlossaryTerms')
-          .update(supabasePayload)
-          .eq('Id', gEditId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('GlossaryTerms')
-          .insert([supabasePayload]);
-        if (error) throw error;
+    if (!IS_LOCAL_SSMS) {
+      try {
+        if (gEditId) {
+          const { error } = await supabase
+            .from('GlossaryTerms')
+            .update(supabasePayload)
+            .eq('Id', gEditId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('GlossaryTerms')
+            .insert([supabasePayload]);
+          if (error) throw error;
+        }
+        directSuccess = true;
+      } catch (sbErr) {
+        console.warn("Direct Supabase glossary post error, trying API fallback:", sbErr);
       }
-      directSuccess = true;
-    } catch (sbErr) {
-      console.warn("Direct Supabase glossary post error, trying API fallback:", sbErr);
     }
 
     if (directSuccess) {
@@ -90,7 +92,7 @@ export default function AdminGlossarySection({
       onRefreshGlossary();
       if (onGlossaryChange) onGlossaryChange();
       cancelEditGlossaryTerm();
-    } else if (API_BASE) {
+    } else {
       const payload = {
         term: gTerm.trim(),
         fullName: isPerfStudio ? '' : (gFull || ''),
@@ -130,8 +132,6 @@ export default function AdminGlossarySection({
       } catch {
         setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
       }
-    } else {
-      setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
     }
 
     setTimeout(() => setGMsg(''), 3500);
@@ -255,30 +255,32 @@ export default function AdminGlossarySection({
         };
 
         let directSuccess = false;
-        try {
-          if (existing) {
-            const { error } = await supabase
-              .from('GlossaryTerms')
-              .update(supabasePayload)
-              .eq('Id', existing.id);
-            if (!error) {
-              directSuccess = true;
-              updatedCount++;
+        if (!IS_LOCAL_SSMS) {
+          try {
+            if (existing) {
+              const { error } = await supabase
+                .from('GlossaryTerms')
+                .update(supabasePayload)
+                .eq('Id', existing.id);
+              if (!error) {
+                directSuccess = true;
+                updatedCount++;
+              }
+            } else {
+              const { error } = await supabase
+                .from('GlossaryTerms')
+                .insert([supabasePayload]);
+              if (!error) {
+                directSuccess = true;
+                addedCount++;
+              }
             }
-          } else {
-            const { error } = await supabase
-              .from('GlossaryTerms')
-              .insert([supabasePayload]);
-            if (!error) {
-              directSuccess = true;
-              addedCount++;
-            }
+          } catch {
+            // fallback below
           }
-        } catch {
-          // fallback below
         }
 
-        if (!directSuccess && API_BASE) {
+        if (!directSuccess) {
           const payload = {
             term: tmpl.term,
             fullName: '',
@@ -323,18 +325,20 @@ export default function AdminGlossarySection({
   const deleteGlossaryTerm = async (id) => {
     if (!confirm('Are you sure you want to delete this card / term?')) return;
     let deleted = false;
-    try {
-      const { error } = await supabase.from('GlossaryTerms').delete().eq('Id', id);
-      if (error) throw error;
-      deleted = true;
-    } catch (err) {
-      console.warn("Direct Supabase delete glossary failed, trying API:", err);
-      if (API_BASE) {
-        try {
-          const res = await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) });
-          if (res.ok) deleted = true;
-        } catch {}
+    if (!IS_LOCAL_SSMS) {
+      try {
+        const { error } = await supabase.from('GlossaryTerms').delete().eq('Id', id);
+        if (error) throw error;
+        deleted = true;
+      } catch (err) {
+        console.warn("Direct Supabase delete glossary failed, trying API:", err);
       }
+    }
+    if (!deleted) {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) });
+        if (res.ok) deleted = true;
+      } catch {}
     }
     if (deleted) {
       setGMsg('🗑️ Card deleted successfully!');

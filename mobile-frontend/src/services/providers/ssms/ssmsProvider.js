@@ -21,8 +21,12 @@ async function request(path, options = {}) {
 }
 
 function resolveUsername(userOrUsername) {
+  if (Array.isArray(userOrUsername)) {
+    const firstNonNumeric = userOrUsername.find(t => t && !/^\d+$/.test(String(t).trim()));
+    return String(firstNonNumeric || userOrUsername[0] || '').trim();
+  }
   if (typeof userOrUsername === 'object' && userOrUsername !== null) {
-    return userOrUsername.preferredName || userOrUsername.fullName || userOrUsername.username || '';
+    return userOrUsername.fullName || userOrUsername.preferredName || userOrUsername.username || userOrUsername.email || '';
   }
   return String(userOrUsername || '').trim();
 }

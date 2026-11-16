@@ -13,7 +13,7 @@ namespace mobile_backend.Services
     {
         public async Task<List<GlossaryTermDto>> GetGlossaryAsync()
         {
-            var terms = await db.GlossaryTerms.OrderBy(g => g.Term).ToListAsync();
+            var terms = await db.GlossaryTerms.AsNoTracking().OrderBy(g => g.Term).ToListAsync();
             return [.. terms.Select(g => new GlossaryTermDto(
                 g.Id,
                 g.Term,
@@ -29,7 +29,7 @@ namespace mobile_backend.Services
 
         public async Task<List<InfographicDto>> GetInfographicsAsync()
         {
-            var items = await db.Infographics.OrderByDescending(i => i.PostedAt).ToListAsync();
+            var items = await db.Infographics.AsNoTracking().OrderByDescending(i => i.PostedAt).ToListAsync();
             return [.. items.Select(i => new InfographicDto(
                 i.Id,
                 i.Title,

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
-import { API_BASE } from '../../../services/apiConfig';
+import { IS_LOCAL_SSMS, API_BASE } from '../../../services/apiConfig';
 import { PostImageSlider } from '../../ui';
 import { ImageViewerModal } from '../../modals';
 
@@ -159,22 +159,24 @@ export default function AdminInfographicsSection({
       };
 
       let directSuccess = false;
-      try {
-        if (iEditId) {
-          const { error } = await supabase
-            .from('Infographics')
-            .update(supabasePayload)
-            .eq('Id', iEditId);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from('Infographics')
-            .insert([supabasePayload]);
-          if (error) throw error;
+      if (!IS_LOCAL_SSMS) {
+        try {
+          if (iEditId) {
+            const { error } = await supabase
+              .from('Infographics')
+              .update(supabasePayload)
+              .eq('Id', iEditId);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase
+              .from('Infographics')
+              .insert([supabasePayload]);
+            if (error) throw error;
+          }
+          directSuccess = true;
+        } catch (sbErr) {
+          console.warn("Direct Supabase post error, trying API fallback:", sbErr);
         }
-        directSuccess = true;
-      } catch (sbErr) {
-        console.warn("Direct Supabase post error, trying API fallback:", sbErr);
       }
 
       if (directSuccess) {
@@ -241,11 +243,15 @@ export default function AdminInfographicsSection({
 
   const deleteInfographic = async (id) => {
     if (!confirm('Delete this post?')) return;
-    try {
-      const { error } = await supabase.from('Infographics').delete().eq('Id', id);
-      if (error) throw error;
-    } catch (err) {
-      console.warn("Direct Supabase delete failed, trying API:", err);
+    if (!IS_LOCAL_SSMS) {
+      try {
+        const { error } = await supabase.from('Infographics').delete().eq('Id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.warn("Direct Supabase delete failed, trying API:", err);
+        await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) }).catch(() => null);
+      }
+    } else {
       await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) }).catch(() => null);
     }
     if (onRefreshInfographics) onRefreshInfographics();

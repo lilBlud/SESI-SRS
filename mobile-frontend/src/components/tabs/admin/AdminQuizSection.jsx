@@ -33,11 +33,13 @@ export default function AdminQuizSection({
     };
 
     let directSuccess = false;
-    try {
-      const { error } = await supabase.from('QuizQuestions').insert([payload]);
-      if (!error) directSuccess = true;
-    } catch (sbErr) {
-      console.warn("Direct Supabase addQuestion failed, trying fallback:", sbErr);
+    if (!IS_LOCAL_SSMS) {
+      try {
+        const { error } = await supabase.from('QuizQuestions').insert([payload]);
+        if (!error) directSuccess = true;
+      } catch (sbErr) {
+        console.warn("Direct Supabase addQuestion failed, trying fallback:", sbErr);
+      }
     }
 
     if (directSuccess) {
@@ -49,7 +51,7 @@ export default function AdminQuizSection({
       setOptC('');
       setOptD('');
       setCorrect('A');
-    } else if (API_BASE) {
+    } else {
       try {
         const res = await fetch(`${API_BASE}/api/admin/questions`, {
           signal: AbortSignal.timeout(4000),
@@ -80,8 +82,6 @@ export default function AdminQuizSection({
       } catch {
         setQMsg('❌ Failed to add question');
       }
-    } else {
-      setQMsg('❌ Failed to add question');
     }
 
     setIsSubmitting(false);
@@ -90,12 +90,13 @@ export default function AdminQuizSection({
 
   const deleteQuestion = async (id) => {
     if (!confirm('Delete this question?')) return;
-    try {
-      await supabase.from('QuizQuestions').delete().eq('Id', id);
-    } catch (err) {
-      console.warn("Direct Supabase deleteQuestion failed:", err);
-    }
-    if (API_BASE) {
+    if (!IS_LOCAL_SSMS) {
+      try {
+        await supabase.from('QuizQuestions').delete().eq('Id', id);
+      } catch (err) {
+        console.warn("Direct Supabase deleteQuestion failed:", err);
+      }
+    } else {
       await fetch(`${API_BASE}/api/admin/questions/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) }).catch(() => null);
     }
     onRefreshQuestions();

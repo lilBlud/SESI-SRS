@@ -13,7 +13,7 @@ namespace mobile_backend.Services
     {
         public async Task<List<QuizQuestionDto>> GetQuizQuestionsAsync(string month)
         {
-            var questions = await db.QuizQuestions.Where(q => q.Month == month).ToListAsync();
+            var questions = await db.QuizQuestions.AsNoTracking().Where(q => q.Month == month).ToListAsync();
             return [.. questions.Select(q => new QuizQuestionDto(
                 q.Id,
                 q.QuestionText,
@@ -24,14 +24,14 @@ namespace mobile_backend.Services
 
         public async Task<List<QuizSummaryDto>> GetQuizSummaryAsync()
         {
-            var questions = await db.QuizQuestions.Select(q => new { q.Id, q.Month }).ToListAsync();
+            var questions = await db.QuizQuestions.AsNoTracking().Select(q => new { q.Id, q.Month }).ToListAsync();
             return questions.Select(q => new QuizSummaryDto(q.Id, q.Month)).ToList();
         }
 
         public async Task<List<LeaderboardEntryDto>> GetLeaderboardAsync(string month)
         {
-            var allAnswers = await db.UserAnswers.Where(a => a.Month == month).ToListAsync();
-            var allStaff = await db.StaffUsers.ToListAsync();
+            var allAnswers = await db.UserAnswers.AsNoTracking().Where(a => a.Month == month).ToListAsync();
+            var allStaff = await db.StaffUsers.AsNoTracking().ToListAsync();
 
             var staffByName = allStaff
                 .Where(s => !string.IsNullOrWhiteSpace(s.FullName))
@@ -116,7 +116,22 @@ namespace mobile_backend.Services
         public async Task<List<UserAnswerDto>> GetUserRecentAnswersAsync(string username, string? month)
         {
             var u = (username ?? "").Trim().ToLower();
-            var query = db.UserAnswers.Where(a => (a.Username ?? "").ToLower() == u);
+            var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(s =>
+                s.FullName.ToLower() == u ||
+                s.PreferredName.ToLower() == u ||
+                s.Email.ToLower() == u);
+
+            var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { u };
+            if (staff != null)
+            {
+                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim().ToLower());
+                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim().ToLower());
+                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim().ToLower());
+            }
+
+            var query = db.UserAnswers.AsNoTracking().Where(a =>
+                targets.Contains((a.Username ?? "").ToLower()) ||
+                targets.Contains((a.PreferredName ?? "").ToLower()));
             if (!string.IsNullOrEmpty(month))
             {
                 query = query.Where(a => a.Month == month);
@@ -146,8 +161,21 @@ namespace mobile_backend.Services
         public async Task<List<string>> GetUserActiveMonthsAsync(string username)
         {
             var u = (username ?? "").Trim().ToLower();
-            return await db.UserAnswers
-                .Where(a => (a.Username ?? "").ToLower() == u)
+            var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(s =>
+                s.FullName.ToLower() == u ||
+                s.PreferredName.ToLower() == u ||
+                s.Email.ToLower() == u);
+
+            var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { u };
+            if (staff != null)
+            {
+                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim().ToLower());
+                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim().ToLower());
+                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim().ToLower());
+            }
+
+            return await db.UserAnswers.AsNoTracking()
+                .Where(a => targets.Contains((a.Username ?? "").ToLower()) || targets.Contains((a.PreferredName ?? "").ToLower()))
                 .Select(a => a.Month)
                 .Distinct()
                 .OrderByDescending(m => m)

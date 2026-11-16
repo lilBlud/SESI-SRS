@@ -233,9 +233,15 @@ namespace mobile_backend.Data
                     new() { Term = "WACC", FullName = "Weighted Average Cost of Capital", Description = "The estimated efficient cost of financing of the Licensee, which represents its allowed reasonable return.", Formula = "", Category = "IBR Framework" }
                 };
 
+                var existingTermSet = db.GlossaryTerms
+                    .AsNoTracking()
+                    .Select(x => x.Term)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
                 foreach (var t in ibrTerms) {
-                    if (!db.GlossaryTerms.Any(x => x.Term == t.Term)) {
+                    if (!existingTermSet.Contains(t.Term)) {
                         db.GlossaryTerms.Add(t);
+                        existingTermSet.Add(t.Term);
                     }
                 }
                 db.SaveChanges();

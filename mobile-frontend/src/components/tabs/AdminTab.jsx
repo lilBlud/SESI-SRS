@@ -247,15 +247,14 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
     else if (activeSection === 'infographics') fetchInfographics();
   }, [activeSection, fetchTraffic, fetchUsers, fetchQuestions, fetchGlossary, fetchInfographics]);
 
-  // Background hydration for badge counts after initial mount
+  // Hydrate badge counts immediately in parallel on initial mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchUsers();
-      fetchQuestions();
-      fetchGlossary();
-      fetchInfographics();
-    }, 1200);
-    return () => clearTimeout(timer);
+    Promise.allSettled([
+      fetchUsers(),
+      fetchQuestions(),
+      fetchGlossary(),
+      fetchInfographics()
+    ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

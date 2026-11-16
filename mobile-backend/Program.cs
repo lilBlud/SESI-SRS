@@ -39,6 +39,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 // ─── Domain Services (Clean Architecture) ───
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
 builder.Services.AddScoped<IGlossaryService, GlossaryService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -86,6 +90,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseResponseCompression();
 app.UseCors("AllowAll");
 app.UseDefaultFiles();
 app.UseStaticFiles();

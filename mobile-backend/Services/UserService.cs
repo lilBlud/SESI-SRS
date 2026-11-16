@@ -46,6 +46,7 @@ namespace mobile_backend.Services
         public async Task<List<UserProfileDto>> GetAllUsersAsync()
         {
             var users = await db.StaffUsers
+                .AsNoTracking()
                 .Where(u => u.Division != "DELETED" && !u.Email.StartsWith("deleted_"))
                 .OrderBy(u => u.FullName)
                 .ToListAsync();
