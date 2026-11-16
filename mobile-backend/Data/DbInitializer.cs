@@ -31,7 +31,7 @@ namespace mobile_backend.Data
 
 
 
-            try 
+            try
             {
                 bool patched = false;
                 var epsbTerm = db.GlossaryTerms.FirstOrDefault(t => t.Term == "EPSB");
@@ -50,47 +50,57 @@ namespace mobile_backend.Data
                 }
                 if (patched) db.SaveChanges();
             }
-            catch {}
+            catch { }
 
-            try 
+            try
             {
                 var dummyData = PerformanceChartData;
                 var allTerms = db.GlossaryTerms.ToList();
                 bool anyChanged = false;
-                
-                foreach (var kvp in dummyData) {
+
+                foreach (var kvp in dummyData)
+                {
                     var upperKey = kvp.Key;
-                    
+
                     var existingTerms = allTerms.Where(t => !string.IsNullOrEmpty(t.Term) && string.Equals(t.Term.Trim(), upperKey, StringComparison.OrdinalIgnoreCase)).ToList();
                     Definitions.TryGetValue(upperKey, out var desc);
                     desc ??= "";
                     Units.TryGetValue(upperKey, out var unit);
                     unit ??= "in %";
-                    
-                    if (existingTerms.Count == 0) {
-                        db.GlossaryTerms.Add(new() { 
-                            Term = kvp.Key, 
-                            Description = desc, 
-                            Category = "Corporate Performance", 
-                            ChartData = kvp.Value, 
-                            FormulaNotations = unit 
+
+                    if (existingTerms.Count == 0)
+                    {
+                        db.GlossaryTerms.Add(new()
+                        {
+                            Term = kvp.Key,
+                            Description = desc,
+                            Category = "Corporate Performance",
+                            ChartData = kvp.Value,
+                            FormulaNotations = unit
                         });
                         anyChanged = true;
-                    } else {
-                        foreach (var term in existingTerms) {
-                            if (term.Category != "Corporate Performance") {
+                    }
+                    else
+                    {
+                        foreach (var term in existingTerms)
+                        {
+                            if (term.Category != "Corporate Performance")
+                            {
                                 term.Category = "Corporate Performance";
                                 anyChanged = true;
                             }
-                            if (string.IsNullOrEmpty(term.ChartData) || !term.ChartData.Contains("\"year\":\"2022\"")) {
+                            if (string.IsNullOrEmpty(term.ChartData) || !term.ChartData.Contains("\"year\":\"2022\""))
+                            {
                                 term.ChartData = kvp.Value;
                                 anyChanged = true;
                             }
-                            if (string.IsNullOrEmpty(term.Description) && !string.IsNullOrEmpty(desc)) {
+                            if (string.IsNullOrEmpty(term.Description) && !string.IsNullOrEmpty(desc))
+                            {
                                 term.Description = desc;
                                 anyChanged = true;
                             }
-                            if (string.IsNullOrEmpty(term.FormulaNotations) && !string.IsNullOrEmpty(unit)) {
+                            if (string.IsNullOrEmpty(term.FormulaNotations) && !string.IsNullOrEmpty(unit))
+                            {
                                 term.FormulaNotations = unit;
                                 anyChanged = true;
                             }
@@ -99,98 +109,98 @@ namespace mobile_backend.Data
                 }
 
                 if (anyChanged) db.SaveChanges();
-            } 
-            catch (Exception ex) 
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine("DB SEED ERROR: " + ex.ToString());
             }
 
-            try 
+            try
             {
                 // Seed glossary terms if empty
                 if (!db.GlossaryTerms.Any())
                 {
                     db.GlossaryTerms.AddRange(
                         // ── IBR Framework ──
-                        new() { Term = "IBR",      FullName = "Incentive-Based Regulation",                      Description = "A regulatory framework that sets a ceiling on revenues while offering financial rewards for cost savings and penalizing poor service quality.", Formula = "Revenue = Operating Expenditure + Depreciation + (Regulated Asset Base × Weighted Average Cost of Capital) + Tax", FormulaNotations = "Revenue\nOPEX\nDepreciation\nRAB\nWACC\nTax", FormulaTermMeanings = "Revenue: The total allowed revenue.\nOPEX: Operating Expenditure.\nDepreciation: Allowance for asset depreciation.\nRAB: Regulated Asset Base.\nWACC: Weighted Average Cost of Capital.\nTax: Tax allowance.", Category = "IBR Framework" },
-                        new() { Term = "RAB",      FullName = "Regulated Asset Base",                            Description = "The total value of assets used by the utility to provide regulated services, upon which a return is allowed.", Formula = "Regulated Asset Base = Opening Regulated Asset Base + Capital Expenditure − Depreciation − Disposals", FormulaNotations = "RAB\nOpening RAB\nCAPEX\nDepreciation\nDisposals", FormulaTermMeanings = "RAB: Regulated Asset Base at year end.\nOpening RAB: Regulated Asset Base at year start.\nCAPEX: Capital Expenditure.\nDepreciation: Asset depreciation.\nDisposals: Value of disposed assets.", Category = "IBR Framework" },
-                        new() { Term = "WACC",     FullName = "Weighted Average Cost of Capital",                 Description = "The benchmark return on capital allowed by the regulator, reflecting the blended cost of debt and equity.", Formula = "Weighted Average Cost of Capital = (Equity Proportion × Cost of Equity) + (Debt Proportion × Cost of Debt × (1 − Corporate Tax Rate))", FormulaNotations = "WACC\nE/V\nRe\nD/V\nRd\nTc", FormulaTermMeanings = "WACC: Weighted Average Cost of Capital.\nE/V: Proportion of equity in the capital structure.\nRe: Cost of equity.\nD/V: Proportion of debt in the capital structure.\nRd: Cost of debt.\nTc: Corporate tax rate.", Category = "IBR Framework" },
-                        new() { Term = "OPEX",     FullName = "Operating Expenditure",                           Description = "Day-to-day operational expenses like maintenance, salaries, and administration.", Formula = "", Category = "IBR Framework" },
-                        new() { Term = "CAPEX",    FullName = "Capital Expenditure",                             Description = "Investment in new assets or upgrades to existing infrastructure within the regulated network.", Formula = "", Category = "IBR Framework" },
-                        new() { Term = "ICPT",     FullName = "Imbalance Cost Pass-Through",                     Description = "A mechanism that reviews and passes through uncontrollable fuel and generation cost variances to consumers every 6 months.", Formula = "Imbalance Cost Pass-Through = Actual Fuel Cost − Forecasted Fuel Cost", FormulaNotations = "ICPT\nActual Fuel Cost\nForecasted Fuel Cost", FormulaTermMeanings = "ICPT: Imbalance Cost Pass-Through.\nActual Fuel Cost: The real cost incurred for fuel.\nForecasted Fuel Cost: The predicted cost of fuel.", Category = "IBR Framework" },
-                        new() { Term = "RP",       FullName = "Regulatory Period",                               Description = "The fixed time frame (usually 3 years) for which tariffs and revenue caps are set under IBR.", Formula = "", Category = "IBR Framework" },
-                        new() { Term = "BBM",      FullName = "Building Block Model",                            Description = "The methodology used to calculate the total allowed revenue from individual cost components.", Formula = "Allowed Revenue = Operating Expenditure + Return on Regulated Asset Base + Depreciation + Tax", FormulaNotations = "AR\nOPEX\nReturn on RAB\nDepreciation\nTax", FormulaTermMeanings = "AR: Allowed Revenue.\nOPEX: Operating Expenditure.\nReturn on RAB: Return allowed on the Regulated Asset Base.\nDepreciation: Asset depreciation allowance.\nTax: Tax allowance.", Category = "IBR Framework" },
-                        new() { Term = "MAR",      FullName = "Maximum Allowable Revenue",                       Description = "The maximum revenue a regulated utility is allowed to earn during a regulatory period.", Formula = "Maximum Allowable Revenue = Sum of (Operating Expenditure + Depreciation + Return on Capital + Corporate Tax Allowance) over the Regulatory Period", FormulaNotations = "MAR\nOPEX\nDep\nReturn\nTax\nRP", FormulaTermMeanings = "MAR: Maximum Allowable Revenue.\nOPEX: Operating Expenditure.\nDep: Depreciation.\nReturn: Return on capital.\nTax: Corporate tax allowance.\nRP: Regulatory Period.", Category = "IBR Framework" },
+                        new() { Term = "IBR", FullName = "Incentive-Based Regulation", Description = "A regulatory framework that sets a ceiling on revenues while offering financial rewards for cost savings and penalizing poor service quality.", Formula = "Revenue = Operating Expenditure + Depreciation + (Regulated Asset Base × Weighted Average Cost of Capital) + Tax", FormulaNotations = "Revenue\nOPEX\nDepreciation\nRAB\nWACC\nTax", FormulaTermMeanings = "Revenue: The total allowed revenue.\nOPEX: Operating Expenditure.\nDepreciation: Allowance for asset depreciation.\nRAB: Regulated Asset Base.\nWACC: Weighted Average Cost of Capital.\nTax: Tax allowance.", Category = "IBR Framework" },
+                        new() { Term = "RAB", FullName = "Regulated Asset Base", Description = "The total value of assets used by the utility to provide regulated services, upon which a return is allowed.", Formula = "Regulated Asset Base = Opening Regulated Asset Base + Capital Expenditure − Depreciation − Disposals", FormulaNotations = "RAB\nOpening RAB\nCAPEX\nDepreciation\nDisposals", FormulaTermMeanings = "RAB: Regulated Asset Base at year end.\nOpening RAB: Regulated Asset Base at year start.\nCAPEX: Capital Expenditure.\nDepreciation: Asset depreciation.\nDisposals: Value of disposed assets.", Category = "IBR Framework" },
+                        new() { Term = "WACC", FullName = "Weighted Average Cost of Capital", Description = "The benchmark return on capital allowed by the regulator, reflecting the blended cost of debt and equity.", Formula = "Weighted Average Cost of Capital = (Equity Proportion × Cost of Equity) + (Debt Proportion × Cost of Debt × (1 − Corporate Tax Rate))", FormulaNotations = "WACC\nE/V\nRe\nD/V\nRd\nTc", FormulaTermMeanings = "WACC: Weighted Average Cost of Capital.\nE/V: Proportion of equity in the capital structure.\nRe: Cost of equity.\nD/V: Proportion of debt in the capital structure.\nRd: Cost of debt.\nTc: Corporate tax rate.", Category = "IBR Framework" },
+                        new() { Term = "OPEX", FullName = "Operating Expenditure", Description = "Day-to-day operational expenses like maintenance, salaries, and administration.", Formula = "", Category = "IBR Framework" },
+                        new() { Term = "CAPEX", FullName = "Capital Expenditure", Description = "Investment in new assets or upgrades to existing infrastructure within the regulated network.", Formula = "", Category = "IBR Framework" },
+                        new() { Term = "ICPT", FullName = "Imbalance Cost Pass-Through", Description = "A mechanism that reviews and passes through uncontrollable fuel and generation cost variances to consumers every 6 months.", Formula = "Imbalance Cost Pass-Through = Actual Fuel Cost − Forecasted Fuel Cost", FormulaNotations = "ICPT\nActual Fuel Cost\nForecasted Fuel Cost", FormulaTermMeanings = "ICPT: Imbalance Cost Pass-Through.\nActual Fuel Cost: The real cost incurred for fuel.\nForecasted Fuel Cost: The predicted cost of fuel.", Category = "IBR Framework" },
+                        new() { Term = "RP", FullName = "Regulatory Period", Description = "The fixed time frame (usually 3 years) for which tariffs and revenue caps are set under IBR.", Formula = "", Category = "IBR Framework" },
+                        new() { Term = "BBM", FullName = "Building Block Model", Description = "The methodology used to calculate the total allowed revenue from individual cost components.", Formula = "Allowed Revenue = Operating Expenditure + Return on Regulated Asset Base + Depreciation + Tax", FormulaNotations = "AR\nOPEX\nReturn on RAB\nDepreciation\nTax", FormulaTermMeanings = "AR: Allowed Revenue.\nOPEX: Operating Expenditure.\nReturn on RAB: Return allowed on the Regulated Asset Base.\nDepreciation: Asset depreciation allowance.\nTax: Tax allowance.", Category = "IBR Framework" },
+                        new() { Term = "MAR", FullName = "Maximum Allowable Revenue", Description = "The maximum revenue a regulated utility is allowed to earn during a regulatory period.", Formula = "Maximum Allowable Revenue = Sum of (Operating Expenditure + Depreciation + Return on Capital + Corporate Tax Allowance) over the Regulatory Period", FormulaNotations = "MAR\nOPEX\nDep\nReturn\nTax\nRP", FormulaTermMeanings = "MAR: Maximum Allowable Revenue.\nOPEX: Operating Expenditure.\nDep: Depreciation.\nReturn: Return on capital.\nTax: Corporate tax allowance.\nRP: Regulatory Period.", Category = "IBR Framework" },
 
                         // ── Strategy and Sustainability ──
-                        new() { Term = "NGER",     FullName = "National Green Energy Roadmap",                   Description = "Malaysia's strategic plan to transition towards green energy, targeting 70% renewable energy capacity by 2050.", Formula = "", Category = "Strategy and Sustainability" },
-                        new() { Term = "SDG",      FullName = "Sustainable Development Goals",                   Description = "17 global goals set by the United Nations for sustainable development by 2030.", Formula = "", Category = "Strategy and Sustainability" },
-                        new() { Term = "Net Zero", FullName = "Net Zero Carbon Emissions",                       Description = "The balance between the amount of greenhouse gas produced and the amount removed from the atmosphere.", Formula = "Net Zero = Total Emissions − Carbon Offsets = 0", FormulaNotations = "Net Zero\nTotal Emissions\nCarbon Offsets", FormulaTermMeanings = "Net Zero: A state of zero net emissions.\nTotal Emissions: Overall greenhouse gases emitted.\nCarbon Offsets: Reductions or removals of emissions.", Category = "Strategy and Sustainability" },
-                        new() { Term = "RE",       FullName = "Renewable Energy",                                Description = "Energy generated from naturally replenishing sources like solar, wind, hydro, and biomass.", Formula = "Renewable Energy Percentage = (Renewable Energy Generation / Total Generation) × 100", FormulaNotations = "RE%\nRE Generation\nTotal Generation", FormulaTermMeanings = "RE%: Renewable Energy percentage.\nRE Generation: Amount of energy produced from renewable sources.\nTotal Generation: Total electricity produced.", Category = "Strategy and Sustainability" },
-                        new() { Term = "CSR",      FullName = "Corporate Social Responsibility",                 Description = "Business practices that integrate social and environmental concerns into company operations and stakeholder interactions.", Formula = "", Category = "Strategy and Sustainability" },
+                        new() { Term = "NGER", FullName = "National Green Energy Roadmap", Description = "Malaysia's strategic plan to transition towards green energy, targeting 70% renewable energy capacity by 2050.", Formula = "", Category = "Strategy and Sustainability" },
+                        new() { Term = "SDG", FullName = "Sustainable Development Goals", Description = "17 global goals set by the United Nations for sustainable development by 2030.", Formula = "", Category = "Strategy and Sustainability" },
+                        new() { Term = "Net Zero", FullName = "Net Zero Carbon Emissions", Description = "The balance between the amount of greenhouse gas produced and the amount removed from the atmosphere.", Formula = "Net Zero = Total Emissions − Carbon Offsets = 0", FormulaNotations = "Net Zero\nTotal Emissions\nCarbon Offsets", FormulaTermMeanings = "Net Zero: A state of zero net emissions.\nTotal Emissions: Overall greenhouse gases emitted.\nCarbon Offsets: Reductions or removals of emissions.", Category = "Strategy and Sustainability" },
+                        new() { Term = "RE", FullName = "Renewable Energy", Description = "Energy generated from naturally replenishing sources like solar, wind, hydro, and biomass.", Formula = "Renewable Energy Percentage = (Renewable Energy Generation / Total Generation) × 100", FormulaNotations = "RE%\nRE Generation\nTotal Generation", FormulaTermMeanings = "RE%: Renewable Energy percentage.\nRE Generation: Amount of energy produced from renewable sources.\nTotal Generation: Total electricity produced.", Category = "Strategy and Sustainability" },
+                        new() { Term = "CSR", FullName = "Corporate Social Responsibility", Description = "Business practices that integrate social and environmental concerns into company operations and stakeholder interactions.", Formula = "", Category = "Strategy and Sustainability" },
 
                         // ── Energy Market and Industry ──
-                        new() { Term = "LSS",      FullName = "Large Scale Solar",                               Description = "Utility-scale solar photovoltaic installations typically above 1 MW connected to the transmission grid.", Formula = "Capacity Factor = (Actual Output / Maximum Possible Output) × 100%", FormulaNotations = "Capacity Factor\nActual Output\nMax Possible Output", FormulaTermMeanings = "Capacity Factor: The ratio of actual energy produced to theoretical maximum.\nActual Output: Real energy generated.\nMax Possible Output: Maximum energy that could be produced running constantly.", Category = "Energy Market and Industry" },
-                        new() { Term = "BESS",     FullName = "Battery Energy Storage System",                   Description = "Systems that capture energy and store it for use at a later time, critical for solar integration and grid stability.", Formula = "Storage Efficiency = (Energy Output / Energy Input) × 100%", FormulaNotations = "Storage Efficiency\nEnergy Output\nEnergy Input", FormulaTermMeanings = "Storage Efficiency: How well the system retains energy.\nEnergy Output: Energy discharged from the battery.\nEnergy Input: Energy charged into the battery.", Category = "Energy Market and Industry" },
-                        new() { Term = "FiT",      FullName = "Feed-in Tariff",                                  Description = "A policy mechanism that guarantees renewable energy producers a fixed price for electricity fed into the grid.", Formula = "", Category = "Energy Market and Industry" },
-                        new() { Term = "PPA",      FullName = "Power Purchase Agreement",                        Description = "A long-term contract between an electricity generator and a power purchaser to buy energy at pre-agreed prices.", Formula = "", Category = "Energy Market and Industry" },
-                        new() { Term = "IPP",      FullName = "Independent Power Producer",                      Description = "A private entity that generates electricity for sale to utilities and end users, not owned by the utility.", Formula = "", Category = "Energy Market and Industry" },
-                        new() { Term = "T&D",      FullName = "Transmission & Distribution",                     Description = "The network infrastructure for transporting electricity from generation plants to end consumers.", Formula = "Transmission and Distribution Losses = ((Energy In − Energy Delivered) / Energy In) × 100%", FormulaNotations = "T&D Losses\nEnergy In\nEnergy Delivered", FormulaTermMeanings = "T&D Losses: Transmission & Distribution energy losses.\nEnergy In: Total electricity entering the grid.\nEnergy Delivered: Total electricity reaching consumers.", Category = "Energy Market and Industry" },
+                        new() { Term = "LSS", FullName = "Large Scale Solar", Description = "Utility-scale solar photovoltaic installations typically above 1 MW connected to the transmission grid.", Formula = "Capacity Factor = (Actual Output / Maximum Possible Output) × 100%", FormulaNotations = "Capacity Factor\nActual Output\nMax Possible Output", FormulaTermMeanings = "Capacity Factor: The ratio of actual energy produced to theoretical maximum.\nActual Output: Real energy generated.\nMax Possible Output: Maximum energy that could be produced running constantly.", Category = "Energy Market and Industry" },
+                        new() { Term = "BESS", FullName = "Battery Energy Storage System", Description = "Systems that capture energy and store it for use at a later time, critical for solar integration and grid stability.", Formula = "Storage Efficiency = (Energy Output / Energy Input) × 100%", FormulaNotations = "Storage Efficiency\nEnergy Output\nEnergy Input", FormulaTermMeanings = "Storage Efficiency: How well the system retains energy.\nEnergy Output: Energy discharged from the battery.\nEnergy Input: Energy charged into the battery.", Category = "Energy Market and Industry" },
+                        new() { Term = "FiT", FullName = "Feed-in Tariff", Description = "A policy mechanism that guarantees renewable energy producers a fixed price for electricity fed into the grid.", Formula = "", Category = "Energy Market and Industry" },
+                        new() { Term = "PPA", FullName = "Power Purchase Agreement", Description = "A long-term contract between an electricity generator and a power purchaser to buy energy at pre-agreed prices.", Formula = "", Category = "Energy Market and Industry" },
+                        new() { Term = "IPP", FullName = "Independent Power Producer", Description = "A private entity that generates electricity for sale to utilities and end users, not owned by the utility.", Formula = "", Category = "Energy Market and Industry" },
+                        new() { Term = "T&D", FullName = "Transmission & Distribution", Description = "The network infrastructure for transporting electricity from generation plants to end consumers.", Formula = "Transmission and Distribution Losses = ((Energy In − Energy Delivered) / Energy In) × 100%", FormulaNotations = "T&D Losses\nEnergy In\nEnergy Delivered", FormulaTermMeanings = "T&D Losses: Transmission & Distribution energy losses.\nEnergy In: Total electricity entering the grid.\nEnergy Delivered: Total electricity reaching consumers.", Category = "Energy Market and Industry" },
 
                         // ── ESG ──
-                        new() { Term = "ESG",      FullName = "Environmental, Social, and Governance",           Description = "A framework used to assess a company's business practices and performance on sustainability and ethical issues.", Formula = "", Category = "ESG" },
-                        new() { Term = "TCFD",     FullName = "Task Force on Climate-related Financial Disclosures", Description = "Framework for companies to disclose climate-related financial risks and opportunities.", Formula = "", Category = "ESG" },
-                        new() { Term = "GHG",      FullName = "Greenhouse Gas",                                  Description = "Gases that trap heat in the atmosphere, contributing to global warming (CO₂, methane, etc.).", Formula = "Carbon Dioxide Equivalent = Sum of (Amount of specific Greenhouse Gas × Global Warming Potential of the gas)", FormulaNotations = "CO₂e\nGas\nGWP", FormulaTermMeanings = "CO₂e: Carbon dioxide equivalent.\nGas: Amount of a specific greenhouse gas.\nGWP: Global Warming Potential of the gas.", Category = "ESG" },
-                        new() { Term = "Scope 1",  FullName = "Direct GHG Emissions",                           Description = "Greenhouse gas emissions directly from sources owned or controlled by the company (e.g. company vehicles, generators).", Formula = "", Category = "ESG" },
-                        new() { Term = "Scope 2",  FullName = "Indirect GHG Emissions (Energy)",                 Description = "Emissions from purchased electricity, steam, heating, and cooling consumed by the company.", Formula = "Indirect Greenhouse Gas Emissions = Electricity Consumed (kWh) × Emission Factor", FormulaNotations = "Scope 2\nElectricity Consumed\nEmission Factor", FormulaTermMeanings = "Scope 2: Indirect emissions from purchased energy.\nElectricity Consumed: Amount of electricity used in kWh.\nEmission Factor: Rate of emissions per unit of electricity.", Category = "ESG" },
-                        new() { Term = "GRI",      FullName = "Global Reporting Initiative",                     Description = "An international framework for sustainability reporting, helping organizations communicate their ESG impact.", Formula = "", Category = "ESG" },
+                        new() { Term = "ESG", FullName = "Environmental, Social, and Governance", Description = "A framework used to assess a company's business practices and performance on sustainability and ethical issues.", Formula = "", Category = "ESG" },
+                        new() { Term = "TCFD", FullName = "Task Force on Climate-related Financial Disclosures", Description = "Framework for companies to disclose climate-related financial risks and opportunities.", Formula = "", Category = "ESG" },
+                        new() { Term = "GHG", FullName = "Greenhouse Gas", Description = "Gases that trap heat in the atmosphere, contributing to global warming (CO₂, methane, etc.).", Formula = "Carbon Dioxide Equivalent = Sum of (Amount of specific Greenhouse Gas × Global Warming Potential of the gas)", FormulaNotations = "CO₂e\nGas\nGWP", FormulaTermMeanings = "CO₂e: Carbon dioxide equivalent.\nGas: Amount of a specific greenhouse gas.\nGWP: Global Warming Potential of the gas.", Category = "ESG" },
+                        new() { Term = "Scope 1", FullName = "Direct GHG Emissions", Description = "Greenhouse gas emissions directly from sources owned or controlled by the company (e.g. company vehicles, generators).", Formula = "", Category = "ESG" },
+                        new() { Term = "Scope 2", FullName = "Indirect GHG Emissions (Energy)", Description = "Emissions from purchased electricity, steam, heating, and cooling consumed by the company.", Formula = "Indirect Greenhouse Gas Emissions = Electricity Consumed (kWh) × Emission Factor", FormulaNotations = "Scope 2\nElectricity Consumed\nEmission Factor", FormulaTermMeanings = "Scope 2: Indirect emissions from purchased energy.\nElectricity Consumed: Amount of electricity used in kWh.\nEmission Factor: Rate of emissions per unit of electricity.", Category = "ESG" },
+                        new() { Term = "GRI", FullName = "Global Reporting Initiative", Description = "An international framework for sustainability reporting, helping organizations communicate their ESG impact.", Formula = "", Category = "ESG" },
 
                         // ── EPSB ──
-                        new() { Term = "EPSB",     FullName = "Elopura Power Sendirian Berhad",                  Description = "The body responsible for overseeing the reliable generation, transmission, and distribution of electrical power in Sabah.", Formula = "", Category = "EPSB" },
-                        new() { Term = "SAIDI",    FullName = "System Average Interruption Duration Index",       Description = "A key reliability indicator measuring the average duration of power outages per customer over a year.", Formula = "System Average Interruption Duration Index = Sum of Customer Interruption Durations / Total Customers Served", FormulaNotations = "SAIDI\nCustomer Interruption Durations\nTotal Customers Served", FormulaTermMeanings = "SAIDI: System Average Interruption Duration Index.\nCustomer Interruption Durations: Sum of all outage times.\nTotal Customers Served: Total number of connected customers.", Category = "EPSB" },
-                        new() { Term = "SAIFI",    FullName = "System Average Interruption Frequency Index",      Description = "Average number of sustained interruptions per customer per year.", Formula = "System Average Interruption Frequency Index = Total Interruptions / Total Customers Served", FormulaNotations = "SAIFI\nTotal Interruptions\nTotal Customers Served", FormulaTermMeanings = "SAIFI: System Average Interruption Frequency Index.\nTotal Interruptions: Number of sustained outages.\nTotal Customers Served: Total number of connected customers.", Category = "EPSB" },
-                        new() { Term = "CAIDI",    FullName = "Customer Average Interruption Duration Index",      Description = "The average time to restore service once an outage occurs.", Formula = "Customer Average Interruption Duration Index = System Average Interruption Duration Index / System Average Interruption Frequency Index", FormulaNotations = "CAIDI\nSAIDI\nSAIFI", FormulaTermMeanings = "CAIDI: Customer Average Interruption Duration Index.\nSAIDI: System Average Interruption Duration Index.\nSAIFI: System Average Interruption Frequency Index.", Category = "EPSB" },
-                        new() { Term = "SE",       FullName = "Sabah Electricity",                               Description = "The main utility company responsible for generation, transmission, and distribution of electricity in Sabah.", Formula = "", Category = "EPSB" },
+                        new() { Term = "EPSB", FullName = "Elopura Power Sendirian Berhad", Description = "The body responsible for overseeing the reliable generation, transmission, and distribution of electrical power in Sabah.", Formula = "", Category = "EPSB" },
+                        new() { Term = "SAIDI", FullName = "System Average Interruption Duration Index", Description = "A key reliability indicator measuring the average duration of power outages per customer over a year.", Formula = "System Average Interruption Duration Index = Sum of Customer Interruption Durations / Total Customers Served", FormulaNotations = "SAIDI\nCustomer Interruption Durations\nTotal Customers Served", FormulaTermMeanings = "SAIDI: System Average Interruption Duration Index.\nCustomer Interruption Durations: Sum of all outage times.\nTotal Customers Served: Total number of connected customers.", Category = "EPSB" },
+                        new() { Term = "SAIFI", FullName = "System Average Interruption Frequency Index", Description = "Average number of sustained interruptions per customer per year.", Formula = "System Average Interruption Frequency Index = Total Interruptions / Total Customers Served", FormulaNotations = "SAIFI\nTotal Interruptions\nTotal Customers Served", FormulaTermMeanings = "SAIFI: System Average Interruption Frequency Index.\nTotal Interruptions: Number of sustained outages.\nTotal Customers Served: Total number of connected customers.", Category = "EPSB" },
+                        new() { Term = "CAIDI", FullName = "Customer Average Interruption Duration Index", Description = "The average time to restore service once an outage occurs.", Formula = "Customer Average Interruption Duration Index = System Average Interruption Duration Index / System Average Interruption Frequency Index", FormulaNotations = "CAIDI\nSAIDI\nSAIFI", FormulaTermMeanings = "CAIDI: Customer Average Interruption Duration Index.\nSAIDI: System Average Interruption Duration Index.\nSAIFI: System Average Interruption Frequency Index.", Category = "EPSB" },
+                        new() { Term = "SE", FullName = "Sabah Electricity", Description = "The main utility company responsible for generation, transmission, and distribution of electricity in Sabah.", Formula = "", Category = "EPSB" },
 
                         // ── BDV ──
-                        new() { Term = "BDV",      FullName = "Breakdown Voltage",                               Description = "The minimum voltage at which an insulating material (e.g. transformer oil) fails and conducts electricity.", Formula = "Breakdown Voltage Test: Breakdown Voltage measured in kilovolts (IEC 60156)", FormulaNotations = "V_breakdown", FormulaTermMeanings = "V_breakdown: Breakdown voltage value in kilovolts.", Category = "BDV" },
-                        new() { Term = "DGA",      FullName = "Dissolved Gas Analysis",                          Description = "A diagnostic technique analyzing gases dissolved in transformer oil to detect developing faults.", Formula = "", Category = "BDV" },
-                        new() { Term = "PPM",      FullName = "Parts Per Million",                               Description = "A unit of measurement used to describe the concentration of substances (e.g., moisture in transformer oil).", Formula = "Parts Per Million = (Mass of solute / Mass of solution) × 1,000,000", FormulaNotations = "PPM\nMass of solute\nMass of solution", FormulaTermMeanings = "PPM: Parts per million concentration.\nMass of solute: Mass of the dissolved substance.\nMass of solution: Total mass of the mixture.", Category = "BDV" },
-                        new() { Term = "TAN",      FullName = "Total Acid Number",                               Description = "Measures acidity of transformer oil, indicating oil degradation over time.", Formula = "Total Acid Number measured in milligrams of potassium hydroxide per gram of sample", FormulaNotations = "TAN\nmg KOH/g", FormulaTermMeanings = "TAN: Total Acid Number.\nmg KOH/g: Milligrams of potassium hydroxide per gram of sample.", Category = "BDV" },
+                        new() { Term = "BDV", FullName = "Breakdown Voltage", Description = "The minimum voltage at which an insulating material (e.g. transformer oil) fails and conducts electricity.", Formula = "Breakdown Voltage Test: Breakdown Voltage measured in kilovolts (IEC 60156)", FormulaNotations = "V_breakdown", FormulaTermMeanings = "V_breakdown: Breakdown voltage value in kilovolts.", Category = "BDV" },
+                        new() { Term = "DGA", FullName = "Dissolved Gas Analysis", Description = "A diagnostic technique analyzing gases dissolved in transformer oil to detect developing faults.", Formula = "", Category = "BDV" },
+                        new() { Term = "PPM", FullName = "Parts Per Million", Description = "A unit of measurement used to describe the concentration of substances (e.g., moisture in transformer oil).", Formula = "Parts Per Million = (Mass of solute / Mass of solution) × 1,000,000", FormulaNotations = "PPM\nMass of solute\nMass of solution", FormulaTermMeanings = "PPM: Parts per million concentration.\nMass of solute: Mass of the dissolved substance.\nMass of solution: Total mass of the mixture.", Category = "BDV" },
+                        new() { Term = "TAN", FullName = "Total Acid Number", Description = "Measures acidity of transformer oil, indicating oil degradation over time.", Formula = "Total Acid Number measured in milligrams of potassium hydroxide per gram of sample", FormulaNotations = "TAN\nmg KOH/g", FormulaTermMeanings = "TAN: Total Acid Number.\nmg KOH/g: Milligrams of potassium hydroxide per gram of sample.", Category = "BDV" },
 
                         // ── Governance ──
-                        new() { Term = "BOD",      FullName = "Board of Directors",                              Description = "The governing body responsible for the strategic direction and oversight of the organization.", Formula = "", Category = "Governance" },
-                        new() { Term = "KPI",      FullName = "Key Performance Indicator",                       Description = "Measurable values that demonstrate how effectively the company is achieving key business objectives.", Formula = "Key Performance Indicator Achievement = (Actual Performance / Target Performance) × 100%", FormulaNotations = "KPI Achievement\nActual\nTarget", FormulaTermMeanings = "KPI Achievement: Percentage of goal met.\nActual: Realized performance value.\nTarget: Goal performance value.", Category = "Governance" },
-                        new() { Term = "SOX",      FullName = "Sarbanes-Oxley Act",                              Description = "Regulations for corporate financial transparency and accountability to protect shareholders.", Formula = "", Category = "Governance" },
-                        new() { Term = "MCCG",     FullName = "Malaysian Code on Corporate Governance",          Description = "A set of principles and best practices to strengthen corporate governance standards in Malaysia.", Formula = "", Category = "Governance" },
+                        new() { Term = "BOD", FullName = "Board of Directors", Description = "The governing body responsible for the strategic direction and oversight of the organization.", Formula = "", Category = "Governance" },
+                        new() { Term = "KPI", FullName = "Key Performance Indicator", Description = "Measurable values that demonstrate how effectively the company is achieving key business objectives.", Formula = "Key Performance Indicator Achievement = (Actual Performance / Target Performance) × 100%", FormulaNotations = "KPI Achievement\nActual\nTarget", FormulaTermMeanings = "KPI Achievement: Percentage of goal met.\nActual: Realized performance value.\nTarget: Goal performance value.", Category = "Governance" },
+                        new() { Term = "SOX", FullName = "Sarbanes-Oxley Act", Description = "Regulations for corporate financial transparency and accountability to protect shareholders.", Formula = "", Category = "Governance" },
+                        new() { Term = "MCCG", FullName = "Malaysian Code on Corporate Governance", Description = "A set of principles and best practices to strengthen corporate governance standards in Malaysia.", Formula = "", Category = "Governance" },
 
                         // ── Corporate Performance ──
-                        new() { Term = "ROI",      FullName = "Return on Investment",                            Description = "A financial metric measuring the profitability of an investment relative to its cost.", Formula = "Return on Investment = ((Net Profit − Investment Cost) / Investment Cost) × 100%", FormulaNotations = "ROI\nNet Profit\nInvestment Cost", FormulaTermMeanings = "ROI: Return on Investment.\nNet Profit: Total profit after costs.\nInvestment Cost: Initial cost of the investment.", Category = "Corporate Performance" },
-                        new() { Term = "EBITDA",   FullName = "Earnings Before Interest, Taxes, Depreciation & Amortization", Description = "A measure of a company's overall financial performance as an alternative to net income.", Formula = "Earnings Before Interest, Taxes, Depreciation & Amortization = Revenue − Operating Expenses (excluding Depreciation and Amortization)", FormulaNotations = "EBITDA\nRevenue\nOPEX (excl. D&A)", FormulaTermMeanings = "EBITDA: Earnings Before Interest, Taxes, Depreciation & Amortization.\nRevenue: Total income.\nOPEX (excl. D&A): Operating expenses excluding depreciation and amortization.", Category = "Corporate Performance" },
-                        new() { Term = "ROA",      FullName = "Return on Assets",                                Description = "Indicates how profitable a company is relative to its total assets.", Formula = "Return on Assets = (Net Income / Total Assets) × 100%", FormulaNotations = "ROA\nNet Income\nTotal Assets", FormulaTermMeanings = "ROA: Return on Assets.\nNet Income: Total profit.\nTotal Assets: Value of all owned assets.", Category = "Corporate Performance" },
-                        new() { Term = "ROE",      FullName = "Return on Equity",                                Description = "Measures the return generated on shareholders' equity.", Formula = "Return on Equity = (Net Income / Shareholders' Equity) × 100%", FormulaNotations = "ROE\nNet Income\nShareholders' Equity", FormulaTermMeanings = "ROE: Return on Equity.\nNet Income: Total profit.\nShareholders' Equity: Net worth of the company.", Category = "Corporate Performance" },
-                        new() { Term = "PAT",      FullName = "Profit After Tax",                                Description = "The net profit of a company after all taxes have been deducted.", Formula = "Profit After Tax = Profit Before Tax − Income Tax", FormulaNotations = "PAT\nPBT\nIncome Tax", FormulaTermMeanings = "PAT: Profit After Tax.\nPBT: Profit Before Tax.\nIncome Tax: Total corporate taxes paid.", Category = "Corporate Performance" },
-                        new() { Term = "Total Revenue", FullName = "Total Revenue",                              Description = "The total amount of income generated by the sale of goods or services related to the company's primary operations.", Formula = "", Category = "Corporate Performance" },
-                        new() { Term = "EBIT",     FullName = "Earnings Before Interest and Taxes",              Description = "An indicator of a company's profitability, calculated as revenue minus expenses, excluding tax and interest.", Formula = "EBIT = Net Income + Interest + Taxes", FormulaNotations = "EBIT\nNet Income\nInterest\nTaxes", FormulaTermMeanings = "EBIT: Earnings Before Interest and Taxes.\nNet Income: Total profit.\nInterest: Interest expenses.\nTaxes: Corporate taxes.", Category = "Corporate Performance" },
-                        new() { Term = "Asset Capitalisation", FullName = "Asset Capitalisation",                Description = "The process of recognizing a cost as an asset, including Legacy, NOVA 1, NOVA 2, Land & Services.", Formula = "", Category = "Corporate Performance" },
-                        new() { Term = "System Loss", FullName = "System Loss",                                  Description = "The difference between the total energy entering the system and the total energy billed to consumers, expressed as a percentage.", Formula = "", Category = "Corporate Performance" },
-                        new() { Term = "System Unit", FullName = "System Unit",                                  Description = "A measurement metric related to system performance or power generation units outages.", Formula = "", Category = "Corporate Performance" },
-                        new() { Term = "Audit Issue", FullName = "Audit Issue Closure Rate",                     Description = "The percentage of identified audit issues or corrective actions (CA) that have been successfully closed.", Formula = "Closure Rate = (Closed Issues / Total Issues) × 100%", FormulaNotations = "Closure Rate\nClosed Issues\nTotal Issues", FormulaTermMeanings = "Closure Rate: Percentage of resolved issues.\nClosed Issues: Number of resolved audit findings.\nTotal Issues: Total number of audit findings.", Category = "Corporate Performance" },
-                        new() { Term = "LTIFR",    FullName = "Lost Time Injury Frequency Rate",                 Description = "The number of lost time injuries occurring in a workplace per one million hours worked, serving as a key safety performance indicator.", Formula = "LTIFR = (Number of Lost Time Injuries / Total Hours Worked) × 1,000,000", FormulaNotations = "LTIFR\nLost Time Injuries\nTotal Hours", FormulaTermMeanings = "LTIFR: Lost Time Injury Frequency Rate.\nLost Time Injuries: Number of injuries causing time off work.\nTotal Hours: Total hours worked by all employees.", Category = "Corporate Performance" },
+                        new() { Term = "ROI", FullName = "Return on Investment", Description = "A financial metric measuring the profitability of an investment relative to its cost.", Formula = "Return on Investment = ((Net Profit − Investment Cost) / Investment Cost) × 100%", FormulaNotations = "ROI\nNet Profit\nInvestment Cost", FormulaTermMeanings = "ROI: Return on Investment.\nNet Profit: Total profit after costs.\nInvestment Cost: Initial cost of the investment.", Category = "Corporate Performance" },
+                        new() { Term = "EBITDA", FullName = "Earnings Before Interest, Taxes, Depreciation & Amortization", Description = "A measure of a company's overall financial performance as an alternative to net income.", Formula = "Earnings Before Interest, Taxes, Depreciation & Amortization = Revenue − Operating Expenses (excluding Depreciation and Amortization)", FormulaNotations = "EBITDA\nRevenue\nOPEX (excl. D&A)", FormulaTermMeanings = "EBITDA: Earnings Before Interest, Taxes, Depreciation & Amortization.\nRevenue: Total income.\nOPEX (excl. D&A): Operating expenses excluding depreciation and amortization.", Category = "Corporate Performance" },
+                        new() { Term = "ROA", FullName = "Return on Assets", Description = "Indicates how profitable a company is relative to its total assets.", Formula = "Return on Assets = (Net Income / Total Assets) × 100%", FormulaNotations = "ROA\nNet Income\nTotal Assets", FormulaTermMeanings = "ROA: Return on Assets.\nNet Income: Total profit.\nTotal Assets: Value of all owned assets.", Category = "Corporate Performance" },
+                        new() { Term = "ROE", FullName = "Return on Equity", Description = "Measures the return generated on shareholders' equity.", Formula = "Return on Equity = (Net Income / Shareholders' Equity) × 100%", FormulaNotations = "ROE\nNet Income\nShareholders' Equity", FormulaTermMeanings = "ROE: Return on Equity.\nNet Income: Total profit.\nShareholders' Equity: Net worth of the company.", Category = "Corporate Performance" },
+                        new() { Term = "PAT", FullName = "Profit After Tax", Description = "The net profit of a company after all taxes have been deducted.", Formula = "Profit After Tax = Profit Before Tax − Income Tax", FormulaNotations = "PAT\nPBT\nIncome Tax", FormulaTermMeanings = "PAT: Profit After Tax.\nPBT: Profit Before Tax.\nIncome Tax: Total corporate taxes paid.", Category = "Corporate Performance" },
+                        new() { Term = "Total Revenue", FullName = "Total Revenue", Description = "The total amount of income generated by the sale of goods or services related to the company's primary operations.", Formula = "", Category = "Corporate Performance" },
+                        new() { Term = "EBIT", FullName = "Earnings Before Interest and Taxes", Description = "An indicator of a company's profitability, calculated as revenue minus expenses, excluding tax and interest.", Formula = "EBIT = Net Income + Interest + Taxes", FormulaNotations = "EBIT\nNet Income\nInterest\nTaxes", FormulaTermMeanings = "EBIT: Earnings Before Interest and Taxes.\nNet Income: Total profit.\nInterest: Interest expenses.\nTaxes: Corporate taxes.", Category = "Corporate Performance" },
+                        new() { Term = "Asset Capitalisation", FullName = "Asset Capitalisation", Description = "The process of recognizing a cost as an asset, including Legacy, NOVA 1, NOVA 2, Land & Services.", Formula = "", Category = "Corporate Performance" },
+                        new() { Term = "System Loss", FullName = "System Loss", Description = "The difference between the total energy entering the system and the total energy billed to consumers, expressed as a percentage.", Formula = "", Category = "Corporate Performance" },
+                        new() { Term = "System Unit", FullName = "System Unit", Description = "A measurement metric related to system performance or power generation units outages.", Formula = "", Category = "Corporate Performance" },
+                        new() { Term = "Audit Issue", FullName = "Audit Issue Closure Rate", Description = "The percentage of identified audit issues or corrective actions (CA) that have been successfully closed.", Formula = "Closure Rate = (Closed Issues / Total Issues) × 100%", FormulaNotations = "Closure Rate\nClosed Issues\nTotal Issues", FormulaTermMeanings = "Closure Rate: Percentage of resolved issues.\nClosed Issues: Number of resolved audit findings.\nTotal Issues: Total number of audit findings.", Category = "Corporate Performance" },
+                        new() { Term = "LTIFR", FullName = "Lost Time Injury Frequency Rate", Description = "The number of lost time injuries occurring in a workplace per one million hours worked, serving as a key safety performance indicator.", Formula = "LTIFR = (Number of Lost Time Injuries / Total Hours Worked) × 1,000,000", FormulaNotations = "LTIFR\nLost Time Injuries\nTotal Hours", FormulaTermMeanings = "LTIFR: Lost Time Injury Frequency Rate.\nLost Time Injuries: Number of injuries causing time off work.\nTotal Hours: Total hours worked by all employees.", Category = "Corporate Performance" },
 
                         // ── ISO Management ──
-                        new() { Term = "ISO 9001",   FullName = "Quality Management System",                    Description = "International standard for quality management systems, ensuring consistent quality in products and services.", Formula = "", Category = "ISO Management" },
-                        new() { Term = "ISO 14001",  FullName = "Environmental Management System",               Description = "International standard for effective environmental management systems to reduce environmental footprint.", Formula = "", Category = "ISO Management" },
-                        new() { Term = "ISO 45001",  FullName = "Occupational Health & Safety Management",       Description = "International standard for occupational health and safety management systems to prevent work-related injuries.", Formula = "", Category = "ISO Management" },
-                        new() { Term = "ISO 27001",  FullName = "Information Security Management System",        Description = "International standard for managing information security, including cyber security and data protection.", Formula = "", Category = "ISO Management" },
-                        new() { Term = "PDCA",       FullName = "Plan-Do-Check-Act",                             Description = "A four-step iterative management method used for continuous improvement of processes and products.", Formula = "Cycle: Plan → Do → Check → Act → Repeat", FormulaNotations = "Plan\nDo\nCheck\nAct", FormulaTermMeanings = "Plan: Establish objectives and processes.\nDo: Implement the plan.\nCheck: Evaluate the results.\nAct: Adjust and improve the process.", Category = "ISO Management" },
+                        new() { Term = "ISO 9001", FullName = "Quality Management System", Description = "International standard for quality management systems, ensuring consistent quality in products and services.", Formula = "", Category = "ISO Management" },
+                        new() { Term = "ISO 14001", FullName = "Environmental Management System", Description = "International standard for effective environmental management systems to reduce environmental footprint.", Formula = "", Category = "ISO Management" },
+                        new() { Term = "ISO 45001", FullName = "Occupational Health & Safety Management", Description = "International standard for occupational health and safety management systems to prevent work-related injuries.", Formula = "", Category = "ISO Management" },
+                        new() { Term = "ISO 27001", FullName = "Information Security Management System", Description = "International standard for managing information security, including cyber security and data protection.", Formula = "", Category = "ISO Management" },
+                        new() { Term = "PDCA", FullName = "Plan-Do-Check-Act", Description = "A four-step iterative management method used for continuous improvement of processes and products.", Formula = "Cycle: Plan → Do → Check → Act → Repeat", FormulaNotations = "Plan\nDo\nCheck\nAct", FormulaTermMeanings = "Plan: Establish objectives and processes.\nDo: Implement the plan.\nCheck: Evaluate the results.\nAct: Adjust and improve the process.", Category = "ISO Management" },
 
                         // ── SE Risk ──
-                        new() { Term = "ERM",      FullName = "Enterprise Risk Management",                      Description = "A comprehensive approach to identifying, assessing, and managing risks across the entire organization.", Formula = "Risk Score = Likelihood of Risk Occurring × Impact of Consequence", FormulaNotations = "Risk Score\nLikelihood\nImpact", FormulaTermMeanings = "Risk Score: Overall risk severity.\nLikelihood: Probability of the risk occurring.\nImpact: Severity of the consequences.", Category = "SE Risk" },
-                        new() { Term = "HIRARC",   FullName = "Hazard Identification, Risk Assessment & Risk Control", Description = "A systematic process to identify hazards, assess risks, and determine appropriate control measures.", Formula = "Risk Level = Extent of Severity × Likelihood of Occurrence", FormulaNotations = "Risk Level\nSeverity\nProbability", FormulaTermMeanings = "Risk Level: Calculated risk rating.\nSeverity: Extent of harm or damage.\nProbability: Likelihood of occurrence.", Category = "SE Risk" },
-                        new() { Term = "BCP",      FullName = "Business Continuity Plan",                        Description = "A plan outlining procedures and instructions an organization must follow in the face of disasters or disruptions.", Formula = "", Category = "SE Risk" },
-                        new() { Term = "RTO",      FullName = "Recovery Time Objective",                         Description = "The maximum acceptable length of time a business process can be offline after a failure or disaster.", Formula = "", Category = "SE Risk" },
-                        new() { Term = "RPO",      FullName = "Recovery Point Objective",                        Description = "The maximum acceptable amount of data loss measured in time before the disaster.", Formula = "", Category = "SE Risk" }
+                        new() { Term = "ERM", FullName = "Enterprise Risk Management", Description = "A comprehensive approach to identifying, assessing, and managing risks across the entire organization.", Formula = "Risk Score = Likelihood of Risk Occurring × Impact of Consequence", FormulaNotations = "Risk Score\nLikelihood\nImpact", FormulaTermMeanings = "Risk Score: Overall risk severity.\nLikelihood: Probability of the risk occurring.\nImpact: Severity of the consequences.", Category = "SE Risk" },
+                        new() { Term = "HIRARC", FullName = "Hazard Identification, Risk Assessment & Risk Control", Description = "A systematic process to identify hazards, assess risks, and determine appropriate control measures.", Formula = "Risk Level = Extent of Severity × Likelihood of Occurrence", FormulaNotations = "Risk Level\nSeverity\nProbability", FormulaTermMeanings = "Risk Level: Calculated risk rating.\nSeverity: Extent of harm or damage.\nProbability: Likelihood of occurrence.", Category = "SE Risk" },
+                        new() { Term = "BCP", FullName = "Business Continuity Plan", Description = "A plan outlining procedures and instructions an organization must follow in the face of disasters or disruptions.", Formula = "", Category = "SE Risk" },
+                        new() { Term = "RTO", FullName = "Recovery Time Objective", Description = "The maximum acceptable length of time a business process can be offline after a failure or disaster.", Formula = "", Category = "SE Risk" },
+                        new() { Term = "RPO", FullName = "Recovery Point Objective", Description = "The maximum acceptable amount of data loss measured in time before the disaster.", Formula = "", Category = "SE Risk" }
                     );
                     db.SaveChanges();
                 }
@@ -260,8 +270,10 @@ namespace mobile_backend.Data
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 bool addedIbr = false;
-                foreach (var t in ibrTerms) {
-                    if (!existingTermSet.Contains(t.Term)) {
+                foreach (var t in ibrTerms)
+                {
+                    if (!existingTermSet.Contains(t.Term))
+                    {
                         db.GlossaryTerms.Add(t);
                         existingTermSet.Add(t.Term);
                         addedIbr = true;
@@ -286,7 +298,8 @@ namespace mobile_backend.Data
                         db.Database.ExecuteSqlRaw("ALTER TABLE \"Infographics\" ADD COLUMN IF NOT EXISTS \"AdditionalImages\" text DEFAULT '';");
                     }
                 }
-                catch (Exception e) {
+                catch (Exception e)
+                {
                     Console.WriteLine("Patch failed: " + e.Message);
                 }
 
@@ -436,7 +449,7 @@ namespace mobile_backend.Data
                     }) }
                 };
 
-                private static readonly Dictionary<string, string> Definitions = new() {
+        private static readonly Dictionary<string, string> Definitions = new() {
                     { "TOTAL REVENUE", "Total income generated from the sale of electricity and related services before any expenses are deducted." },
                     { "EPSB REVENUE", "Revenue generated specifically by Elopura Power Sendirian Berhad from regulated generation, transmission, and supply operations." },
                     { "PAT", "Profit After Tax. The net profit earned by the company after deducting all expenses, interest, and taxes." },
@@ -453,21 +466,21 @@ namespace mobile_backend.Data
                     { "SAFETY", "Lost Time Injury Frequency Rate (LTIFR). The number of lost time injuries occurring per 1 million hours worked." }
                 };
 
-                // Move required metrics into Corporate Performance and inject dummy data
-                private static readonly Dictionary<string, string> Units = new() { 
-                    { "TOTAL REVENUE", "in RM bil" }, 
+        // Move required metrics into Corporate Performance and inject dummy data
+        private static readonly Dictionary<string, string> Units = new() {
+                    { "TOTAL REVENUE", "in RM bil" },
                     { "EPSB REVENUE", "in RM bil" },
-                    { "PAT", "in RM mil" }, 
-                    { "EBIT", "in RM mil" }, 
+                    { "PAT", "in RM mil" },
+                    { "EBIT", "in RM mil" },
                     { "FINANCIAL PERFORMANCE", "in %" },
                     { "TECHNICAL PERFORMANCE", "in %" },
-                    { "SAIDI", "in mins" }, 
-                    { "SYSTEM LOSS", "in %" }, 
-                    { "CAPEX", "in RM mil" }, 
-                    { "OPEX", "in RM mil" }, 
-                    { "ASSET CAPITALISATION", "in %" }, 
-                    { "SYSTEM UNIT", "in mins" }, 
-                    { "AUDIT ISSUE", "in %" }, 
+                    { "SAIDI", "in mins" },
+                    { "SYSTEM LOSS", "in %" },
+                    { "CAPEX", "in RM mil" },
+                    { "OPEX", "in RM mil" },
+                    { "ASSET CAPITALISATION", "in %" },
+                    { "SYSTEM UNIT", "in mins" },
+                    { "AUDIT ISSUE", "in %" },
                     { "SAFETY", "in LTIFR" }
         };
     }

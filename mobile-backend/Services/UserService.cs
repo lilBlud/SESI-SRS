@@ -20,7 +20,7 @@ namespace mobile_backend.Services
                 .ToListAsync();
 
             var streak = await StreakService.CalculateStreakAsync(username, db);
-            return new StreakDto(streak, dates.Select(d => d.ToString("yyyy-MM-dd")).ToList());
+            return new StreakDto(streak, [.. dates.Select(d => d.ToString("yyyy-MM-dd"))]);
         }
 
         public async Task<ReadActivityDto> RecordActivityAsync(string username)
@@ -51,7 +51,7 @@ namespace mobile_backend.Services
                 .OrderBy(u => u.FullName)
                 .ToListAsync();
 
-            return users.Select(u => new UserProfileDto(
+            return [.. users.Select(u => new UserProfileDto(
                 u.Id,
                 u.FullName,
                 u.PreferredName,
@@ -61,7 +61,7 @@ namespace mobile_backend.Services
                 u.ProfilePicture,
                 u.Role,
                 u.CreatedAt
-            )).ToList();
+            ))];
         }
 
         public async Task<UserProfileDto?> GetUserProfileAsync(string username)
@@ -181,10 +181,10 @@ namespace mobile_backend.Services
 
         private Task<StaffUser?> FindStaffUserAsync(string? target)
         {
-            var key = (target ?? "").Trim().ToLower();
+            var key = (target ?? "").Trim();
             return db.StaffUsers.FirstOrDefaultAsync(u =>
-                u.Email.ToLower() == key ||
-                u.FullName.ToLower() == key);
+                u.Email == key ||
+                u.FullName == key);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace mobile_backend.Services
         public async Task<List<QuizSummaryDto>> GetQuizSummaryAsync()
         {
             var questions = await db.QuizQuestions.AsNoTracking().Select(q => new { q.Id, q.Month }).ToListAsync();
-            return questions.Select(q => new QuizSummaryDto(q.Id, q.Month)).ToList();
+            return [.. questions.Select(q => new QuizSummaryDto(q.Id, q.Month))];
         }
 
         public async Task<List<LeaderboardEntryDto>> GetLeaderboardAsync(string month)
@@ -115,23 +115,23 @@ namespace mobile_backend.Services
 
         public async Task<List<UserAnswerDto>> GetUserRecentAnswersAsync(string username, string? month)
         {
-            var u = (username ?? "").Trim().ToLower();
+            var u = (username ?? "").Trim();
             var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(s =>
-                s.FullName.ToLower() == u ||
-                s.PreferredName.ToLower() == u ||
-                s.Email.ToLower() == u);
+                s.FullName == u ||
+                s.PreferredName == u ||
+                s.Email == u);
 
-            var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { u };
+            var targets = new List<string> { u };
             if (staff != null)
             {
-                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim().ToLower());
-                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim().ToLower());
-                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim().ToLower());
+                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim());
+                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim());
+                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim());
             }
 
             var query = db.UserAnswers.AsNoTracking().Where(a =>
-                targets.Contains((a.Username ?? "").ToLower()) ||
-                targets.Contains((a.PreferredName ?? "").ToLower()));
+                targets.Contains(a.Username) ||
+                targets.Contains(a.PreferredName));
             if (!string.IsNullOrEmpty(month))
             {
                 query = query.Where(a => a.Month == month);
@@ -142,7 +142,7 @@ namespace mobile_backend.Services
                 .Take(50)
                 .ToListAsync();
 
-            return history.Select(a => new UserAnswerDto(
+            return [.. history.Select(a => new UserAnswerDto(
                 a.Id,
                 a.Month,
                 a.QuestionId,
@@ -155,27 +155,27 @@ namespace mobile_backend.Services
                 a.Username,
                 a.PreferredName,
                 a.Division
-            )).ToList();
+            ))];
         }
 
         public async Task<List<string>> GetUserActiveMonthsAsync(string username)
         {
-            var u = (username ?? "").Trim().ToLower();
+            var u = (username ?? "").Trim();
             var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(s =>
-                s.FullName.ToLower() == u ||
-                s.PreferredName.ToLower() == u ||
-                s.Email.ToLower() == u);
+                s.FullName == u ||
+                s.PreferredName == u ||
+                s.Email == u);
 
-            var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { u };
+            var targets = new List<string> { u };
             if (staff != null)
             {
-                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim().ToLower());
-                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim().ToLower());
-                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim().ToLower());
+                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim());
+                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim());
+                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim());
             }
 
             return await db.UserAnswers.AsNoTracking()
-                .Where(a => targets.Contains((a.Username ?? "").ToLower()) || targets.Contains((a.PreferredName ?? "").ToLower()))
+                .Where(a => targets.Contains(a.Username) || targets.Contains(a.PreferredName))
                 .Select(a => a.Month)
                 .Distinct()
                 .OrderByDescending(m => m)

@@ -23,7 +23,7 @@ namespace mobile_backend.Services
             }
 
             var terms = await db.GlossaryTerms.AsNoTracking().OrderBy(g => g.Term).ToListAsync();
-            var result = terms.Select(g => new GlossaryTermDto(
+            List<GlossaryTermDto> result = [.. terms.Select(g => new GlossaryTermDto(
                 g.Id,
                 g.Term,
                 g.FullName,
@@ -33,7 +33,7 @@ namespace mobile_backend.Services
                 g.FormulaTermMeanings,
                 g.Category,
                 g.ChartData
-            )).ToList();
+            ))];
 
             cache.Set(GlossaryCacheKey, result, TimeSpan.FromMinutes(10));
             return result;
@@ -47,7 +47,7 @@ namespace mobile_backend.Services
             }
 
             var items = await db.Infographics.AsNoTracking().OrderByDescending(i => i.PostedAt).ToListAsync();
-            var result = items.Select(i => new InfographicDto(
+            List<InfographicDto> result = [.. items.Select(i => new InfographicDto(
                 i.Id,
                 i.Title,
                 i.Description,
@@ -55,7 +55,7 @@ namespace mobile_backend.Services
                 i.AdditionalImages,
                 i.Category,
                 i.PostedAt
-            )).ToList();
+            ))];
 
             cache.Set(InfographicsCacheKey, result, TimeSpan.FromMinutes(10));
             return result;
