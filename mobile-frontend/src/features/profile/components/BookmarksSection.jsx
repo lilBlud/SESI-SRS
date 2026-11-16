@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getColor, getCatMeta } from '../../../utils/constants';
-import { CorporatePerformanceChart, PostImageSlider, saveImage } from '../../ui';
+import { CorporatePerformanceChart, PostImageSlider, saveImage } from '../../../components/ui';
 import { exportBookmarksToPdf, exportSingleTermToPdf } from '../../../utils/pdfExport';
 
 export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab }) {

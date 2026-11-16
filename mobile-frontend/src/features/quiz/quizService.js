@@ -1,5 +1,5 @@
-import { dataProvider } from './dataProvider';
-import { extractUserTargets } from '../utils/rbac';
+import { dataProvider } from '../../services/dataProvider';
+import { extractUserTargets } from '../../utils/rbac';
 
 export async function getQuizQuestions(month) {
   return await dataProvider.getQuizQuestions(month);

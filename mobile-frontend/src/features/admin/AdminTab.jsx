@@ -10,11 +10,11 @@ import {
 } from '../../utils/supabaseClient';
 import { matchesUser } from '../../utils/rbac';
 import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../services/apiConfig';
-import AdminTrafficSection from './admin/AdminTrafficSection';
-import AdminUsersSection from './admin/AdminUsersSection';
-import AdminQuizSection from './admin/AdminQuizSection';
-import AdminGlossarySection from './admin/AdminGlossarySection';
-import AdminInfographicsSection from './admin/AdminInfographicsSection';
+import AdminTrafficSection from './components/AdminTrafficSection';
+import AdminUsersSection from './components/AdminUsersSection';
+import AdminQuizSection from './components/AdminQuizSection';
+import AdminGlossarySection from './components/AdminGlossarySection';
+import AdminInfographicsSection from './components/AdminInfographicsSection';
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 const defaultMonth = currentMonth < '2026-01' ? '2026-01' : currentMonth;

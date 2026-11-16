@@ -1,5 +1,5 @@
 import React from 'react';
-import { CorporatePerformanceChart } from '../../../ui';
+import { CorporatePerformanceChart } from '../../../../components/ui';
 
 export function AdminGlossaryCardList({
   isPerfStudio,

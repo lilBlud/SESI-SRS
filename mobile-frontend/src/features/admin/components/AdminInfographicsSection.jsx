@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
 import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../../services/apiConfig';
-import { PostImageSlider } from '../../ui';
-import { ImageViewerModal } from '../../modals';
+import { PostImageSlider } from '../../../components/ui';
+import { ImageViewerModal } from '../../../components/modals';
 
 // ─── Module-Level Image Compression Helpers ───
 function scaleImage(img, maxDim = 1600, quality = 0.85) {

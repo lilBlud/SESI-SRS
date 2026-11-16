@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CATEGORIES, API_BASE, getColor } from '../../utils/constants';
-import { CorporatePerformanceChart } from '../ui';
+import { CorporatePerformanceChart } from '../../components/ui';
 import { recordUserActivityDirect } from '../../utils/supabaseClient';
-import { FutureGenMapModal } from '../modals';
-import { GlossaryFlashcardView, GlossaryFutureGenCard } from './glossary';
+import { FutureGenMapModal } from '../../components/modals';
+import { GlossaryFlashcardView, GlossaryFutureGenCard } from './components';
 
 export function GlossaryTab({
   user,

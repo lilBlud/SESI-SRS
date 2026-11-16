@@ -1,4 +1,4 @@
-import { dataProvider } from './dataProvider';
+import { dataProvider } from '../../services/dataProvider';
 
 export async function getInfographics() {
   return await dataProvider.getInfographics();

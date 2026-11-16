@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 
-const HomeTab = lazy(() => import('./components/tabs/HomeTab'));
-const GlossaryTab = lazy(() => import('./components/tabs/GlossaryTab'));
-const QuizTab = lazy(() => import('./components/tabs/QuizTab'));
-const ProfileTab = lazy(() => import('./components/tabs/ProfileTab'));
-const AdminTab = lazy(() => import('./components/tabs/AdminTab'));
-import LoginPage from './components/pages/LoginPage';
-import PasscodeGate from './components/pages/PasscodeGate';
-import { getGlossary } from './services/glossaryService';
+const HomeTab = lazy(() => import('./features/home/HomeTab'));
+const GlossaryTab = lazy(() => import('./features/glossary/GlossaryTab'));
+const QuizTab = lazy(() => import('./features/quiz/QuizTab'));
+const ProfileTab = lazy(() => import('./features/profile/ProfileTab'));
+const AdminTab = lazy(() => import('./features/admin/AdminTab'));
+import LoginPage from './features/auth/LoginPage';
+import PasscodeGate from './features/auth/PasscodeGate';
+import { getGlossary } from './features/glossary/glossaryService';
 import { getUserStreak } from './services/userService';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
 import { DesktopSidebar, DesktopHeader, TopographicBackground } from './components/layout';

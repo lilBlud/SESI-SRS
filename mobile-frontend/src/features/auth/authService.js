@@ -1,4 +1,4 @@
-import { dataProvider } from './dataProvider';
+import { dataProvider } from '../../services/dataProvider';
 
 export async function login(email, password) {
   return await dataProvider.login(email, password);

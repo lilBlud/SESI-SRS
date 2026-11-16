@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { InstagramPhotoCropper } from '../../ui';
+import { InstagramPhotoCropper } from '../../../components/ui';
 
 export function ProfilePhotoPickerModal({
   isOpen,

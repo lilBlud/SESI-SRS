@@ -1,5 +1,5 @@
 import React from 'react';
-import { CorporatePerformanceChart } from '../../../ui';
+import { CorporatePerformanceChart } from '../../../../components/ui';
 import { DEFAULT_HISTORICAL_METRICS } from '../../../../data/historicalPerformanceData';
 
 export function AdminGlossaryForm({

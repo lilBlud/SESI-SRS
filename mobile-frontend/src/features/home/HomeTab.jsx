@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { PostImageSlider, saveImage } from '../ui';
-import { FullLeaderboardModal, ImageViewerModal, EditPreferredNameModal } from '../modals';
+import { PostImageSlider, saveImage } from '../../components/ui';
+import { FullLeaderboardModal, ImageViewerModal, EditPreferredNameModal } from '../../components/modals';
 import { currentMonth, CATEGORIES, getColor } from '../../utils/constants';
 import { getInfographicsDirect, getLeaderboardDirect, updatePreferredNameDirect } from '../../utils/supabaseClient';
-import { HomeHeroBanner, HomeAdminTrafficCard, HomeLeaderboardPodium } from './home';
+import { HomeHeroBanner, HomeAdminTrafficCard, HomeLeaderboardPodium } from './components';
 
 export function HomeTab({
   user,

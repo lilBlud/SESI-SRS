@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TopographicBackground } from '../layout';
+import { TopographicBackground } from '../../components/layout';
 
 const VALID_PASSCODES = [
   'sesb2026',

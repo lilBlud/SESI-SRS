@@ -12,7 +12,7 @@ import {
   isExcludedLeaderboardAccount 
 } from './rbac';
 
-import { getInfographics, getGlossary } from '../services/glossaryService';
+import { getInfographics, getGlossary } from '../features/glossary/glossaryService';
 import {
   getQuizQuestions,
   getLeaderboard,
@@ -22,7 +22,7 @@ import {
   getUserRecentAnswers,
   getUserActiveMonths,
   getUserScoreAndRank
-} from '../services/quizService';
+} from '../features/quiz/quizService';
 import {
   getUserStreak,
   recordUserActivity,
@@ -34,7 +34,7 @@ import {
   updateUserRole,
   deleteUser
 } from '../services/userService';
-import { login, signup } from '../services/authService';
+import { login, signup } from '../features/auth/authService';
 import { getVisitorStats, recordVisitor } from '../services/visitorService';
 
 export {

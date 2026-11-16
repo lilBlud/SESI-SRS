@@ -8,14 +8,14 @@ import {
   getUserScoreAndRankDirect,
   extractUserTargets
 } from '../../utils/supabaseClient';
-import { EditPreferredNameModal } from '../modals';
+import { EditPreferredNameModal } from '../../components/modals';
 import {
   ProfileHeroCard,
   ProfileStatsBadges,
   RecentQuestionsCarousel,
   BookmarksSection,
   ProfilePhotoPickerModal
-} from './profile';
+} from './components';
 
 export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }) {
   const { bookmarks, toggleBookmark } = bookmarkActions || { bookmarks: [], toggleBookmark: () => { } };

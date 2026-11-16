@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { loginDirect } from '../../utils/supabaseClient';
 import { API_BASE, IS_LOCAL_SSMS } from '../../services/apiConfig';
-import { TopographicBackground } from '../layout';
+import { TopographicBackground } from '../../components/layout';
 
 export default function LoginPage({ onLogin }) {
   const [identifier, setIdentifier] = useState('');

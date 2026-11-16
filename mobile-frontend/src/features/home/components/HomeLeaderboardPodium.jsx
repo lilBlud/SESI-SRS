@@ -1,5 +1,5 @@
 import React from 'react';
-import { LeaderboardAvatar } from '../../ui';
+import { LeaderboardAvatar } from '../../../components/ui';
 import { currentMonthLabel } from '../../../utils/constants';
 
 export function HomeLeaderboardPodium({

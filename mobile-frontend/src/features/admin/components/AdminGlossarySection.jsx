@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { getYAxisUnit } from '../../ui';
+import { getYAxisUnit } from '../../../components/ui';
 import { DEFAULT_HISTORICAL_METRICS } from '../../../data/historicalPerformanceData';
 import { supabase } from '../../../utils/supabaseClient';
 import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../../services/apiConfig';

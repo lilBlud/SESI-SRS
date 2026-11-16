@@ -7,7 +7,7 @@ import {
   recordQuizAnswerDirect,
   extractUserTargets 
 } from '../../utils/supabaseClient';
-import { QuizIdleView, QuizActiveView, QuizReviewView } from './quiz';
+import { QuizIdleView, QuizActiveView, QuizReviewView } from './components';
 
 export function QuizTab({ user, streak, onStreakUpdate }) {
   const [state, setState] = useState('idle'); // 'idle' | 'loading' | 'active' | 'review'
