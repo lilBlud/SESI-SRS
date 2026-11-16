@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { DEFAULT_HISTORICAL_METRICS, getYAxisUnit } from '../../data/historicalPerformanceData';
 
 export function PostImageSlider({ images, title, onImageClick, aspectRatio = 'aspect-[4/5]', category = null }) {
@@ -246,27 +246,16 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
   const dataForYear = parsed.filter(d => parseInt(d.year) === activeYear);
   dataForYear.sort((a, b) => MONTH_MAP[a.month] - MONTH_MAP[b.month]);
 
-  const rawFormattedData = dataForYear.map(d => ({
+  const formattedData = dataForYear.map(d => ({
     name: `${d.month}`,
     fullName: `${d.month}`,
     value: Number(d.value) || 0
   }));
 
-  // Trim trailing zero months (unentered future months) so the line & Latest KPI stop at the last recorded value
-  let lastRecordedIdx = -1;
-  for (let i = rawFormattedData.length - 1; i >= 0; i--) {
-    if (rawFormattedData[i].value !== 0) {
-      lastRecordedIdx = i;
-      break;
-    }
-  }
-  const formattedData = lastRecordedIdx >= 0
-    ? rawFormattedData.slice(0, lastRecordedIdx + 1)
-    : rawFormattedData;
-
   const unitLabel = getUnitLabel(term, yAxisLabel);
   const lastData = formattedData[formattedData.length - 1];
   const firstData = formattedData[0];
+  const isLatestZero = (lastData?.value ?? 0) === 0;
   const growth = firstData && lastData && firstData.value !== 0
     ? ((lastData.value - firstData.value) / Math.abs(firstData.value)) * 100
     : 0;
@@ -313,7 +302,11 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
                 <span className="text-[28px] font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">
                   {formatBigStat(term, yAxisLabel, lastData?.value ?? 0)}
                 </span>
-                {!isZero && (
+                {isLatestZero ? (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/70">
+                    Baseline (0)
+                  </span>
+                ) : !isZero && (
                   <span className={`text-[13px] font-bold flex items-center px-1.5 py-0.5 rounded-md ${isPositive ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400' : 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'}`}>
                     <svg className={`w-3.5 h-3.5 mr-0.5 ${!isPositive ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3.25a.75.75 0 01.53.22l5 5a.75.75 0 11-1.06 1.06L10.75 5.81v10.44a.75.75 0 01-1.5 0V5.81L5.53 9.53a.75.75 0 01-1.06-1.06l5-5a.75.75 0 01.53-.22z" clipRule="evenodd" />
@@ -353,16 +346,26 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
         </div>
       ) : (
         <>
-          <div className="h-36 w-full relative z-10 [&_*]:outline-none [&_svg]:!outline-none" style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}>
+          <div className="h-40 w-full relative z-10 [&_*]:outline-none [&_svg]:!outline-none" style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}>
             <ResponsiveContainer width="100%" height="100%" className="!outline-none focus:!outline-none">
               {isBar ? (
-                <BarChart data={formattedData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }} style={{ outline: 'none' }}>
+                <BarChart data={formattedData} margin={{ top: 12, right: 10, left: 10, bottom: 2 }} style={{ outline: 'none' }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" strokeOpacity={0.18} />
+                  <ReferenceLine y={0} stroke="#94a3b8" strokeOpacity={0.4} />
                   <Tooltip 
                     content={(tooltipProps) => <ChartTooltip {...tooltipProps} term={term} />}
                     cursor={{ fill: '#e2e8f0', opacity: 0.4 }}
                   />
-                  <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
-                  <YAxis hide={true} domain={[0, (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    interval="preserveStartEnd"
+                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                    height={22}
+                    padding={{ left: 6, right: 6 }}
+                  />
+                  <YAxis hide={true} domain={[0, (dataMax) => dataMax + (Math.abs(dataMax) * 0.12 || 1)]} />
                   <Bar 
                     dataKey="value" 
                     fill="#10b981" 
@@ -378,19 +381,29 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
                   </Bar>
                 </BarChart>
               ) : (
-                <AreaChart data={formattedData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }} style={{ outline: 'none' }}>
+                <AreaChart data={formattedData} margin={{ top: 12, right: 10, left: 10, bottom: 2 }} style={{ outline: 'none' }}>
                   <defs>
                     <linearGradient id={`colorValue-${(term || '').replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#10b981" stopOpacity={0.35}/>
                       <stop offset="100%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" strokeOpacity={0.18} />
+                  <ReferenceLine y={0} stroke="#94a3b8" strokeOpacity={0.4} />
                   <Tooltip 
                     content={(tooltipProps) => <ChartTooltip {...tooltipProps} term={term} />}
                     cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.4 }}
                   />
-                  <XAxis dataKey="name" hide={true} padding={{ left: 10, right: 10 }} />
-                  <YAxis hide={true} domain={[(dataMin) => Math.max(0, Math.floor(dataMin * 0.9)), (dataMax) => dataMax + (Math.abs(dataMax) * 0.1 || 1)]} />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    interval="preserveStartEnd"
+                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                    height={22}
+                    padding={{ left: 6, right: 6 }}
+                  />
+                  <YAxis hide={true} domain={[0, (dataMax) => dataMax + (Math.abs(dataMax) * 0.12 || 1)]} />
                   <Area 
                     type="monotone" 
                     dataKey="value" 
