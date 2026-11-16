@@ -28,7 +28,7 @@ export function GlossaryTab({
   const [selectedTermId, setSelectedTermId] = useState(null);
   const [isFutureGenMapOpen, setIsFutureGenMapOpen] = useState(false);
   const searchInputRef = useRef(null);
-  const USERNAME = user?.fullName || "Ahmad Azib Danish";
+  const USERNAME = user?.fullName || user?.preferredName || user?.email || "";
 
   // Filter logic
   const filtered = glossary.filter(item => {

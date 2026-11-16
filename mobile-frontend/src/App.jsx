@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 
-const HomeTab = lazy(() => import('./features/home/HomeTab'));
-const GlossaryTab = lazy(() => import('./features/glossary/GlossaryTab'));
-const QuizTab = lazy(() => import('./features/quiz/QuizTab'));
-const ProfileTab = lazy(() => import('./features/profile/ProfileTab'));
+const HomeTab = lazy(() => import('./features/home/HomeTab').then(m => ({ default: m.HomeTab })));
+const GlossaryTab = lazy(() => import('./features/glossary/GlossaryTab').then(m => ({ default: m.GlossaryTab })));
+const QuizTab = lazy(() => import('./features/quiz/QuizTab').then(m => ({ default: m.QuizTab })));
+const ProfileTab = lazy(() => import('./features/profile/ProfileTab').then(m => ({ default: m.ProfileTab })));
 const AdminTab = lazy(() => import('./features/admin/AdminTab'));
 import LoginPage from './features/auth/LoginPage';
 import PasscodeGate from './features/auth/PasscodeGate';

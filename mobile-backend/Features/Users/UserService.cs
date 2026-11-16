@@ -80,8 +80,7 @@ namespace mobile_backend.Services
                 staff.StaffId,
                 staff.ProfilePicture,
                 staff.Role,
-                staff.CreatedAt,
-                SecurityHelper.IssueToken(staff, config)
+                staff.CreatedAt
             );
         }
 
@@ -126,7 +125,7 @@ namespace mobile_backend.Services
 
             if (user.Role == "Admin" && role == "Staff")
             {
-                var adminCount = await db.StaffUsers.CountAsync(u => u.Role == "Admin");
+                var adminCount = await db.StaffUsers.CountAsync(u => u.Role == "Admin" && u.Division != "DELETED");
                 if (adminCount <= 1) return false;
             }
 
@@ -490,8 +489,8 @@ namespace mobile_backend.Services
         {
             var key = (target ?? "").Trim();
             return db.StaffUsers.FirstOrDefaultAsync(u =>
-                u.Email == key ||
-                u.FullName == key);
+                u.Division != "DELETED" &&
+                (u.Email == key || u.FullName == key || u.StaffId == key));
         }
     }
 }

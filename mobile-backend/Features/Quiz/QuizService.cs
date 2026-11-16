@@ -169,7 +169,8 @@ namespace mobile_backend.Services
             }
             else
             {
-                answer.PointsAwarded = answer.IsCorrect ? Math.Max(500, 1000 - (answer.TimeTakenSeconds * 10)) : 0;
+                answer.IsCorrect = false;
+                answer.PointsAwarded = 0;
             }
 
             if (string.IsNullOrWhiteSpace(answer.PreferredName))

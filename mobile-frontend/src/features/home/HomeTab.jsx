@@ -288,7 +288,7 @@ export function HomeTab({
                 }
 
                 const hasImages = allImages.length > 0;
-                const bookmarked = isBookmarked(post, 'poster');
+                const bookmarked = isBookmarked(post.id, 'poster');
                 const dateStr = post.postedAt ? new Date(post.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
                 const clr = getColor(post.category || 'General');
 

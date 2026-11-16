@@ -119,7 +119,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
         const targetUser = users.find(u => matchesUser(u, targetIdOrEmail));
         const targetId = typeof targetIdOrEmail === 'number' ? targetIdOrEmail : targetUser?.id;
 
-        if (API_BASE && targetId) {
+        if (IS_LOCAL_SSMS && targetId) {
           const res = await fetch(`${API_BASE}/api/admin/users/${targetId}/role`, {
           signal: AbortSignal.timeout(4000),
             method: 'PUT',

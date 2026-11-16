@@ -28,7 +28,7 @@ export async function getUserActiveMonths(userOrIdentifiers) {
 export async function getUserMonthlyQuizStatus(userOrIdentifiers, month) {
   const answers = await getUserRecentAnswers(userOrIdentifiers, month);
   const totalScore = answers.reduce((sum, a) => sum + Number(a.pointsAwarded || 0), 0);
-  const answeredQuestionIds = [...new Set(answers.map(a => Number(a.id || a.questionId)).filter(Boolean))];
+  const answeredQuestionIds = [...new Set(answers.map(a => Number(a.questionId ?? a.QuestionId ?? a.id)).filter(Boolean))];
 
   return {
     hasAttempted: answers.length > 0,
