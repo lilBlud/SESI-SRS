@@ -380,16 +380,22 @@ export const supabaseProvider = {
   },
 
   // ─── Auth ───
-  async login(email, password) {
-    const targetEmail = email.trim().toLowerCase();
+  async login(identifier, password) {
+    const clean = String(identifier || '').trim();
+    const safe = clean.replace(/[,()"\\]/g, '');
+    if (!safe) {
+      throw new Error("Invalid Staff ID/Email or password");
+    }
+
     const { data, error } = await supabase
       .from('StaffUsers')
       .select('*')
-      .eq('Email', targetEmail)
-      .single();
+      .or(`Email.ilike.${safe},StaffId.ilike.${safe}`)
+      .limit(1)
+      .maybeSingle();
 
     if (error || !data || data.PasswordHash !== password) {
-      throw new Error("Invalid email or password");
+      throw new Error("Invalid Staff ID/Email or password");
     }
 
     return normalizeUser(data, data.Role || 'Staff');

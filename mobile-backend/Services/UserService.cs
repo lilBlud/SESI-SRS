@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.DirectoryServices;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -144,19 +145,169 @@ namespace mobile_backend.Services
 
         public async Task<AuthResponseDto?> LoginAsync(string email, string password)
         {
-            var user = await db.StaffUsers.FirstOrDefaultAsync(u => u.Email == email && u.PasswordHash == password);
-            if (user == null) return null;
+            var identifier = (email ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(identifier) || string.IsNullOrEmpty(password))
+                return null;
+
+            // 1. Fast path: check existing StaffUsers record by Email or StaffId
+            var existingUser = await db.StaffUsers.FirstOrDefaultAsync(u =>
+                u.Division != "DELETED" &&
+                (u.Email == identifier || u.StaffId == identifier) &&
+                u.PasswordHash == password);
+
+            if (existingUser != null)
+            {
+                return new AuthResponseDto(
+                    existingUser.Id,
+                    existingUser.FullName,
+                    existingUser.PreferredName,
+                    existingUser.Email,
+                    existingUser.Division,
+                    existingUser.StaffId,
+                    existingUser.ProfilePicture,
+                    existingUser.Role
+                );
+            }
+
+            // 2. Active Directory (LDAP://sesb.internal) authentication & auto-provisioning
+            var adProfile = TryAuthenticateActiveDirectory(identifier, password);
+            if (adProfile == null)
+                return null;
+
+            var adStaffId = adProfile.Value.StaffId;
+            var adEmail = adProfile.Value.Email;
+            var adFullName = adProfile.Value.FullName;
+            var adDivision = adProfile.Value.Division;
+
+            var existing = await db.StaffUsers.FirstOrDefaultAsync(u =>
+                u.Division != "DELETED" &&
+                ((!string.IsNullOrEmpty(adStaffId) && u.StaffId == adStaffId) ||
+                 (!string.IsNullOrEmpty(adEmail) && u.Email == adEmail) ||
+                 u.Email == identifier ||
+                 u.StaffId == identifier));
+
+            if (existing != null)
+            {
+                if (string.IsNullOrWhiteSpace(existing.FullName) && !string.IsNullOrWhiteSpace(adFullName))
+                    existing.FullName = adFullName;
+                if (string.IsNullOrWhiteSpace(existing.StaffId) && !string.IsNullOrWhiteSpace(adStaffId))
+                    existing.StaffId = adStaffId;
+                if (string.IsNullOrWhiteSpace(existing.Division) && !string.IsNullOrWhiteSpace(adDivision))
+                    existing.Division = adDivision;
+                if (string.IsNullOrWhiteSpace(existing.Email) && !string.IsNullOrWhiteSpace(adEmail))
+                    existing.Email = adEmail;
+                existing.PasswordHash = password;
+                await db.SaveChangesAsync();
+
+                return new AuthResponseDto(
+                    existing.Id,
+                    existing.FullName,
+                    existing.PreferredName,
+                    existing.Email,
+                    existing.Division,
+                    existing.StaffId,
+                    existing.ProfilePicture,
+                    existing.Role
+                );
+            }
+
+            var firstWord = (adFullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? adStaffId).Trim();
+            if (firstWord.Length > 10) firstWord = firstWord[..10];
+
+            var created = new StaffUser
+            {
+                FullName = adFullName,
+                PreferredName = firstWord,
+                Email = !string.IsNullOrWhiteSpace(adEmail) ? adEmail : $"{adStaffId}@sesb.com.my",
+                PasswordHash = password,
+                Division = !string.IsNullOrWhiteSpace(adDivision) ? adDivision : "General",
+                StaffId = adStaffId,
+                ProfilePicture = "",
+                Role = "Staff",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            db.StaffUsers.Add(created);
+            await db.SaveChangesAsync();
 
             return new AuthResponseDto(
-                user.Id,
-                user.FullName,
-                user.PreferredName,
-                user.Email,
-                user.Division,
-                user.StaffId,
-                user.ProfilePicture,
-                user.Role
+                created.Id,
+                created.FullName,
+                created.PreferredName,
+                created.Email,
+                created.Division,
+                created.StaffId,
+                created.ProfilePicture,
+                created.Role
             );
+        }
+
+        private static (string StaffId, string FullName, string Email, string Division)? TryAuthenticateActiveDirectory(string loginId, string password)
+        {
+            if (!OperatingSystem.IsWindows())
+                return null;
+
+            const string domainName = "sesb.internal";
+            var cleanAccount = loginId.Trim();
+            if (cleanAccount.Contains('\\'))
+                cleanAccount = cleanAccount.Split('\\').Last();
+            else if (cleanAccount.Contains('@'))
+                cleanAccount = cleanAccount.Split('@').First();
+
+            // Single canonical bind to avoid multiple failed attempts against AD lockout policies
+            var bindUser = loginId.Contains('\\') || loginId.EndsWith($"@{domainName}", StringComparison.OrdinalIgnoreCase)
+                ? loginId.Trim()
+                : $"{cleanAccount}@{domainName}";
+
+            try
+            {
+                using var entry = new DirectoryEntry($"LDAP://{domainName}", bindUser, password, AuthenticationTypes.Secure);
+                // Force LDAP bind check (mirrors adConn.Open "DS Query" in login.asp)
+                _ = entry.NativeObject;
+
+                var escapedAccount = EscapeLdapFilterValue(cleanAccount);
+                var escapedLogin = EscapeLdapFilterValue(loginId.Trim());
+
+                using var searcher = new DirectorySearcher(entry)
+                {
+                    Filter = $"(&(objectCategory=user)(|(sAMAccountName={escapedAccount})(userPrincipalName={escapedLogin})(mail={escapedLogin})))",
+                    PageSize = 1
+                };
+                searcher.PropertiesToLoad.AddRange(["cn", "displayName", "mail", "userPrincipalName", "department", "company", "sAMAccountName", "employeeID"]);
+
+                var result = searcher.FindOne();
+                var staffId = GetAdProp(result, "sAMAccountName") ?? GetAdProp(result, "employeeID") ?? cleanAccount;
+                var fullName = GetAdProp(result, "displayName") ?? GetAdProp(result, "cn") ?? staffId;
+                var email = GetAdProp(result, "mail") ?? GetAdProp(result, "userPrincipalName") ?? (loginId.Contains('@') ? loginId : $"{staffId}@sesb.com.my");
+                var division = GetAdProp(result, "department") ?? GetAdProp(result, "company") ?? "General";
+
+                return (staffId.Trim(), fullName.Trim(), email.Trim().ToLowerInvariant(), division.Trim());
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string? GetAdProp(SearchResult? result, string propName)
+        {
+            if (result == null || !result.Properties.Contains(propName))
+                return null;
+            var col = result.Properties[propName];
+            if (col == null || col.Count == 0 || col[0] == null)
+                return null;
+            var val = col[0].ToString()?.Trim();
+            return string.IsNullOrWhiteSpace(val) ? null : val;
+        }
+
+        private static string EscapeLdapFilterValue(string value)
+        {
+            return value
+                .Replace("\\", "\\5c")
+                .Replace("*", "\\2a")
+                .Replace("(", "\\28")
+                .Replace(")", "\\29")
+                .Replace("\0", "\\00");
         }
 
         public async Task<AuthResponseDto?> SignupAsync(StaffUser newUser)

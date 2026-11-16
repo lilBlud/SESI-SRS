@@ -1,35 +1,11 @@
 import React, { useState } from 'react';
-import { loginDirect, signupDirect } from '../../utils/supabaseClient';
+import { loginDirect } from '../../utils/supabaseClient';
 import { API_BASE, IS_LOCAL_SSMS } from '../../services/apiConfig';
 import { TopographicBackground } from '../layout';
 
-const DIVISIONS = [
-  'Chief Executive Officer (CEO) Office',
-  'Single Buyer',
-  'Grid System Operator',
-  'Major Project',
-  'Operating',
-  'Generation',
-  'Transmission',
-  'Distribution',
-  'Retail',
-  'Strategy & Sustainability',
-  'Corporate Services',
-  'Corporate Communication',
-  'Finance',
-  'Human Resources',
-  'Information & Digital',
-  'Procurement'
-];
-
 export default function LoginPage({ onLogin }) {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [preferredName, setPreferredName] = useState('');
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [division, setDivision] = useState('');
-  const [staffId, setStaffId] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -54,8 +30,9 @@ export default function LoginPage({ onLogin }) {
     if (isSubmitting) return;
     setErrorMsg('');
 
-    if (isSignUp && password.length < 4) {
-      setErrorMsg('Password must be at least 4 characters.');
+    const cleanId = identifier.trim();
+    if (!cleanId || !password) {
+      setErrorMsg('Please enter your Staff ID / Email and password.');
       return;
     }
 
@@ -65,33 +42,26 @@ export default function LoginPage({ onLogin }) {
 
       if (!IS_LOCAL_SSMS) {
         try {
-          if (isSignUp) {
-            loggedUser = await signupDirect({ fullName, preferredName, email, password, division, staffId });
-          } else {
-            loggedUser = await loginDirect(email, password);
-          }
+          loggedUser = await loginDirect(cleanId, password);
         } catch (sbErr) {
-          if (sbErr.message && (sbErr.message.includes("Invalid") || sbErr.message.includes("already exists"))) {
-            setErrorMsg(sbErr.message);
+          if (sbErr.message && sbErr.message.includes('Invalid')) {
+            setErrorMsg('Invalid Staff ID/Email or password. Please try again.');
             return;
           }
-          console.warn("Direct Supabase auth fallback to API:", sbErr);
+          console.warn('Direct Supabase auth fallback to API:', sbErr);
         }
       }
 
       if (!loggedUser) {
-        const endpoint = isSignUp ? `${API_BASE}/api/auth/signup` : `${API_BASE}/api/auth/login`;
-        const body = isSignUp ? { fullName, preferredName, email, password, division, staffId } : { email, password };
-
-        const res = await fetch(endpoint, {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: JSON.stringify({ email: cleanId, password })
         });
 
         if (!res.ok) {
           if (res.status === 401) {
-            setErrorMsg('Invalid email or password. Please check your credentials and try again.');
+            setErrorMsg('The Staff ID/Email or password you entered is incorrect. Please try again.');
           } else {
             const errText = await res.text();
             setErrorMsg(errText ? errText.substring(0, 120) : `Request failed (${res.status}). Please try again.`);
@@ -196,161 +166,48 @@ export default function LoginPage({ onLogin }) {
 
         <div className="w-full max-w-md mx-auto lg:bg-white lg:dark:bg-slate-900 lg:border lg:border-slate-200/90 lg:dark:border-slate-800 lg:rounded-2xl lg:p-7 lg:shadow-xl">
           {/* Card Heading */}
-          <div className="mb-5">
-            <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-              {isSignUp ? 'Create Staff Profile' : 'Staff Sign In'}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {isSignUp ? 'Register once to track quiz streaks and rankings' : 'Sign in with your SESI portal credentials'}
-            </p>
-          </div>
-
-          {/* Segmented Mode Switcher */}
-          <div className="flex bg-slate-100 dark:bg-slate-800/70 p-1 rounded-xl mb-5 border border-slate-200/70 dark:border-slate-700/60">
-            <button
-              type="button"
-              onClick={() => { setIsSignUp(false); setErrorMsg(''); }}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                !isSignUp
-                  ? 'bg-white dark:bg-slate-700 shadow-xs text-slate-900 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-              </svg>
-              <span>Sign In</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setIsSignUp(true); setErrorMsg(''); }}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                isSignUp
-                  ? 'bg-white dark:bg-slate-700 shadow-xs text-emerald-700 dark:text-emerald-400'
-                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              <span>New Staff Sign Up</span>
-            </button>
+          <div className="flex items-start justify-between gap-3 mb-5">
+            <div>
+              <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                Staff Sign In
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Sign in with your SESB Active Directory credentials
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/70 dark:border-emerald-800/60 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              AD Connected
+            </span>
           </div>
 
           {/* Auth Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-            {isSignUp && (
-              <>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className={inputClass}
-                      placeholder="e.g. Dayang Nurul Ain"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Display Name <span className="text-[10.5px] text-slate-400 font-normal">(max 10)</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                      </div>
-                      <input
-                        type="text"
-                        value={preferredName}
-                        onChange={(e) => setPreferredName(e.target.value)}
-                        maxLength={10}
-                        className={inputClass}
-                        placeholder="e.g. Ain"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Staff ID</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
-                        </svg>
-                      </div>
-                      <input
-                        type="text"
-                        value={staffId}
-                        onChange={(e) => setStaffId(e.target.value)}
-                        className={inputClass}
-                        placeholder="e.g. EMP-1234"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Division</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                    </div>
-                    <select
-                      value={division}
-                      onChange={(e) => setDivision(e.target.value)}
-                      className={`${inputClass} pr-9 appearance-none`}
-                    >
-                      <option value="" disabled>Select your division</option>
-                      {DIVISIONS.map(div => (
-                        <option key={div} value={div}>{div}</option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Staff ID or Email
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
                   </svg>
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="username"
+                  value={identifier}
+                  onChange={(e) => { setIdentifier(e.target.value); if (errorMsg) setErrorMsg(''); }}
                   className={inputClass}
-                  placeholder="e.g. name@sesb.com.my"
+                  placeholder="e.g. 90003508 or name@sesb.com.my"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {isSignUp ? 'Create Password' : 'Password'}
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -361,10 +218,11 @@ export default function LoginPage({ onLogin }) {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); if (errorMsg) setErrorMsg(''); }}
                   className={`${inputClass} pr-10`}
-                  placeholder={isSignUp ? 'Minimum 4 characters' : 'Enter your password'}
+                  placeholder="Enter your Active Directory password"
                 />
                 <button
                   type="button"
@@ -406,10 +264,10 @@ export default function LoginPage({ onLogin }) {
               {isSubmitting ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  <span>{isSignUp ? 'Creating Account...' : 'Signing In...'}</span>
+                  <span>Signing In...</span>
                 </>
               ) : (
-                <span>{isSignUp ? 'Create Account & Enter SESI' : 'Sign In'}</span>
+                <span>Sign In</span>
               )}
             </button>
           </form>
