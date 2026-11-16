@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getInfographicsDirect,
   getGlossaryDirect,
@@ -32,6 +32,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   const [questions, setQuestions] = useState([]);
   const [qCount, setQCount] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
+  const hasAutoResolvedMonth = useRef(false);
 
   const [glossaryTerms, setGlossaryTerms] = useState([]);
   const [infographics, setInfographics] = useState([]);
@@ -154,27 +155,45 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   const fetchQuestions = useCallback(async () => {
     if (!IS_LOCAL_SSMS) {
       try {
-      const { data, error } = await supabase
-        .from('QuizQuestions')
-        .select('*')
-        .eq('Month', selectedMonth);
-      if (!error && data) {
-        const formatted = data.map(q => ({
-          id: q.Id ?? q.id,
-          month: q.Month ?? q.month,
-          questionText: q.QuestionText ?? q.questionText,
-          optionA: q.OptionA ?? q.optionA,
-          optionB: q.OptionB ?? q.optionB,
-          optionC: q.OptionC ?? q.optionC,
-          optionD: q.OptionD ?? q.optionD,
-          correctOption: q.CorrectOption ?? q.correctOption ?? 'A'
-        }));
-        setQuestions(formatted);
-        setQCount(formatted.length);
-        return;
-      }
-    } catch (sbErr) {
-      console.warn('Direct fetch questions error in AdminTab:', sbErr);
+        let { data, error } = await supabase
+          .from('QuizQuestions')
+          .select('*')
+          .eq('Month', selectedMonth);
+        if (!error && data) {
+          if (data.length === 0 && !hasAutoResolvedMonth.current) {
+            hasAutoResolvedMonth.current = true;
+            const { data: latest } = await supabase
+              .from('QuizQuestions')
+              .select('Month')
+              .order('Month', { ascending: false })
+              .limit(1);
+            const latestMonth = latest?.[0]?.Month ?? latest?.[0]?.month;
+            if (latestMonth && latestMonth !== selectedMonth) {
+              setSelectedMonth(latestMonth);
+              const { data: fallbackData } = await supabase
+                .from('QuizQuestions')
+                .select('*')
+                .eq('Month', latestMonth);
+              if (fallbackData) data = fallbackData;
+            }
+          }
+          hasAutoResolvedMonth.current = true;
+          const formatted = data.map(q => ({
+            id: q.Id ?? q.id,
+            month: q.Month ?? q.month,
+            questionText: q.QuestionText ?? q.questionText,
+            optionA: q.OptionA ?? q.optionA,
+            optionB: q.OptionB ?? q.optionB,
+            optionC: q.OptionC ?? q.optionC,
+            optionD: q.OptionD ?? q.optionD,
+            correctOption: q.CorrectOption ?? q.correctOption ?? 'A'
+          }));
+          setQuestions(formatted);
+          setQCount(formatted.length);
+          return;
+        }
+      } catch (sbErr) {
+        console.warn('Direct fetch questions error in AdminTab:', sbErr);
       }
     }
 
