@@ -91,8 +91,18 @@ app.UseCors("AllowAll");
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// ─── Ensure DB is created + seed initial data ───
-DbInitializer.Initialize(app);
+// ─── Ensure DB is created + seed initial data in background so startup is instant ───
+_ = Task.Run(() =>
+{
+    try
+    {
+        DbInitializer.Initialize(app);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Background DB init error: {ex.Message}");
+    }
+});
 
 // ─── Domain Endpoints ───
 app.MapGet("/api/health", () => Results.Ok(new { status = "online", timestamp = DateTime.UtcNow }));

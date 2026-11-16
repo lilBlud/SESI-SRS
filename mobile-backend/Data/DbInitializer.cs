@@ -23,10 +23,12 @@ namespace mobile_backend.Data
 
             try 
             {
+                bool patched = false;
                 var epsbTerm = db.GlossaryTerms.FirstOrDefault(t => t.Term == "EPSB");
                 if (epsbTerm != null && epsbTerm.FullName != "Elopura Power Sendirian Berhad")
                 {
                     epsbTerm.FullName = "Elopura Power Sendirian Berhad";
+                    patched = true;
                 }
 
                 var sesbTerm = db.GlossaryTerms.FirstOrDefault(t => t.Term == "SESB");
@@ -34,8 +36,9 @@ namespace mobile_backend.Data
                 {
                     sesbTerm.Term = "SE";
                     sesbTerm.FullName = "Sabah Electricity";
+                    patched = true;
                 }
-                db.SaveChanges();
+                if (patched) db.SaveChanges();
             }
             catch {}
 
@@ -43,6 +46,7 @@ namespace mobile_backend.Data
             {
                 var dummyData = PerformanceChartData;
                 var allTerms = db.GlossaryTerms.ToList();
+                bool anyChanged = false;
                 
                 foreach (var kvp in dummyData) {
                     var upperKey = kvp.Key;
@@ -61,23 +65,30 @@ namespace mobile_backend.Data
                             ChartData = kvp.Value, 
                             FormulaNotations = unit 
                         });
+                        anyChanged = true;
                     } else {
                         foreach (var term in existingTerms) {
-                            term.Category = "Corporate Performance";
+                            if (term.Category != "Corporate Performance") {
+                                term.Category = "Corporate Performance";
+                                anyChanged = true;
+                            }
                             if (string.IsNullOrEmpty(term.ChartData) || !term.ChartData.Contains("\"year\":\"2022\"")) {
                                 term.ChartData = kvp.Value;
+                                anyChanged = true;
                             }
-                            if (string.IsNullOrEmpty(term.Description)) {
+                            if (string.IsNullOrEmpty(term.Description) && !string.IsNullOrEmpty(desc)) {
                                 term.Description = desc;
+                                anyChanged = true;
                             }
-                            if (string.IsNullOrEmpty(term.FormulaNotations)) {
+                            if (string.IsNullOrEmpty(term.FormulaNotations) && !string.IsNullOrEmpty(unit)) {
                                 term.FormulaNotations = unit;
+                                anyChanged = true;
                             }
                         }
                     }
                 }
 
-                db.SaveChanges();
+                if (anyChanged) db.SaveChanges();
             } 
             catch (Exception ex) 
             {
@@ -222,7 +233,7 @@ namespace mobile_backend.Data
                     new() { Term = "Revenue-Cap Adjustment", FullName = "", Description = "An annual adjustment to ensure that a Revenue-Cap RBE complies with its Revenue-Cap.", Formula = "", Category = "IBR Framework" },
                     new() { Term = "Revenue-Cap RBE", FullName = "", Description = "An RBE regulated under a Revenue-Cap.", Formula = "", Category = "IBR Framework" },
                     new() { Term = "Revenue Requirement Model", FullName = "", Description = "The approved calculation model to calculate the required revenue for the RBEs.", Formula = "", Category = "IBR Framework" },
-                    new() { Term = "SESB", FullName = "Sabah Electricity Sdn. Bhd.", Description = "The primary electricity utility company in Sabah.", Formula = "", Category = "IBR Framework" },
+                    new() { Term = "SE", FullName = "Sabah Electricity", Description = "The primary electricity utility company in Sabah.", Formula = "", Category = "IBR Framework" },
                     new() { Term = "SESB Generation", FullName = "", Description = "SESB's wholly owned generation plants in which Single Buyer enters into SLAs or non-SLAs.", Formula = "", Category = "IBR Framework" },
                     new() { Term = "Single Buyer", FullName = "SBO", Description = "The RBE responsible for managing the procurement of electricity and related services.", Formula = "", Category = "IBR Framework" },
                     new() { Term = "Single Buyer Generation", FullName = "", Description = "The costs of the Single Buyer related to power purchases.", Formula = "", Category = "IBR Framework" },
@@ -238,13 +249,15 @@ namespace mobile_backend.Data
                     .Select(x => x.Term)
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+                bool addedIbr = false;
                 foreach (var t in ibrTerms) {
                     if (!existingTermSet.Contains(t.Term)) {
                         db.GlossaryTerms.Add(t);
                         existingTermSet.Add(t.Term);
+                        addedIbr = true;
                     }
                 }
-                db.SaveChanges();
+                if (addedIbr) db.SaveChanges();
 
                 // ─── Patch Glossary Terms with Performance Data ───
                 try
