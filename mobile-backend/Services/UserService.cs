@@ -289,6 +289,7 @@ namespace mobile_backend.Services
             }
         }
 
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private static string? GetAdProp(SearchResult? result, string propName)
         {
             if (result == null || !result.Properties.Contains(propName))
