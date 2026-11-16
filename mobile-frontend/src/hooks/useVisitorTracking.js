@@ -2,14 +2,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { recordVisitorDirect, getVisitorStatsDirect } from '../utils/supabaseClient';
 
 const STATS_STORAGE_KEY = 'sesi_cached_visitor_stats';
-const VISITOR_ID_KEY = 'sesi_visitor_id';
 
 const DEFAULT_STATS = { totalVisits: 0, todayVisits: 0, uniqueVisitors: 0 };
 
 /**
  * Custom hook to manage platform visitor tracking and analytics state.
- * Handles automatic device ID generation, 15-minute throttling via Supabase,
- * and seamless localStorage caching to avoid 0-flash UX delays.
+ * Tracks only authenticated staff visits (ignoring pre-login anonymous sessions and Demo User).
  */
 export function useVisitorTracking(user) {
   const [visitorStats, setVisitorStats] = useState(() => {
@@ -35,22 +33,26 @@ export function useVisitorTracking(user) {
     } catch {}
   }, []);
 
-  // Record visit on mount or when user profile info updates
   useEffect(() => {
-    let visitorId = null;
-    try {
-      visitorId = localStorage.getItem(VISITOR_ID_KEY);
-    } catch {}
+    const cleanUsername = (user?.fullName || user?.preferredName || user?.email || '').trim();
+    const isDemoOrAnon =
+      !user ||
+      !cleanUsername ||
+      user?.id === 9999 ||
+      cleanUsername.toLowerCase() === 'demo user' ||
+      (user?.email || '').toLowerCase() === 'demo@sesb.com.my';
 
-    if (!visitorId) {
-      visitorId = 'v_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
-      try {
-        localStorage.setItem(VISITOR_ID_KEY, visitorId);
-      } catch {}
+    if (isDemoOrAnon) {
+      getVisitorStatsDirect()
+        .then(stats => {
+          if (stats) saveStats(stats);
+        })
+        .catch(() => {});
+      return;
     }
 
-    const cleanUsername = user?.fullName || user?.preferredName || '';
-    const cleanDivision = user?.division || (user?.fullName ? 'Information & Digital' : '');
+    const visitorId = `staff_${user?.id || user?.staffId || user?.email || cleanUsername.toLowerCase().replace(/\s+/g, '_')}`;
+    const cleanDivision = user?.division || 'Information & Digital';
     const currentKey = `${visitorId}:${cleanUsername}:${cleanDivision}`;
 
     if (lastRecordedKeyRef.current === currentKey) {
@@ -72,18 +74,17 @@ export function useVisitorTracking(user) {
         if (stats) saveStats(stats);
       })
       .catch(err => {
-        console.warn("Visitor tracking record error:", err);
+        console.warn('Visitor tracking record error:', err);
       });
-  }, [user?.fullName, user?.preferredName, user?.division, user?.id, saveStats]);
+  }, [user, saveStats]);
 
-  // Expose manual refresh function for Admin dashboard and counter views
   const refreshVisitorStats = useCallback(async () => {
     try {
       const stats = await getVisitorStatsDirect();
       if (stats) saveStats(stats);
       return stats;
     } catch (err) {
-      console.warn("Visitor stats refresh error:", err);
+      console.warn('Visitor stats refresh error:', err);
       return null;
     }
   }, [saveStats]);

@@ -41,7 +41,7 @@ export default function AdminTrafficSection({
             {totalVisits.toLocaleString()}
           </div>
           <div className="text-xs lg:text-[13px] font-medium text-slate-400 mt-2 flex items-center gap-1">
-            <span>Cumulative across all platforms</span>
+            <span>Authenticated staff visits</span>
           </div>
         </div>
 
@@ -59,7 +59,7 @@ export default function AdminTrafficSection({
             {todayVisits.toLocaleString()}
           </div>
           <div className="text-xs lg:text-[13px] font-medium text-slate-400 mt-2">
-            Activity in the last 24 hours
+            Distinct staff active today
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export default function AdminTrafficSection({
             {uniqueVisitors.toLocaleString()}
           </div>
           <div className="text-xs lg:text-[13px] font-medium text-slate-400 mt-2">
-            Distinct devices & staff accounts
+            Registered staff accounts
           </div>
         </div>
       </div>

@@ -428,24 +428,64 @@ export const supabaseProvider = {
 
   // ─── Visitor Stats ───
   async getVisitorStats() {
-    const [totalRes, recentRes, breakdownRes] = await Promise.all([
-      supabase.from('VisitorLogs').select('*', { count: 'exact', head: true }),
-      supabase.from('VisitorLogs').select('*').order('VisitedAt', { ascending: false }).limit(20),
-      supabase.from('VisitorLogs').select('VisitorId, Division').limit(5000)
+    const [logsRes, staffRes] = await Promise.all([
+      supabase.from('VisitorLogs').select('*').order('VisitedAt', { ascending: false }).limit(5000),
+      supabase.from('StaffUsers').select('Id')
     ]);
 
-    const totalVisits = totalRes.count ?? 0;
-    const uniqueVisitors = new Set((breakdownRes.data || []).map(l => l.VisitorId).filter(Boolean)).size;
+    const excludedUsers = new Set([
+      '',
+      'anonymous visitor',
+      'demo user',
+      'test user',
+      'test_admin_user',
+      'test_role_probe',
+      'cameron'
+    ]);
+
+    const validLogs = (logsRes.data || []).filter(v => {
+      const uname = (v.Username || '').trim().toLowerCase();
+      const vid = (v.VisitorId || '').trim();
+      return !excludedUsers.has(uname) && !vid.startsWith('v_seed_');
+    });
+
+    const mytOffsetMs = 8 * 60 * 60 * 1000;
+    const todayStartMs = Math.floor((Date.now() + mytOffsetMs) / 86400000) * 86400000 - mytOffsetMs;
+
+    const totalVisits = validLogs.length;
+    const todayVisitorsSet = new Set();
+    const divCounts = {};
+
+    for (const v of validLogs) {
+      const uname = (v.Username || '').trim();
+      const visitedMs = v.VisitedAt ? new Date(v.VisitedAt).getTime() : 0;
+      if (visitedMs >= todayStartMs && uname) {
+        todayVisitorsSet.add(uname.toLowerCase());
+      }
+      const div = (v.Division || '').trim();
+      if (div && div !== 'General') {
+        divCounts[div] = (divCounts[div] || 0) + 1;
+      }
+    }
+
+    const staffCount = (staffRes.data || []).length;
+    const distinctLoggedStaff = new Set(validLogs.map(l => (l.Username || '').trim().toLowerCase()).filter(Boolean)).size;
+    const uniqueVisitors = staffCount || distinctLoggedStaff;
+
+    const divisionBreakdown = Object.entries(divCounts)
+      .map(([division, count]) => ({ division, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
 
     return {
       totalVisits,
-      todayVisits: totalVisits,
-      uniqueVisitors: uniqueVisitors || totalVisits,
-      divisionBreakdown: [],
-      recentVisits: (recentRes.data || []).map(v => ({
+      todayVisits: todayVisitorsSet.size,
+      uniqueVisitors,
+      divisionBreakdown,
+      recentVisits: validLogs.slice(0, 25).map(v => ({
         id: v.Id ?? v.id,
         visitorId: v.VisitorId ?? '',
-        username: v.Username || 'Anonymous Visitor',
+        username: v.Username,
         division: v.Division || 'General',
         visitedAt: v.VisitedAt || new Date().toISOString()
       }))
@@ -453,13 +493,31 @@ export const supabaseProvider = {
   },
 
   async recordVisitor(payload) {
-    await supabase.from('VisitorLogs').insert([{
-      VisitorId: payload.visitorId,
-      Username: payload.username || '',
-      Division: payload.division || '',
-      Path: payload.path || '/',
-      VisitedAt: new Date().toISOString()
-    }]);
+    const cleanUsername = (payload?.username || '').trim();
+    const lowerName = cleanUsername.toLowerCase();
+    if (
+      cleanUsername &&
+      lowerName !== 'anonymous visitor' &&
+      lowerName !== 'demo user'
+    ) {
+      const fifteenMinAgoIso = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const { data: recent } = await supabase
+        .from('VisitorLogs')
+        .select('Id')
+        .eq('Username', cleanUsername)
+        .gte('VisitedAt', fifteenMinAgoIso)
+        .limit(1);
+
+      if (!recent || recent.length === 0) {
+        await supabase.from('VisitorLogs').insert([{
+          VisitorId: payload.visitorId,
+          Username: cleanUsername,
+          Division: payload.division || '',
+          Path: payload.path || '/',
+          VisitedAt: new Date().toISOString()
+        }]);
+      }
+    }
     return await this.getVisitorStats();
   }
 };

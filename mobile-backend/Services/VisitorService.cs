@@ -10,13 +10,34 @@ namespace mobile_backend.Services
 {
     public class VisitorService(AppDbContext db) : IVisitorService
     {
+        private IQueryable<VisitorLog> GetAuthenticatedLogsQuery() =>
+            db.VisitorLogs.Where(v =>
+                !v.VisitorId.StartsWith("v_seed_") &&
+                !string.IsNullOrEmpty(v.Username) &&
+                v.Username != "Anonymous Visitor" &&
+                v.Username != "Demo User" &&
+                v.Username != "Test User" &&
+                v.Username != "test_admin_user" &&
+                v.Username != "test_role_probe" &&
+                v.Username != "Cameron");
+
         public async Task<VisitorStatsDto> GetVisitorStatsAsync()
         {
-            var baseQuery = db.VisitorLogs.Where(v => !v.VisitorId.StartsWith("v_seed_"));
+            var baseQuery = GetAuthenticatedLogsQuery();
             var todayStart = DateTime.UtcNow.AddHours(8).Date.AddHours(-8);
+
             var totalVisits = await baseQuery.CountAsync();
-            var todayVisits = await baseQuery.CountAsync(v => v.VisitedAt >= todayStart);
-            var uniqueVisitors = await baseQuery.Select(v => v.VisitorId).Distinct().CountAsync();
+            var todayVisits = await baseQuery
+                .Where(v => v.VisitedAt >= todayStart)
+                .Select(v => v.Username)
+                .Distinct()
+                .CountAsync();
+
+            var uniqueVisitors = await db.StaffUsers.CountAsync();
+            if (uniqueVisitors == 0)
+            {
+                uniqueVisitors = await baseQuery.Select(v => v.Username).Distinct().CountAsync();
+            }
 
             var rawBreakdown = await baseQuery
                 .Where(v => !string.IsNullOrEmpty(v.Division) && v.Division != "General")
@@ -36,7 +57,7 @@ namespace mobile_backend.Services
                 .Select(v => new {
                     v.Id,
                     v.VisitorId,
-                    Username = string.IsNullOrWhiteSpace(v.Username) ? "Anonymous Visitor" : v.Username,
+                    Username = v.Username,
                     Division = string.IsNullOrWhiteSpace(v.Division) ? "General" : v.Division,
                     v.VisitedAt
                 })
@@ -63,41 +84,57 @@ namespace mobile_backend.Services
 
         public async Task<RecordVisitorResultDto> RecordVisitAsync(RecordVisitRequest req, string remoteIp, string userAgent)
         {
-            var visitorId = (req.VisitorId ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(visitorId))
+            var cleanUsername = (req.Username ?? "").Trim();
+            var isAuthenticatedStaff =
+                !string.IsNullOrWhiteSpace(cleanUsername) &&
+                !string.Equals(cleanUsername, "Anonymous Visitor", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(cleanUsername, "Demo User", StringComparison.OrdinalIgnoreCase);
+
+            if (isAuthenticatedStaff)
             {
-                visitorId = !string.IsNullOrEmpty(remoteIp) ? remoteIp : Guid.NewGuid().ToString("N");
-            }
-
-            if (userAgent.Length > 200) userAgent = userAgent[..200];
-
-            var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-5);
-            var recentVisit = await db.VisitorLogs
-                .AnyAsync(v => v.VisitorId == visitorId && v.VisitedAt >= fiveMinutesAgo);
-
-            if (!recentVisit)
-            {
-                var log = new VisitorLog
+                var visitorId = (req.VisitorId ?? "").Trim();
+                if (string.IsNullOrWhiteSpace(visitorId))
                 {
-                    VisitorId = visitorId,
-                    Username = req.Username ?? "",
-                    Division = req.Division ?? "",
-                    Path = req.Path ?? "/",
-                    UserAgent = userAgent,
-                    VisitedAt = DateTime.UtcNow
-                };
-                db.VisitorLogs.Add(log);
-                await db.SaveChangesAsync();
+                    visitorId = !string.IsNullOrEmpty(remoteIp) ? remoteIp : Guid.NewGuid().ToString("N");
+                }
+
+                if (userAgent.Length > 200) userAgent = userAgent[..200];
+
+                var fifteenMinutesAgo = DateTime.UtcNow.AddMinutes(-15);
+                var recentVisit = await db.VisitorLogs
+                    .AnyAsync(v => v.Username == cleanUsername && v.VisitedAt >= fifteenMinutesAgo);
+
+                if (!recentVisit)
+                {
+                    var log = new VisitorLog
+                    {
+                        VisitorId = visitorId,
+                        Username = cleanUsername,
+                        Division = (req.Division ?? "").Trim(),
+                        Path = req.Path ?? "/",
+                        UserAgent = userAgent,
+                        VisitedAt = DateTime.UtcNow
+                    };
+                    db.VisitorLogs.Add(log);
+                    await db.SaveChangesAsync();
+                }
             }
 
-            var baseQuery = db.VisitorLogs.Where(v => !v.VisitorId.StartsWith("v_seed_"));
+            var baseQuery = GetAuthenticatedLogsQuery();
             var todayStart = DateTime.UtcNow.AddHours(8).Date.AddHours(-8);
             var totalVisits = await baseQuery.CountAsync();
-            var todayVisits = await baseQuery.CountAsync(v => v.VisitedAt >= todayStart);
-            var uniqueVisitors = await baseQuery.Select(v => v.VisitorId).Distinct().CountAsync();
+            var todayVisits = await baseQuery
+                .Where(v => v.VisitedAt >= todayStart)
+                .Select(v => v.Username)
+                .Distinct()
+                .CountAsync();
+            var uniqueVisitors = await db.StaffUsers.CountAsync();
+            if (uniqueVisitors == 0)
+            {
+                uniqueVisitors = await baseQuery.Select(v => v.Username).Distinct().CountAsync();
+            }
 
             return new RecordVisitorResultDto(totalVisits, todayVisits, uniqueVisitors);
         }
     }
 }
-
