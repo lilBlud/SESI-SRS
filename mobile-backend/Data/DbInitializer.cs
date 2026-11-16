@@ -15,7 +15,17 @@ namespace mobile_backend.Data
             using var scope = app.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            db.Database.EnsureCreated();
+            try
+            {
+                if (!db.GlossaryTerms.Any())
+                {
+                    db.Database.EnsureCreated();
+                }
+            }
+            catch
+            {
+                db.Database.EnsureCreated();
+            }
 
 
 
