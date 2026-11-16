@@ -127,23 +127,8 @@ export default function LoginPage({ onLogin }) {
           className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none"
         />
 
-        {/* Brand Header */}
-        <div className="relative z-10 flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-white/95 border border-white/20 p-1.5 shadow-md flex items-center justify-center shrink-0">
-            <img src="/assets/logo.png" alt="SESI Logo" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <span className="text-base font-extrabold tracking-tight text-white block leading-none">
-              SESI INSIGHT
-            </span>
-            <span className="text-[11px] font-medium text-emerald-300/90 block mt-1">
-              Sabah Electricity Supply Industry
-            </span>
-          </div>
-        </div>
-
         {/* Center Narrative (Full on Desktop, Compact on Mobile) */}
-        <div className="relative z-10 mt-6 lg:my-auto max-w-xl">
+        <div className="relative z-10 mt-1 lg:my-auto max-w-xl">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-[42px] font-black tracking-tight leading-[1.15] text-white">
             Regulatory intelligence &amp; performance for{' '}
             <span className="text-emerald-400">Sabah&apos;s grid.</span>
