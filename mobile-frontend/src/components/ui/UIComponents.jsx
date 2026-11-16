@@ -246,17 +246,29 @@ export function CorporatePerformanceChart({ chartData, term = '', description = 
   const dataForYear = parsed.filter(d => parseInt(d.year) === activeYear);
   dataForYear.sort((a, b) => MONTH_MAP[a.month] - MONTH_MAP[b.month]);
 
-  const formattedData = dataForYear.map(d => ({
+  const rawFormattedData = dataForYear.map(d => ({
     name: `${d.month}`,
     fullName: `${d.month}`,
-    value: d.value
+    value: Number(d.value) || 0
   }));
+
+  // Trim trailing zero months (unentered future months) so the line & Latest KPI stop at the last recorded value
+  let lastRecordedIdx = -1;
+  for (let i = rawFormattedData.length - 1; i >= 0; i--) {
+    if (rawFormattedData[i].value !== 0) {
+      lastRecordedIdx = i;
+      break;
+    }
+  }
+  const formattedData = lastRecordedIdx >= 0
+    ? rawFormattedData.slice(0, lastRecordedIdx + 1)
+    : rawFormattedData;
 
   const unitLabel = getUnitLabel(term, yAxisLabel);
   const lastData = formattedData[formattedData.length - 1];
   const firstData = formattedData[0];
-  const growth = firstData && firstData.value !== 0 
-    ? ((lastData.value - firstData.value) / Math.abs(firstData.value)) * 100 
+  const growth = firstData && lastData && firstData.value !== 0
+    ? ((lastData.value - firstData.value) / Math.abs(firstData.value)) * 100
     : 0;
   const isPositive = growth >= 0;
   const isZero = growth === 0;
