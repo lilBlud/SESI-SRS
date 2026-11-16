@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
-import { IS_LOCAL_SSMS, API_BASE } from '../../../services/apiConfig';
+import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../../services/apiConfig';
 import { PostImageSlider } from '../../ui';
 import { ImageViewerModal } from '../../modals';
 
@@ -199,7 +199,7 @@ export default function AdminInfographicsSection({
 
         const res = await fetch(url, {
           method,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
           body: JSON.stringify(payload)
         });
 
@@ -249,10 +249,10 @@ export default function AdminInfographicsSection({
         if (error) throw error;
       } catch (err) {
         console.warn("Direct Supabase delete failed, trying API:", err);
-        await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) }).catch(() => null);
+        await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', headers: getAuthHeaders(), signal: AbortSignal.timeout(4000) }).catch(() => null);
       }
     } else {
-      await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) }).catch(() => null);
+      await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', headers: getAuthHeaders(), signal: AbortSignal.timeout(4000) }).catch(() => null);
     }
     if (onRefreshInfographics) onRefreshInfographics();
   };

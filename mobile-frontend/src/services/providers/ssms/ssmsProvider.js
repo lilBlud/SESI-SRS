@@ -1,4 +1,4 @@
-import { API_BASE } from '../../apiConfig';
+import { API_BASE, getAuthHeaders } from '../../apiConfig';
 
 /**
  * Dedicated local SSMS driver communicating via mobile-backend ASP.NET Core API on port 5195.
@@ -7,11 +7,12 @@ import { API_BASE } from '../../apiConfig';
 async function request(path, options = {}) {
   const url = `${API_BASE}${path}`;
   const res = await fetch(url, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...(options.headers || {})
-    },
-    ...options
+    }
   });
   if (!res.ok) {
     const errorBody = await res.text().catch(() => '');

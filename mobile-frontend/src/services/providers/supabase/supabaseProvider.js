@@ -2,7 +2,6 @@ import { supabase } from '../../apiConfig';
 import { 
   resolveUserRole, 
   normalizeUser, 
-  matchesUser, 
   buildStaffIndex, 
   isExcludedLeaderboardAccount,
   calculateStreakFromDates,
@@ -29,6 +28,21 @@ function buildSafeUserFilterClauses(targets) {
     }
   }
   return clauses.join(',');
+}
+
+const SAFE_STAFF_COLUMNS = 'Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, CreatedAt';
+
+async function findStaffByTarget(target) {
+  const safe = String(target || '').replace(/[,()"\\]/g, '').trim();
+  if (!safe) return null;
+  const { data, error } = await supabase
+    .from('StaffUsers')
+    .select(SAFE_STAFF_COLUMNS)
+    .or(`Email.ilike.${safe},FullName.ilike.${safe},StaffId.ilike.${safe},PreferredName.ilike.${safe}`)
+    .limit(1)
+    .maybeSingle();
+  if (error) return null;
+  return data;
 }
 
 export const supabaseProvider = {
@@ -318,32 +332,19 @@ export const supabaseProvider = {
   async getAllUsers() {
     const { data, error } = await supabase
       .from('StaffUsers')
-      .select('Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, CreatedAt')
+      .select(SAFE_STAFF_COLUMNS)
       .order('FullName', { ascending: true });
     if (error) throw error;
     return (data || []).map(u => normalizeUser(u, resolveUserRole(u)));
   },
 
   async getUserProfile(usernameOrEmail) {
-    const target = String(usernameOrEmail || '').trim().toLowerCase();
-    const { data, error } = await supabase
-      .from('StaffUsers')
-      .select('*');
-    if (error || !data) return null;
-    const match = data.find(u => matchesUser(u, target));
+    const match = await findStaffByTarget(usernameOrEmail);
     return match ? normalizeUser(match, resolveUserRole(match)) : null;
   },
 
   async updateProfilePicture(usernameOrEmail, profilePicture) {
-    const target = String(usernameOrEmail || '').trim().toLowerCase();
-    const { data, error } = await supabase
-      .from('StaffUsers')
-      .select('Id, Email, FullName');
-    if (error) throw error;
-    const match = (data || []).find(u => 
-      (u.Email && u.Email.toLowerCase() === target) ||
-      (u.FullName && u.FullName.toLowerCase() === target)
-    );
+    const match = await findStaffByTarget(usernameOrEmail);
     if (!match) throw new Error("User not found");
     const { error: upErr } = await supabase
       .from('StaffUsers')
@@ -354,14 +355,8 @@ export const supabaseProvider = {
   },
 
   async updatePreferredName(usernameOrEmail, preferredName) {
-    const target = String(usernameOrEmail || '').trim().toLowerCase();
     const trimmed = (preferredName || '').trim().slice(0, 10);
-    const { data, error } = await supabase.from('StaffUsers').select('Id, Email, FullName');
-    if (error) throw error;
-    const match = (data || []).find(u => 
-      (u.Email && u.Email.toLowerCase() === target) ||
-      (u.FullName && u.FullName.toLowerCase() === target)
-    );
+    const match = await findStaffByTarget(usernameOrEmail);
     if (match) {
       await supabase.from('StaffUsers').update({ PreferredName: trimmed }).eq('Id', match.Id ?? match.id);
     }
@@ -389,16 +384,17 @@ export const supabaseProvider = {
 
     const { data, error } = await supabase
       .from('StaffUsers')
-      .select('*')
+      .select(`${SAFE_STAFF_COLUMNS}, PasswordHash`)
       .or(`Email.ilike.${safe},StaffId.ilike.${safe},PreferredName.ilike.${safe}`)
       .limit(1)
       .maybeSingle();
 
-    if (error || !data || data.PasswordHash !== password) {
+    if (error || !data || data.PasswordHash === '__AD_AUTH__' || data.PasswordHash !== password) {
       throw new Error("Invalid Staff ID/Email or password");
     }
 
-    return normalizeUser(data, resolveUserRole(data));
+    const { PasswordHash: _discarded, ...safeRow } = data;
+    return normalizeUser(safeRow, resolveUserRole(safeRow));
   },
 
   async signup(payload) {
@@ -419,7 +415,7 @@ export const supabaseProvider = {
     const { data, error } = await supabase
       .from('StaffUsers')
       .insert([newUser])
-      .select()
+      .select(SAFE_STAFF_COLUMNS)
       .single();
 
     if (error) throw error;
@@ -429,7 +425,7 @@ export const supabaseProvider = {
   // ─── Visitor Stats ───
   async getVisitorStats() {
     const [logsRes, staffRes] = await Promise.all([
-      supabase.from('VisitorLogs').select('*').order('VisitedAt', { ascending: false }).limit(5000),
+      supabase.from('VisitorLogs').select('Id, VisitorId, Username, Division, VisitedAt').order('VisitedAt', { ascending: false }).limit(5000),
       supabase.from('StaffUsers').select('Id')
     ]);
 

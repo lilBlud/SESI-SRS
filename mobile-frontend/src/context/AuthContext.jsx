@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getUserProfile } from '../services/userService';
+import { setAuthToken } from '../services/apiConfig';
 
 const AuthContext = createContext({
   user: null,
@@ -57,12 +58,15 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback((userData) => {
-    try { localStorage.setItem('sesi_user', JSON.stringify(userData)); } catch {}
+    const { token, ...safeUser } = userData || {};
+    if (token) setAuthToken(token);
+    try { localStorage.setItem('sesi_user', JSON.stringify(safeUser)); } catch {}
     try { sessionStorage.removeItem('dismissedInstallPrompt'); } catch {}
-    setUser(userData);
+    setUser(safeUser);
   }, []);
 
   const logout = useCallback(() => {
+    setAuthToken(null);
     try {
       localStorage.removeItem('sesi_user');
       sessionStorage.removeItem('dismissedInstallPrompt');
@@ -72,13 +76,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  // Sync latest user profile from active data provider with shallow equality
+  // Sync latest user profile & refresh backend token on mount
   useEffect(() => {
     if (user?.email || user?.fullName || user?.staffId) {
       const u = user.email || user.fullName || user.staffId;
       getUserProfile(u)
         .then(data => {
           if (data) {
+            if (data.token) setAuthToken(data.token);
             handleUpdateUser({
               ...(data.profilePicture !== undefined ? { profilePicture: data.profilePicture || '' } : {}),
               ...(data.preferredName !== undefined ? { preferredName: data.preferredName || '' } : {}),

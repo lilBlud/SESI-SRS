@@ -36,6 +36,14 @@ namespace mobile_backend.Tests
         {
             var month = "2026-11";
 
+            _db.StaffUsers.Add(new StaffUser
+            {
+                FullName = "real_user_1",
+                PreferredName = "R1",
+                Email = "r1@sesb.com.my",
+                Division = "Information & Digital"
+            });
+
             _db.UserAnswers.AddRange(
                 new UserAnswer { Username = "real_user_1", Month = month, PointsAwarded = 100 },
                 new UserAnswer { Username = "real_user_1", Month = month, PointsAwarded = 150 },
@@ -53,6 +61,65 @@ namespace mobile_backend.Tests
             Assert.Equal(400, leaderboard[0].Score);
             Assert.Equal("real_user_1", leaderboard[1].Username);
             Assert.Equal(250, leaderboard[1].Score);
+            Assert.Equal("R1", leaderboard[1].DisplayName);
+        }
+
+        [Fact]
+        public async Task SubmitAnswerAsync_ValidatesCorrectnessAndPreventsSpoofingAndDuplicates()
+        {
+            var q = new QuizQuestion
+            {
+                Month = "2026-11",
+                QuestionText = "What does IBR stand for?",
+                OptionA = "Incentive-Based Regulation",
+                OptionB = "Wrong B",
+                OptionC = "Wrong C",
+                OptionD = "Wrong D",
+                CorrectOption = "A"
+            };
+            _db.QuizQuestions.Add(q);
+            await _db.SaveChangesAsync();
+
+            var service = new QuizService(_db);
+
+            // Attempt to spoof 999999 points on a WRONG option
+            var wrongAttempt = await service.SubmitAnswerAsync(new UserAnswer
+            {
+                Username = "ali",
+                Month = "2026-11",
+                QuestionId = q.Id,
+                SelectedOption = "Wrong B",
+                IsCorrect = true,
+                PointsAwarded = 999999,
+                TimeTakenSeconds = 5
+            });
+            Assert.False(wrongAttempt.IsCorrect);
+            Assert.Equal(0, wrongAttempt.PointsAwarded);
+
+            // Second attempt by same user on same question does not double-score
+            var duplicateAttempt = await service.SubmitAnswerAsync(new UserAnswer
+            {
+                Username = "ali",
+                Month = "2026-11",
+                QuestionId = q.Id,
+                SelectedOption = "Incentive-Based Regulation",
+                TimeTakenSeconds = 5
+            });
+            Assert.Equal(wrongAttempt.Id, duplicateAttempt.Id);
+            Assert.Equal(0, duplicateAttempt.PointsAwarded);
+
+            // Fresh user answering correctly gets server-calculated score
+            var validAttempt = await service.SubmitAnswerAsync(new UserAnswer
+            {
+                Username = "siti",
+                Month = "2026-11",
+                QuestionId = q.Id,
+                SelectedOption = "Incentive-Based Regulation",
+                PointsAwarded = 999999,
+                TimeTakenSeconds = 10
+            });
+            Assert.True(validAttempt.IsCorrect);
+            Assert.Equal(900, validAttempt.PointsAwarded);
         }
     }
 }

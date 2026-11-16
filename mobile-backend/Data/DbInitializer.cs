@@ -10,7 +10,17 @@ namespace mobile_backend.Data
 {
     public static class DbInitializer
     {
+        private static readonly object InitLock = new();
+
         public static void Initialize(WebApplication app)
+        {
+            lock (InitLock)
+            {
+                InitializeCore(app);
+            }
+        }
+
+        private static void InitializeCore(WebApplication app)
         {
             using var scope = app.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

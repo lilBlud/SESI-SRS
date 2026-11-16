@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
-import { HomeTab, GlossaryTab, QuizTab, ProfileTab } from './components/tabs';
 
+const HomeTab = lazy(() => import('./components/tabs/HomeTab'));
+const GlossaryTab = lazy(() => import('./components/tabs/GlossaryTab'));
+const QuizTab = lazy(() => import('./components/tabs/QuizTab'));
+const ProfileTab = lazy(() => import('./components/tabs/ProfileTab'));
 const AdminTab = lazy(() => import('./components/tabs/AdminTab'));
 import LoginPage from './components/pages/LoginPage';
 import PasscodeGate from './components/pages/PasscodeGate';
@@ -330,18 +333,18 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
-        {activeTab === 'glossary' && <GlossaryTab key={`glossary-${refreshKey}`} user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
-        {activeTab === 'quiz' && <QuizTab key={`quiz-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
-        {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} setActiveTab={setActiveTab} />}
-        {activeTab === 'admin' && (
-          user?.role === 'Admin' ? (
-            <Suspense fallback={
-              <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3 text-slate-400">
-                <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xs font-semibold">Loading Admin Workspace...</span>
-              </div>
-            }>
+        <Suspense fallback={
+          <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3 text-slate-400">
+            <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-semibold">Loading view...</span>
+          </div>
+        }>
+          {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
+          {activeTab === 'glossary' && <GlossaryTab key={`glossary-${refreshKey}`} user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
+          {activeTab === 'quiz' && <QuizTab key={`quiz-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
+          {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} setActiveTab={setActiveTab} />}
+          {activeTab === 'admin' && (
+            user?.role === 'Admin' ? (
               <AdminTab
                 currentUser={user}
                 onClose={() => setActiveTab('home')}
@@ -349,8 +352,7 @@ function App() {
                 visitorStats={visitorStats}
                 onRefreshVisitorStats={refreshVisitorStats}
               />
-            </Suspense>
-          ) : (
+            ) : (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 space-y-4">
               <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-500 flex items-center justify-center text-3xl shadow-sm">
                 🛡️
@@ -368,8 +370,9 @@ function App() {
                 Return to Home
               </button>
             </div>
-          )
-        )}
+            )
+          )}
+        </Suspense>
         </div>
       </main>
 

@@ -100,7 +100,7 @@ _ = Task.Run(() =>
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Background DB init error: {ex.Message}");
+        app.Logger.LogError(ex, "Background database initialization failed");
     }
 });
 

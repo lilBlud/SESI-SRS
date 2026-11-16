@@ -12,7 +12,8 @@ namespace mobile_backend.DTOs
         string StaffId,
         string ProfilePicture,
         string Role,
-        DateTime? CreatedAt
+        DateTime? CreatedAt,
+        string? Token = null
     );
 
     public record StreakDto(
@@ -33,7 +34,7 @@ namespace mobile_backend.DTOs
         string Division,
         string StaffId,
         string ProfilePicture,
-        string Role
+        string Role,
+        string? Token = null
     );
 }
-

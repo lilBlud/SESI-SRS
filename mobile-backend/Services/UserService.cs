@@ -4,13 +4,14 @@ using System.DirectoryServices;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using mobile_backend.Data;
 using mobile_backend.DTOs;
 using mobile_backend.Models;
 
 namespace mobile_backend.Services
 {
-    public class UserService(AppDbContext db) : IUserService
+    public class UserService(AppDbContext db, IConfiguration? config = null) : IUserService
     {
         public async Task<StreakDto> GetUserStreakAsync(string username)
         {
@@ -79,7 +80,8 @@ namespace mobile_backend.Services
                 staff.StaffId,
                 staff.ProfilePicture,
                 staff.Role,
-                staff.CreatedAt
+                staff.CreatedAt,
+                SecurityHelper.IssueToken(staff, config)
             );
         }
 
@@ -187,19 +189,10 @@ namespace mobile_backend.Services
                     if (string.Equals(existing.Email, "azibdanish66@gmail.com", StringComparison.OrdinalIgnoreCase))
                         existing.Role = "Admin";
 
-                    existing.PasswordHash = password;
+                    existing.PasswordHash = SecurityHelper.AdAuthSentinel;
                     await db.SaveChangesAsync();
 
-                    return new AuthResponseDto(
-                        existing.Id,
-                        existing.FullName,
-                        existing.PreferredName,
-                        existing.Email,
-                        existing.Division,
-                        existing.StaffId,
-                        existing.ProfilePicture,
-                        existing.Role
-                    );
+                    return ToAuthResponse(existing);
                 }
 
                 var firstWord = (adFullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? adStaffId).Trim();
@@ -210,7 +203,7 @@ namespace mobile_backend.Services
                     FullName = adFullName,
                     PreferredName = firstWord,
                     Email = !string.IsNullOrWhiteSpace(adEmail) ? adEmail : $"{adStaffId}@sesb.com.my",
-                    PasswordHash = password,
+                    PasswordHash = SecurityHelper.AdAuthSentinel,
                     Division = !string.IsNullOrWhiteSpace(adDivision) ? adDivision : "General",
                     StaffId = adStaffId,
                     ProfilePicture = "",
@@ -221,27 +214,23 @@ namespace mobile_backend.Services
                 db.StaffUsers.Add(created);
                 await db.SaveChangesAsync();
 
-                return new AuthResponseDto(
-                    created.Id,
-                    created.FullName,
-                    created.PreferredName,
-                    created.Email,
-                    created.Division,
-                    created.StaffId,
-                    created.ProfilePicture,
-                    created.Role
-                );
+                return ToAuthResponse(created);
             }
 
             // 2. Fallback: local StaffUsers record (e.g. protected admin azibdanish66@gmail.com or offline local account)
             var existingUser = await db.StaffUsers.FirstOrDefaultAsync(u =>
                 u.Division != "DELETED" &&
-                (u.Email == identifier || u.StaffId == identifier || u.PreferredName == identifier) &&
-                u.PasswordHash == password);
+                (u.Email == identifier || u.StaffId == identifier || u.PreferredName == identifier));
 
-            if (existingUser != null)
+            if (existingUser != null && SecurityHelper.VerifyPassword(password, existingUser.PasswordHash, out var needsRehash))
             {
                 var changed = false;
+                if (needsRehash)
+                {
+                    existingUser.PasswordHash = SecurityHelper.HashPassword(password);
+                    changed = true;
+                }
+
                 if (string.Equals(existingUser.Email, "azibdanish66@gmail.com", StringComparison.OrdinalIgnoreCase) && existingUser.Role != "Admin")
                 {
                     existingUser.Role = "Admin";
@@ -260,20 +249,23 @@ namespace mobile_backend.Services
                     await db.SaveChangesAsync();
                 }
 
-                return new AuthResponseDto(
-                    existingUser.Id,
-                    existingUser.FullName,
-                    existingUser.PreferredName,
-                    existingUser.Email,
-                    existingUser.Division,
-                    existingUser.StaffId,
-                    existingUser.ProfilePicture,
-                    existingUser.Role
-                );
+                return ToAuthResponse(existingUser);
             }
 
             return null;
         }
+
+        private AuthResponseDto ToAuthResponse(StaffUser user) => new(
+            user.Id,
+            user.FullName,
+            user.PreferredName,
+            user.Email,
+            user.Division,
+            user.StaffId,
+            user.ProfilePicture,
+            user.Role,
+            SecurityHelper.IssueToken(user, config)
+        );
 
         private static (string StaffId, string FullName, string Email, string Division)? TryAuthenticateActiveDirectory(string loginId, string password)
         {
@@ -348,7 +340,7 @@ namespace mobile_backend.Services
             }
         }
 
-        private static string ResolveAdDivision(
+        public static string ResolveAdDivision(
             string? adDivision,
             string? adDepartment,
             string? distinguishedName,
@@ -389,7 +381,7 @@ namespace mobile_backend.Services
             return !string.IsNullOrWhiteSpace(mappedCompany) ? mappedCompany : "General";
         }
 
-        private static string? NormalizeSesbDivision(string? rawValue)
+        public static string? NormalizeSesbDivision(string? rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
                 return null;
@@ -401,7 +393,9 @@ namespace mobile_backend.Services
                 u.Contains("INFORMATION & DIGITAL") ||
                 u.Contains("INFORMATION AND DIGITAL") ||
                 u.Contains("INFORMATION TECHNOLOGY") ||
-                u.Contains("DIGITAL"))
+                u.Contains("DIGITAL") ||
+                u.Contains("ICT") ||
+                u.Contains("IDD"))
                 return "Information & Digital";
 
             if (u is "S&S" or "S & S" or "SSD" or "CS&S" ||
@@ -485,19 +479,11 @@ namespace mobile_backend.Services
             if (await db.StaffUsers.AnyAsync(u => u.Email == newUser.Email))
                 return null;
 
+            newUser.PasswordHash = SecurityHelper.HashPassword(newUser.PasswordHash);
             db.StaffUsers.Add(newUser);
             await db.SaveChangesAsync();
 
-            return new AuthResponseDto(
-                newUser.Id,
-                newUser.FullName,
-                newUser.PreferredName,
-                newUser.Email,
-                newUser.Division,
-                newUser.StaffId,
-                newUser.ProfilePicture,
-                newUser.Role
-            );
+            return ToAuthResponse(newUser);
         }
 
         private Task<StaffUser?> FindStaffUserAsync(string? target)

@@ -30,30 +30,25 @@ namespace mobile_backend.Services
 
         public async Task<List<LeaderboardEntryDto>> GetLeaderboardAsync(string month)
         {
-            var allAnswers = await db.UserAnswers.AsNoTracking().Where(a => a.Month == month).ToListAsync();
-            var allStaff = await db.StaffUsers.AsNoTracking().ToListAsync();
-
-            var staffByName = allStaff
-                .Where(s => !string.IsNullOrWhiteSpace(s.FullName))
-                .GroupBy(s => s.FullName.Trim().ToLower())
-                .ToDictionary(g => g.Key, g => g.First());
-
-            var staffByEmail = allStaff
-                .Where(s => !string.IsNullOrWhiteSpace(s.Email))
-                .GroupBy(s => s.Email.Trim().ToLower())
-                .ToDictionary(g => g.Key, g => g.First());
-
-            var staffByPreferred = allStaff
-                .Where(s => !string.IsNullOrWhiteSpace(s.PreferredName))
-                .GroupBy(s => s.PreferredName.Trim().ToLower())
-                .ToDictionary(g => g.Key, g => g.First());
+            var allAnswers = await db.UserAnswers
+                .AsNoTracking()
+                .Where(a => a.Month == month)
+                .Select(a => new
+                {
+                    a.Username,
+                    a.PreferredName,
+                    a.Division,
+                    a.PointsAwarded,
+                    a.DateAnswered
+                })
+                .ToListAsync();
 
             var excludedMock = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "demo", "demo user", "demo-001", "ka", "evelien", "quizwiz", "coolcat", "cameron", "petrus"
             };
 
-            var top = allAnswers
+            var groupedTop = allAnswers
                 .Where(a =>
                 {
                     var u = (a.Username ?? "").Trim();
@@ -61,53 +56,131 @@ namespace mobile_backend.Services
                     return !excludedMock.Contains(u) && !excludedMock.Contains(p) && !u.Contains("demo", StringComparison.OrdinalIgnoreCase);
                 })
                 .GroupBy(a => a.Username)
-                .Select(g =>
+                .Select(g => new
                 {
-                    var first = g.FirstOrDefault();
-                    var preferred = g.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.PreferredName))?.PreferredName;
-                    var key = (g.Key ?? "").Trim().ToLower();
-
-                    StaffUser? staff = null;
-                    if (staffByName.TryGetValue(key, out var s1)) staff = s1;
-                    else if (staffByEmail.TryGetValue(key, out var s2)) staff = s2;
-                    else if (!string.IsNullOrWhiteSpace(preferred) && staffByPreferred.TryGetValue(preferred.Trim().ToLower(), out var s3)) staff = s3;
-
-                    var displayName = !string.IsNullOrWhiteSpace(preferred)
-                        ? preferred
-                        : (!string.IsNullOrWhiteSpace(staff?.PreferredName)
-                            ? staff.PreferredName
-                            : (!string.IsNullOrWhiteSpace(first?.PreferredName) ? first.PreferredName : g.Key));
-
-                    return new LeaderboardEntryDto(
-                        key,
-                        g.Key ?? "Anonymous",
-                        displayName ?? g.Key ?? "Anonymous",
-                        g.Sum(a => a.PointsAwarded),
-                        staff?.Division ?? first?.Division ?? "General",
-                        first?.DateAnswered,
-                        0,
-                        staff?.ProfilePicture,
-                        staff?.Id
-                    );
+                    RawUsername = g.Key,
+                    Key = (g.Key ?? "").Trim().ToLower(),
+                    Preferred = g.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.PreferredName))?.PreferredName,
+                    First = g.FirstOrDefault(),
+                    Score = g.Sum(a => a.PointsAwarded)
                 })
                 .OrderByDescending(x => x.Score)
                 .Take(10)
                 .ToList();
 
-            return top;
+            if (groupedTop.Count == 0)
+                return [];
+
+            var matchKeys = groupedTop
+                .SelectMany(x => new[] { x.Key, (x.Preferred ?? "").Trim().ToLower() })
+                .Where(k => !string.IsNullOrEmpty(k))
+                .Distinct()
+                .ToList();
+
+            var candidateStaff = await db.StaffUsers
+                .AsNoTracking()
+                .Where(s =>
+                    (!string.IsNullOrEmpty(s.FullName) && matchKeys.Contains(s.FullName.Trim().ToLower())) ||
+                    (!string.IsNullOrEmpty(s.Email) && matchKeys.Contains(s.Email.Trim().ToLower())) ||
+                    (!string.IsNullOrEmpty(s.PreferredName) && matchKeys.Contains(s.PreferredName.Trim().ToLower())))
+                .Select(s => new
+                {
+                    s.Id,
+                    s.FullName,
+                    s.PreferredName,
+                    s.Email,
+                    s.Division,
+                    s.ProfilePicture
+                })
+                .ToListAsync();
+
+            return [.. groupedTop.Select(g =>
+            {
+                var prefLower = (g.Preferred ?? "").Trim().ToLower();
+                var staff = candidateStaff.FirstOrDefault(s =>
+                    (!string.IsNullOrWhiteSpace(s.FullName) && string.Equals(s.FullName.Trim(), g.Key, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrWhiteSpace(s.Email) && string.Equals(s.Email.Trim(), g.Key, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrWhiteSpace(prefLower) && !string.IsNullOrWhiteSpace(s.PreferredName) && string.Equals(s.PreferredName.Trim(), prefLower, StringComparison.OrdinalIgnoreCase)));
+
+                var displayName = !string.IsNullOrWhiteSpace(g.Preferred)
+                    ? g.Preferred
+                    : (!string.IsNullOrWhiteSpace(staff?.PreferredName)
+                        ? staff.PreferredName
+                        : (!string.IsNullOrWhiteSpace(g.First?.PreferredName) ? g.First.PreferredName : g.RawUsername));
+
+                return new LeaderboardEntryDto(
+                    g.Key,
+                    g.RawUsername ?? "Anonymous",
+                    displayName ?? g.RawUsername ?? "Anonymous",
+                    g.Score,
+                    staff?.Division ?? g.First?.Division ?? "General",
+                    g.First?.DateAnswered,
+                    0,
+                    staff?.ProfilePicture,
+                    staff?.Id
+                );
+            })];
         }
 
         public async Task<UserAnswer> SubmitAnswerAsync(UserAnswer answer)
         {
             answer.DateAnswered = DateTime.UtcNow;
+            answer.Username = (answer.Username ?? "").Trim();
+            answer.Month = (answer.Month ?? "").Trim();
+            answer.TimeTakenSeconds = Math.Clamp(answer.TimeTakenSeconds, 0, 3600);
+
+            if (answer.QuestionId > 0)
+            {
+                var existing = await db.UserAnswers.FirstOrDefaultAsync(a =>
+                    a.Username == answer.Username &&
+                    a.Month == answer.Month &&
+                    a.QuestionId == answer.QuestionId);
+                if (existing != null)
+                    return existing;
+
+                var question = await db.QuizQuestions.AsNoTracking()
+                    .FirstOrDefaultAsync(q => q.Id == answer.QuestionId);
+                if (question != null)
+                {
+                    var optKey = (question.CorrectOption ?? "").Trim().ToUpperInvariant();
+                    var correctText = optKey switch
+                    {
+                        "A" => question.OptionA,
+                        "B" => question.OptionB,
+                        "C" => question.OptionC,
+                        "D" => question.OptionD,
+                        _ => ""
+                    };
+                    var chosen = (answer.SelectedOption ?? "").Trim();
+                    var serverCorrect =
+                        string.Equals(chosen, (correctText ?? "").Trim(), StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(chosen, optKey, StringComparison.OrdinalIgnoreCase);
+
+                    answer.IsCorrect = serverCorrect;
+                    answer.PointsAwarded = serverCorrect ? Math.Max(500, 1000 - (answer.TimeTakenSeconds * 10)) : 0;
+                    if (string.IsNullOrWhiteSpace(answer.QuestionText))
+                        answer.QuestionText = question.QuestionText;
+                }
+                else
+                {
+                    answer.IsCorrect = false;
+                    answer.PointsAwarded = 0;
+                }
+            }
+            else
+            {
+                answer.PointsAwarded = answer.IsCorrect ? Math.Max(500, 1000 - (answer.TimeTakenSeconds * 10)) : 0;
+            }
+
             if (string.IsNullOrWhiteSpace(answer.PreferredName))
             {
-                var staff = await db.StaffUsers.FirstOrDefaultAsync(u => u.FullName == answer.Username || u.Email == answer.Username);
+                var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(u => u.FullName == answer.Username || u.Email == answer.Username);
                 if (staff != null && !string.IsNullOrWhiteSpace(staff.PreferredName))
                 {
                     answer.PreferredName = staff.PreferredName;
                 }
             }
+
             db.UserAnswers.Add(answer);
             await db.SaveChangesAsync();
             return answer;

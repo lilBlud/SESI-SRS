@@ -13,6 +13,33 @@ export const API_BASE = (
     : (isLocalHost ? '' : (import.meta.env.VITE_API_BASE || ''))
 ).replace(/\/$/, '');
 
+export const AUTH_TOKEN_KEY = 'sesi_auth_token';
+
+export function getAuthToken() {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function setAuthToken(token) {
+  try {
+    if (token) {
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+  } catch {
+    // Ignore storage errors in restricted contexts
+  }
+}
+
+export function getAuthHeaders() {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://avlypjdoahothehakchf.supabase.co';
 export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable__T0Lcs6Js5Iy8x3EVnMhsw_6Cj_gcxv';
 
@@ -23,4 +50,3 @@ export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_p
 export const IS_LOCAL_SSMS = !isCloudflarePages;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-

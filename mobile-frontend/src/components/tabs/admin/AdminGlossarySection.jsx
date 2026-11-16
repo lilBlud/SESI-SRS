@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { getYAxisUnit } from '../../ui';
 import { DEFAULT_HISTORICAL_METRICS } from '../../../data/historicalPerformanceData';
 import { supabase } from '../../../utils/supabaseClient';
-import { IS_LOCAL_SSMS, API_BASE } from '../../../services/apiConfig';
+import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../../services/apiConfig';
 import { AdminGlossaryForm, AdminGlossaryCardList } from './glossary';
 
 export default function AdminGlossarySection({
@@ -110,14 +110,14 @@ export default function AdminGlossarySection({
           res = await fetch(`${API_BASE}/api/admin/glossary/${gEditId}`, {
           signal: AbortSignal.timeout(4000),
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(payload)
           });
         } else {
           res = await fetch(`${API_BASE}/api/admin/glossary`, {
           signal: AbortSignal.timeout(4000),
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(payload)
           });
         }
@@ -294,14 +294,14 @@ export default function AdminGlossarySection({
           if (existing) {
             await fetch(`${API_BASE}/api/admin/glossary/${existing.id}`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
               body: JSON.stringify(payload)
             }).catch(() => null);
             updatedCount++;
           } else {
             await fetch(`${API_BASE}/api/admin/glossary`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
               body: JSON.stringify(payload)
             }).catch(() => null);
             addedCount++;
@@ -336,7 +336,7 @@ export default function AdminGlossarySection({
     }
     if (!deleted) {
       try {
-        const res = await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) });
+        const res = await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE', headers: getAuthHeaders(), signal: AbortSignal.timeout(4000) });
         if (res.ok) deleted = true;
       } catch {}
     }

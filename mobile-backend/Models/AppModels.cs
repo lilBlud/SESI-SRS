@@ -58,11 +58,6 @@ namespace mobile_backend.Models
         public string Message { get; set; } = string.Empty;
     }
 
-    public class AdminLoginRequest
-    {
-        public string Password { get; set; } = string.Empty;
-    }
-
     public class UpdatePreferredNameRequest
     {
         public string Username { get; set; } = string.Empty;
