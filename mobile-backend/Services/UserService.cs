@@ -155,7 +155,85 @@ namespace mobile_backend.Services
             if (string.IsNullOrWhiteSpace(identifier) || string.IsNullOrEmpty(password))
                 return null;
 
-            // 1. Fast path: check existing StaffUsers record by Email, StaffId, or PreferredName
+            // 1. Active Directory (LDAP://sesb.internal) authentication & live attribute sync
+            var adProfile = TryAuthenticateActiveDirectory(identifier, password);
+            if (adProfile != null)
+            {
+                var adStaffId = adProfile.Value.StaffId;
+                var adEmail = adProfile.Value.Email;
+                var adFullName = adProfile.Value.FullName;
+                var adDivision = adProfile.Value.Division;
+
+                var existing = await db.StaffUsers.FirstOrDefaultAsync(u =>
+                    u.Division != "DELETED" &&
+                    ((!string.IsNullOrEmpty(adStaffId) && u.StaffId == adStaffId) ||
+                     (!string.IsNullOrEmpty(adEmail) && u.Email == adEmail) ||
+                     u.Email == identifier ||
+                     u.StaffId == identifier));
+
+                if (existing != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(adFullName))
+                        existing.FullName = adFullName;
+                    if (!string.IsNullOrWhiteSpace(adStaffId))
+                        existing.StaffId = adStaffId;
+                    if (!string.IsNullOrWhiteSpace(adDivision) && (adDivision != "General" || string.IsNullOrWhiteSpace(existing.Division)))
+                        existing.Division = adDivision;
+                    else if (!string.IsNullOrWhiteSpace(existing.Division))
+                        existing.Division = NormalizeSesbDivision(existing.Division) ?? existing.Division;
+
+                    if (string.IsNullOrWhiteSpace(existing.Email) && !string.IsNullOrWhiteSpace(adEmail))
+                        existing.Email = adEmail;
+                    if (string.Equals(existing.Email, "azibdanish66@gmail.com", StringComparison.OrdinalIgnoreCase))
+                        existing.Role = "Admin";
+
+                    existing.PasswordHash = password;
+                    await db.SaveChangesAsync();
+
+                    return new AuthResponseDto(
+                        existing.Id,
+                        existing.FullName,
+                        existing.PreferredName,
+                        existing.Email,
+                        existing.Division,
+                        existing.StaffId,
+                        existing.ProfilePicture,
+                        existing.Role
+                    );
+                }
+
+                var firstWord = (adFullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? adStaffId).Trim();
+                if (firstWord.Length > 10) firstWord = firstWord[..10];
+
+                var created = new StaffUser
+                {
+                    FullName = adFullName,
+                    PreferredName = firstWord,
+                    Email = !string.IsNullOrWhiteSpace(adEmail) ? adEmail : $"{adStaffId}@sesb.com.my",
+                    PasswordHash = password,
+                    Division = !string.IsNullOrWhiteSpace(adDivision) ? adDivision : "General",
+                    StaffId = adStaffId,
+                    ProfilePicture = "",
+                    Role = "Staff",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                db.StaffUsers.Add(created);
+                await db.SaveChangesAsync();
+
+                return new AuthResponseDto(
+                    created.Id,
+                    created.FullName,
+                    created.PreferredName,
+                    created.Email,
+                    created.Division,
+                    created.StaffId,
+                    created.ProfilePicture,
+                    created.Role
+                );
+            }
+
+            // 2. Fallback: local StaffUsers record (e.g. protected admin azibdanish66@gmail.com or offline local account)
             var existingUser = await db.StaffUsers.FirstOrDefaultAsync(u =>
                 u.Division != "DELETED" &&
                 (u.Email == identifier || u.StaffId == identifier || u.PreferredName == identifier) &&
@@ -163,9 +241,22 @@ namespace mobile_backend.Services
 
             if (existingUser != null)
             {
+                var changed = false;
                 if (string.Equals(existingUser.Email, "azibdanish66@gmail.com", StringComparison.OrdinalIgnoreCase) && existingUser.Role != "Admin")
                 {
                     existingUser.Role = "Admin";
+                    changed = true;
+                }
+
+                var normalizedDiv = NormalizeSesbDivision(existingUser.Division);
+                if (!string.IsNullOrWhiteSpace(normalizedDiv) && existingUser.Division != normalizedDiv)
+                {
+                    existingUser.Division = normalizedDiv;
+                    changed = true;
+                }
+
+                if (changed)
+                {
                     await db.SaveChangesAsync();
                 }
 
@@ -181,77 +272,7 @@ namespace mobile_backend.Services
                 );
             }
 
-            // 2. Active Directory (LDAP://sesb.internal) authentication & auto-provisioning
-            var adProfile = TryAuthenticateActiveDirectory(identifier, password);
-            if (adProfile == null)
-                return null;
-
-            var adStaffId = adProfile.Value.StaffId;
-            var adEmail = adProfile.Value.Email;
-            var adFullName = adProfile.Value.FullName;
-            var adDivision = adProfile.Value.Division;
-
-            var existing = await db.StaffUsers.FirstOrDefaultAsync(u =>
-                u.Division != "DELETED" &&
-                ((!string.IsNullOrEmpty(adStaffId) && u.StaffId == adStaffId) ||
-                 (!string.IsNullOrEmpty(adEmail) && u.Email == adEmail) ||
-                 u.Email == identifier ||
-                 u.StaffId == identifier));
-
-            if (existing != null)
-            {
-                if (string.IsNullOrWhiteSpace(existing.FullName) && !string.IsNullOrWhiteSpace(adFullName))
-                    existing.FullName = adFullName;
-                if (string.IsNullOrWhiteSpace(existing.StaffId) && !string.IsNullOrWhiteSpace(adStaffId))
-                    existing.StaffId = adStaffId;
-                if (string.IsNullOrWhiteSpace(existing.Division) && !string.IsNullOrWhiteSpace(adDivision))
-                    existing.Division = adDivision;
-                if (string.IsNullOrWhiteSpace(existing.Email) && !string.IsNullOrWhiteSpace(adEmail))
-                    existing.Email = adEmail;
-                existing.PasswordHash = password;
-                await db.SaveChangesAsync();
-
-                return new AuthResponseDto(
-                    existing.Id,
-                    existing.FullName,
-                    existing.PreferredName,
-                    existing.Email,
-                    existing.Division,
-                    existing.StaffId,
-                    existing.ProfilePicture,
-                    existing.Role
-                );
-            }
-
-            var firstWord = (adFullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? adStaffId).Trim();
-            if (firstWord.Length > 10) firstWord = firstWord[..10];
-
-            var created = new StaffUser
-            {
-                FullName = adFullName,
-                PreferredName = firstWord,
-                Email = !string.IsNullOrWhiteSpace(adEmail) ? adEmail : $"{adStaffId}@sesb.com.my",
-                PasswordHash = password,
-                Division = !string.IsNullOrWhiteSpace(adDivision) ? adDivision : "General",
-                StaffId = adStaffId,
-                ProfilePicture = "",
-                Role = "Staff",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            db.StaffUsers.Add(created);
-            await db.SaveChangesAsync();
-
-            return new AuthResponseDto(
-                created.Id,
-                created.FullName,
-                created.PreferredName,
-                created.Email,
-                created.Division,
-                created.StaffId,
-                created.ProfilePicture,
-                created.Role
-            );
+            return null;
         }
 
         private static (string StaffId, string FullName, string Email, string Division)? TryAuthenticateActiveDirectory(string loginId, string password)
@@ -260,7 +281,15 @@ namespace mobile_backend.Services
                 return null;
 
             const string domainName = "sesb.internal";
-            var cleanAccount = loginId.Trim();
+            var trimmedLogin = loginId.Trim();
+            if (trimmedLogin.Contains('@') &&
+                !trimmedLogin.EndsWith("@sesb.com.my", StringComparison.OrdinalIgnoreCase) &&
+                !trimmedLogin.EndsWith($"@{domainName}", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var cleanAccount = trimmedLogin;
             if (cleanAccount.Contains('\\'))
                 cleanAccount = cleanAccount.Split('\\').Last();
             else if (cleanAccount.Contains('@'))
@@ -285,20 +314,148 @@ namespace mobile_backend.Services
                     Filter = $"(&(objectCategory=user)(|(sAMAccountName={escapedAccount})(userPrincipalName={escapedLogin})(mail={escapedLogin})))",
                     PageSize = 1
                 };
-                searcher.PropertiesToLoad.AddRange(["cn", "displayName", "mail", "userPrincipalName", "department", "company", "sAMAccountName", "employeeID"]);
+                searcher.PropertiesToLoad.AddRange([
+                    "cn",
+                    "displayName",
+                    "mail",
+                    "userPrincipalName",
+                    "division",
+                    "department",
+                    "company",
+                    "physicalDeliveryOfficeName",
+                    "distinguishedName",
+                    "sAMAccountName",
+                    "employeeID"
+                ]);
 
                 var result = searcher.FindOne();
                 var staffId = GetAdProp(result, "sAMAccountName") ?? GetAdProp(result, "employeeID") ?? cleanAccount;
                 var fullName = GetAdProp(result, "displayName") ?? GetAdProp(result, "cn") ?? staffId;
                 var email = GetAdProp(result, "mail") ?? GetAdProp(result, "userPrincipalName") ?? (loginId.Contains('@') ? loginId : $"{staffId}@sesb.com.my");
-                var division = GetAdProp(result, "department") ?? GetAdProp(result, "company") ?? "General";
+                var division = ResolveAdDivision(
+                    GetAdProp(result, "division"),
+                    GetAdProp(result, "department"),
+                    GetAdProp(result, "distinguishedName"),
+                    GetAdProp(result, "physicalDeliveryOfficeName"),
+                    GetAdProp(result, "company")
+                );
 
-                return (staffId.Trim(), fullName.Trim(), email.Trim().ToLowerInvariant(), division.Trim());
+                return (staffId.Trim(), fullName.Trim(), email.Trim().ToLowerInvariant(), division);
             }
             catch
             {
                 return null;
             }
+        }
+
+        private static string ResolveAdDivision(
+            string? adDivision,
+            string? adDepartment,
+            string? distinguishedName,
+            string? office,
+            string? company)
+        {
+            string?[] rawCandidates = [adDivision, adDepartment, office];
+            foreach (var raw in rawCandidates)
+            {
+                var mapped = NormalizeSesbDivision(raw);
+                if (!string.IsNullOrWhiteSpace(mapped))
+                    return mapped;
+            }
+
+            if (!string.IsNullOrWhiteSpace(distinguishedName))
+            {
+                var parts = distinguishedName.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var part in parts)
+                {
+                    var trimmed = part.Trim();
+                    if (trimmed.StartsWith("OU=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var ouVal = trimmed[3..].Trim();
+                        var mappedOu = NormalizeSesbDivision(ouVal);
+                        if (!string.IsNullOrWhiteSpace(mappedOu))
+                            return mappedOu;
+                    }
+                }
+            }
+
+            foreach (var raw in rawCandidates)
+            {
+                if (!string.IsNullOrWhiteSpace(raw))
+                    return raw.Trim();
+            }
+
+            var mappedCompany = NormalizeSesbDivision(company);
+            return !string.IsNullOrWhiteSpace(mappedCompany) ? mappedCompany : "General";
+        }
+
+        private static string? NormalizeSesbDivision(string? rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+                return null;
+
+            var v = rawValue.Trim();
+            var u = v.ToUpperInvariant();
+
+            if (u is "IDD" or "IT" or "ICT" or "ITD" ||
+                u.Contains("INFORMATION & DIGITAL") ||
+                u.Contains("INFORMATION AND DIGITAL") ||
+                u.Contains("INFORMATION TECHNOLOGY") ||
+                u.Contains("DIGITAL"))
+                return "Information & Digital";
+
+            if (u is "S&S" or "S & S" or "SSD" or "CS&S" ||
+                u.Contains("STRATEGY & SUSTAINABILITY") ||
+                u.Contains("STRATEGY AND SUSTAINABILITY") ||
+                u.Contains("SUSTAINABILITY") ||
+                u.Contains("CORPORATE STRATEGY"))
+                return "Strategy & Sustainability";
+
+            if (u is "CEO" or "OCEO" or "MD" ||
+                u.Contains("CHIEF EXECUTIVE") ||
+                u.Contains("CEO OFFICE"))
+                return "Chief Executive Officer (CEO) Office";
+
+            if (u is "SB" or "SBD" || u.Contains("SINGLE BUYER"))
+                return "Single Buyer";
+
+            if (u is "GSO" or "GSOD" || u.Contains("GRID SYSTEM OPERATOR") || u.Contains("SYSTEM OPERATOR"))
+                return "Grid System Operator";
+
+            if (u is "MP" or "MPD" || u.Contains("MAJOR PROJECT"))
+                return "Major Project";
+
+            if (u is "COO" or "OD" || u.Contains("OPERATING"))
+                return "Operating";
+
+            if (u is "GEN" or "GD" || u.Contains("GENERATION") || u.Contains("PENJANAAN"))
+                return "Generation";
+
+            if (u is "TX" or "TD" || u.Contains("TRANSMISSION") || u.Contains("PENGHANTARAN"))
+                return "Transmission";
+
+            if (u is "DX" or "DD" || u.Contains("DISTRIBUTION") || u.Contains("PEMBAHAGIAN"))
+                return "Distribution";
+
+            if (u is "RTD" || u.Contains("RETAIL") || u.Contains("COMMERCIAL") || u.Contains("CUSTOMER SERVICE"))
+                return "Retail";
+
+            if (u is "CS" or "CSD" || u.Contains("CORPORATE SERVICES") || u.Contains("CORPORATE SERVICE"))
+                return "Corporate Services";
+
+            if (u is "CC" or "CCD" or "CORP COMM" || u.Contains("CORPORATE COMMUNICATION"))
+                return "Corporate Communication";
+
+            if (u is "FIN" or "FD" or "CFO" || u.Contains("FINANCE") || u.Contains("KEWANGAN"))
+                return "Finance";
+
+            if (u is "HR" or "HRD" or "HCM" || u.Contains("HUMAN RESOURCE") || u.Contains("SUMBER MANUSIA"))
+                return "Human Resources";
+
+            if (u is "PROC" or "PD" || u.Contains("PROCUREMENT") || u.Contains("PEROLEHAN") || u.Contains("PURCHASING"))
+                return "Procurement";
+
+            return null;
         }
 
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
