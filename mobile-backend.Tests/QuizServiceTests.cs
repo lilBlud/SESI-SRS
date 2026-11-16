@@ -29,6 +29,7 @@ namespace mobile_backend.Tests
         {
             _db.Dispose();
             _connection.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

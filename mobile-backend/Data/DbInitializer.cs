@@ -10,7 +10,7 @@ namespace mobile_backend.Data
 {
     public static class DbInitializer
     {
-        private static readonly object InitLock = new();
+        private static readonly System.Threading.Lock InitLock = new();
 
         public static void Initialize(WebApplication app)
         {
