@@ -181,20 +181,20 @@ export default function LoginPage({ onLogin }) {
         {/* Mobile Drag Handle */}
         <div className="lg:hidden w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-5 shrink-0" />
 
-        <div className="w-full max-w-md mx-auto lg:bg-white lg:dark:bg-slate-900 lg:border lg:border-slate-200/90 lg:dark:border-slate-800 lg:rounded-2xl lg:p-7 lg:shadow-xl">
-          {/* Brand Logo Lockup */}
-          <div className="flex flex-col items-center text-center mb-5 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/90 dark:border-slate-700 p-2 shadow-sm flex items-center justify-center mb-3">
-              <img src="/assets/logo.png" alt="SESI Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-base font-black tracking-tight text-slate-900 dark:text-white leading-none">
-              SESI INSIGHT
-            </span>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1">
-              Sabah Electricity Supply Industry
-            </span>
+        {/* Brand Logo Lockup (Outside Card Box) */}
+        <div className="flex flex-col items-center text-center mb-6 shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/90 dark:border-slate-700 p-2 shadow-sm flex items-center justify-center mb-3">
+            <img src="/assets/logo.png" alt="SESI Logo" className="w-full h-full object-contain" />
           </div>
+          <span className="text-base font-black tracking-tight text-slate-900 dark:text-white leading-none">
+            SESI INSIGHT
+          </span>
+          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1">
+            Sabah Electricity Supply Industry
+          </span>
+        </div>
 
+        <div className="w-full max-w-md mx-auto lg:bg-white lg:dark:bg-slate-900 lg:border lg:border-slate-200/90 lg:dark:border-slate-800 lg:rounded-2xl lg:p-7 lg:shadow-xl">
           {/* Card Heading */}
           <div className="mb-5">
             <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
