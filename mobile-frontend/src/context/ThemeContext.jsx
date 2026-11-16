@@ -9,8 +9,7 @@ export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(() => {
     try {
       const saved = localStorage.getItem('sesi_theme');
-      if (saved) return saved === 'dark';
-      return Boolean(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      return saved === 'dark';
     } catch {
       return false;
     }

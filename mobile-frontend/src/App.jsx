@@ -148,7 +148,7 @@ function App() {
   if (!isPasscodeUnlocked) {
     return (
       <PasscodeGate
-        isDark={isDark}
+        isDark={false}
         onUnlock={() => {
           setIsPasscodeUnlocked(true);
           try { localStorage.setItem('sesi_passcode_unlocked', 'true'); } catch { }
