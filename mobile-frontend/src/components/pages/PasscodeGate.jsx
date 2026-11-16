@@ -62,12 +62,9 @@ export default function PasscodeGate({ onUnlock, isDark = false }) {
         <div className="flex flex-col items-center text-center mb-7 shrink-0">
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-white border border-slate-200/90 dark:border-slate-700 p-3 shadow-md flex items-center justify-center mb-3.5">
             <img
-              src="/assets/sabah_electricity_logo.png"
-              alt="Sabah Electricity"
+              src="/assets/logo.png"
+              alt="SESI Logo"
               className="w-full h-full object-contain"
-              onError={(e) => {
-                e.currentTarget.src = '/assets/logo.png';
-              }}
             />
           </div>
           <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
