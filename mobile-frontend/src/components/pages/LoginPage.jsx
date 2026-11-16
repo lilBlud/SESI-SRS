@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { loginDirect, signupDirect } from '../../utils/supabaseClient';
-
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+import { API_BASE, IS_LOCAL_SSMS } from '../../services/apiConfig';
 
 export default function LoginPage({ onLogin }) {
   const [isSignUp, setIsSignUp] = useState(true);
@@ -12,6 +11,8 @@ export default function LoginPage({ onLogin }) {
   const [division, setDivision] = useState('');
   const [staffId, setStaffId] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleDemoLogin = () => {
     const demoUser = {
@@ -30,25 +31,34 @@ export default function LoginPage({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setErrorMsg('');
+
+    if (isSignUp && password.length < 4) {
+      setErrorMsg('Password must be at least 4 characters.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       let loggedUser = null;
 
-      // Try direct Supabase auth first (available 24/7)
-      try {
-        if (isSignUp) {
-          loggedUser = await signupDirect({ fullName, preferredName, email, password, division, staffId });
-        } else {
-          loggedUser = await loginDirect(email, password);
+      if (!IS_LOCAL_SSMS) {
+        try {
+          if (isSignUp) {
+            loggedUser = await signupDirect({ fullName, preferredName, email, password, division, staffId });
+          } else {
+            loggedUser = await loginDirect(email, password);
+          }
+        } catch (sbErr) {
+          if (sbErr.message && (sbErr.message.includes("Invalid") || sbErr.message.includes("already exists"))) {
+            setErrorMsg(sbErr.message);
+            return;
+          }
+          console.warn("Direct Supabase auth fallback to API:", sbErr);
         }
-      } catch (sbErr) {
-        if (sbErr.message && (sbErr.message.includes("Invalid") || sbErr.message.includes("already exists"))) {
-          alert(sbErr.message);
-          return;
-        }
-        console.warn("Direct Supabase auth fallback to API:", sbErr);
       }
 
-      // Fallback to backend API if needed
       if (!loggedUser) {
         const endpoint = isSignUp ? `${API_BASE}/api/auth/signup` : `${API_BASE}/api/auth/login`;
         const body = isSignUp ? { fullName, preferredName, email, password, division, staffId } : { email, password };
@@ -61,10 +71,10 @@ export default function LoginPage({ onLogin }) {
 
         if (!res.ok) {
           if (res.status === 401) {
-            alert('Invalid email or password. Please try again.');
+            setErrorMsg('Invalid email or password. Please check your credentials and try again.');
           } else {
             const errText = await res.text();
-            alert(`Server Error (${res.status}): ` + errText.substring(0, 100));
+            setErrorMsg(errText ? errText.substring(0, 120) : `Request failed (${res.status}). Please try again.`);
           }
           return;
         }
@@ -76,7 +86,9 @@ export default function LoginPage({ onLogin }) {
         onLogin(loggedUser);
       }
     } catch (error) {
-      alert(`Connection Error: ${error.message}`);
+      setErrorMsg(`Connection error: ${error.message || 'Unable to reach server.'}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -128,7 +140,8 @@ export default function LoginPage({ onLogin }) {
         {/* Toggle Switches */}
         <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl mb-6 border border-slate-100 dark:border-slate-800">
           <button
-            onClick={() => setIsSignUp(false)}
+            type="button"
+            onClick={() => { setIsSignUp(false); setErrorMsg(''); }}
             className={`flex-1 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${!isSignUp ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +150,8 @@ export default function LoginPage({ onLogin }) {
             Sign In
           </button>
           <button
-            onClick={() => setIsSignUp(true)}
+            type="button"
+            onClick={() => { setIsSignUp(true); setErrorMsg(''); }}
             className={`flex-1 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${isSignUp ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-700 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,6 +300,7 @@ export default function LoginPage({ onLogin }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   className="text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   {showPassword ? (
@@ -303,11 +318,31 @@ export default function LoginPage({ onLogin }) {
             </div>
           </div>
 
+          {errorMsg && (
+            <div
+              role="alert"
+              className="rounded-xl border border-rose-200 dark:border-rose-800/70 bg-rose-50 dark:bg-rose-950/40 px-3.5 py-2.5 text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-start gap-2"
+            >
+              <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
           <button
             type="submit"
-            className="w-full py-3 mt-2 bg-gradient-to-r from-emerald-600 to-blue-800 hover:from-emerald-700 hover:to-blue-900 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all flex justify-center items-center gap-2"
+            disabled={isSubmitting}
+            className="w-full py-3 mt-2 bg-gradient-to-r from-emerald-600 to-blue-800 hover:from-emerald-700 hover:to-blue-900 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all flex justify-center items-center gap-2"
           >
-            {isSignUp ? 'Create Account & Enter SESI' : 'Sign In'}
+            {isSubmitting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <span>{isSignUp ? 'Creating Account...' : 'Signing In...'}</span>
+              </>
+            ) : (
+              <span>{isSignUp ? 'Create Account & Enter SESI' : 'Sign In'}</span>
+            )}
           </button>
         </form>
 
