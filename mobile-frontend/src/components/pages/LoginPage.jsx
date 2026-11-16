@@ -183,18 +183,16 @@ export default function LoginPage({ onLogin }) {
 
         <div className="w-full max-w-md mx-auto lg:bg-white lg:dark:bg-slate-900 lg:border lg:border-slate-200/90 lg:dark:border-slate-800 lg:rounded-2xl lg:p-7 lg:shadow-xl">
           {/* Brand Logo Lockup */}
-          <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/90 dark:border-slate-700 p-1.5 shadow-xs flex items-center justify-center shrink-0">
+          <div className="flex flex-col items-center text-center mb-5 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/90 dark:border-slate-700 p-2 shadow-sm flex items-center justify-center mb-3">
               <img src="/assets/logo.png" alt="SESI Logo" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <span className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white block leading-none">
-                SESI INSIGHT
-              </span>
-              <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 block mt-1">
-                Sabah Electricity Supply Industry
-              </span>
-            </div>
+            <span className="text-base font-black tracking-tight text-slate-900 dark:text-white leading-none">
+              SESI INSIGHT
+            </span>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1">
+              Sabah Electricity Supply Industry
+            </span>
           </div>
 
           {/* Card Heading */}
