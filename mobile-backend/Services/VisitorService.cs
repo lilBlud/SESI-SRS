@@ -40,7 +40,7 @@ namespace mobile_backend.Services
             }
 
             var rawBreakdown = await baseQuery
-                .Where(v => !string.IsNullOrEmpty(v.Division) && v.Division != "General")
+                .Where(v => !string.IsNullOrEmpty(v.Division) && v.Division != "General" && v.Division != "IDD")
                 .GroupBy(v => v.Division)
                 .Select(g => new { Division = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)

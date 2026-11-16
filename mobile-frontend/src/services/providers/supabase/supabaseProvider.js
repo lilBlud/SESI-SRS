@@ -463,7 +463,7 @@ export const supabaseProvider = {
         todayVisitorsSet.add(uname.toLowerCase());
       }
       const div = (v.Division || '').trim();
-      if (div && div !== 'General') {
+      if (div && div !== 'General' && div.toUpperCase() !== 'IDD') {
         divCounts[div] = (divCounts[div] || 0) + 1;
       }
     }
