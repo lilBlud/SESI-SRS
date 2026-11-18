@@ -60,6 +60,10 @@ describe('Dual-Database Provider Architecture', () => {
     const streakResult = await supabaseProvider.getUserStreak('non_existent_test_user');
     expect(streakResult).toHaveProperty('streak');
     expect(streakResult).toHaveProperty('dates');
+
+    const users = await supabaseProvider.getAllUsers();
+    expect(Array.isArray(users)).toBe(true);
+    expect(users.length).toBeGreaterThan(0);
   });
 
   it('getUserRecentAnswers executes and returns an array for user identifier', async () => {

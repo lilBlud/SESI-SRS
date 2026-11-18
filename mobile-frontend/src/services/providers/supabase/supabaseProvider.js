@@ -15,7 +15,7 @@ import {
 } from '../dtoMappers';
 
 const SAFE_STAFF_COLUMNS =
-  'Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, Role, CreatedAt';
+  'Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, CreatedAt';
 
 function buildSafeUserFilterClauses(targets) {
   const clauses = [];
@@ -440,8 +440,13 @@ export const supabaseProvider = {
       .eq('Id', userId)
       .select(SAFE_STAFF_COLUMNS)
       .single();
-    if (error) throw error;
-    return normalizeUser(data, resolveUserRole(data));
+    if (error) {
+      if (error.code === '42703' || String(error.message || '').includes('Role')) {
+        throw new Error('Cannot update role: Supabase StaffUsers table does not have a Role column yet.');
+      }
+      throw error;
+    }
+    return normalizeUser(data, newRole || resolveUserRole(data));
   },
 
   async deleteUser(userId) {
@@ -452,7 +457,6 @@ export const supabaseProvider = {
         PreferredName: null,
         Email: `deleted_${userId}@deleted.local`,
         Division: 'DELETED',
-        Role: 'Staff',
       })
       .eq('Id', userId);
     if (error) throw error;
@@ -493,7 +497,6 @@ export const supabaseProvider = {
       Division: payload.division || '',
       StaffId: payload.staffId || '',
       ProfilePicture: '',
-      Role: 'Staff',
       CreatedAt: new Date().toISOString(),
     };
 
