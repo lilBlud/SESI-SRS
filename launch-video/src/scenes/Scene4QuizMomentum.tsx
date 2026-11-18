@@ -22,7 +22,7 @@ type Scene4Props = {
   readonly captionAccent: string;
 };
 
-const START_QUIZ_POINT = [1020, 615] as const;
+const START_QUIZ_POINT = [1020, 636] as const;
 const OPTION_C_POINT = [790, 636] as const;
 
 const SCENE4_CURSOR_TRACK: CursorTrackSpec = {
@@ -45,37 +45,37 @@ const Scene4Inner: React.FC<Scene4Props> = ({
 }) => {
   const frame = useCurrentFrame();
 
-  const cardInScale = easeRange(frame, 0, 22, 0.86, 1.0, Eases.snapSettle);
-  const cardInOp = easeRange(frame, 0, 12, 0.25, 1, Eases.softLand);
-  const btnScale = pressEnvelope(frame, 68, { minScale: 0.96, release: 8, releaseEase: Eases.snapSettle });
-  const optionScale = pressEnvelope(frame, 150, { minScale: 0.96, release: 10, releaseEase: Eases.snapSettle });
+  const cardInScale = easeRange(frame, 0, 32, 0.9, 1.0, Eases.softLand);
+  const cardInOp = easeRange(frame, 0, 22, 0, 1, Eases.softLand);
+  const btnScale = pressEnvelope(frame, 68, { minScale: 0.96, release: 10, releaseEase: Eases.softLand });
+  const optionScale = pressEnvelope(frame, 150, { minScale: 0.96, release: 12, releaseEase: Eases.softLand });
 
-  const shockScale = easeRange(frame, 68, 108, 0.2, 4.5, Eases.softLand);
-  const shockOp = easeRange(frame, 68, 105, 0.85, 0, Eases.softLand);
+  const shockScale = easeRange(frame, 68, 114, 0.2, 4.5, Eases.softLand);
+  const shockOp = easeRange(frame, 68, 110, 0.85, 0, Eases.softLand);
 
   const showQuestion = frame >= 86;
-  const questionInY = easeRange(frame, 86, 104, 36, 0, Eases.snapSettle);
-  const whipPanY = easeRange(frame, 185, 212, 0, -165, Eases.whip);
+  const questionInY = easeRange(frame, 86, 114, 36, 0, Eases.softLand);
+  const whipPanY = easeRange(frame, 185, 224, 0, -165, Eases.softInOut);
 
-  const streakY = easeRange(frame, 204, 224, 90, 0, Eases.snapSettle);
-  const streakOp = easeRange(frame, 204, 214, 0, 1, Eases.softLand);
-  const xpBadgeScale = easeRange(frame, 218, 240, 0.72, 1.0, Eases.popOver);
-  const xpBadgeOp = easeRange(frame, 218, 228, 0, 1, Eases.softLand);
+  const streakY = easeRange(frame, 206, 234, 90, 0, Eases.softLand);
+  const streakOp = easeRange(frame, 206, 226, 0, 1, Eases.softLand);
+  const xpBadgeScale = easeRange(frame, 218, 248, 0.78, 1.0, Eases.popOver);
+  const xpBadgeOp = easeRange(frame, 218, 236, 0, 1, Eases.softLand);
 
   const scoreVal = Math.round(
     easeRange(frame, 232, 342, QUIZ_DEMO_DATA.startScore, QUIZ_DEMO_DATA.endScore, Eases.softLand),
   );
   const badgeAliveScale = ambientSine(frame, 250, 0.09, 0.014);
-  const stageCamZoom = easeRange(frame, 0, 372, 0.99, 1.045, Eases.glide);
+  const stageCamZoom = easeRange(frame, 0, 362, 0.99, 1.045, Eases.glide);
   const progressBarFill = easeRange(frame, 206, 336, 90, 100, Eases.softLand);
 
-  const copyY = easeRange(frame, 20, 36, 40, 0, Eases.snapSettle);
-  const copyDriftX = easeRange(frame, 20, 372, 18, -20, Eases.cruise);
-  const copyOp = easeRange(frame, 20, 28, 0, 1, Eases.softLand);
+  const copyY = easeRange(frame, 20, 42, 40, 0, Eases.softLand);
+  const copyDriftX = easeRange(frame, 20, 362, 18, -20, Eases.cruise);
+  const copyOp = easeRange(frame, 20, 34, 0, 1, Eases.softLand);
 
   const cursor = evaluateCursorTrack(frame, SCENE4_CURSOR_TRACK);
 
-  const exitT = easeRange(frame, 372, 390, 0, 1, Eases.softInOut);
+  const exitT = easeRange(frame, 362, 390, 0, 1, Eases.softInOut);
   const exitStageOp = 1 - exitT;
   const exitStageScale = interpolate(exitT, [0, 1], [1, 0.93]);
   const exitStageY = interpolate(exitT, [0, 1], [0, -24]);

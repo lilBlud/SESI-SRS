@@ -28,11 +28,11 @@ const PIN_SELECTION_BEATS: readonly PinSelectionBeat[] = [
 
 const SCENE6_CURSOR_TRACK: CursorTrackSpec = {
   moves: [
-    { start: 166, end: 188, from: [226, 218], to: PIN_COORDS_BY_ID.tecoma, ease: Eases.softLand },
-    { start: 246, end: 264, from: PIN_COORDS_BY_ID.tecoma, to: PIN_COORDS_BY_ID.sequioa, ease: Eases.softLand },
-    { start: 288, end: 308, from: PIN_COORDS_BY_ID.sequioa, to: [155, 310], ease: Eases.accelExit },
+    { start: 164, end: 188, from: [226, 218], to: PIN_COORDS_BY_ID.tecoma, ease: Eases.softLand },
+    { start: 244, end: 264, from: PIN_COORDS_BY_ID.tecoma, to: PIN_COORDS_BY_ID.sequioa, ease: Eases.softLand },
+    { start: 288, end: 310, from: PIN_COORDS_BY_ID.sequioa, to: [155, 310], ease: Eases.softInOut },
   ],
-  visibility: [{ start: 166, end: 308, fadeIn: 8, fadeOut: 14 }],
+  visibility: [{ start: 164, end: 310, fadeIn: 8, fadeOut: 14 }],
   clicks: [
     { frame: 192, minScale: 0.82 },
     { frame: 268, minScale: 0.82 },
@@ -49,25 +49,25 @@ const Scene6Inner: React.FC<Scene6Props> = ({
   const frame = useCurrentFrame();
 
   const tensionCopyOp =
-    frame < 84
-      ? easeRange(frame, 0, 14, 0.15, 1, Eases.softLand) *
-        easeRange(frame, 64, 82, 1, 0, Eases.softInOut)
+    frame < 88
+      ? easeRange(frame, 0, 20, 0.15, 1, Eases.softLand) *
+        easeRange(frame, 58, 86, 1, 0, Eases.softInOut)
       : 0;
-  const tensionScale = easeRange(frame, 0, 82, 0.96, 1.04, Eases.glide);
+  const tensionScale = easeRange(frame, 0, 86, 0.96, 1.04, Eases.glide);
   const dimFactor =
-    frame < 62 ? 0.88 : easeRange(frame, 62, 92, 0.88, 0, Eases.softInOut);
+    frame < 58 ? 0.88 : easeRange(frame, 58, 98, 0.88, 0, Eases.softInOut);
 
-  const mapInScale = easeRange(frame, 72, 114, 0.93, 1.0, Eases.snapSettle);
-  const mapOp = easeRange(frame, 72, 94, 0, 1, Eases.softLand);
+  const mapInScale = easeRange(frame, 70, 120, 0.93, 1.0, Eases.softLand);
+  const mapOp = easeRange(frame, 70, 102, 0, 1, Eases.softLand);
   const gridDraw = easeRange(frame, 88, 178, 800, 0, Eases.softLand);
   const powerFlowDash = -(frame * 2.6);
 
   const mapCamZoom =
     frame < 192
       ? easeRange(frame, 72, 192, 0.94, 1.01, Eases.softLand)
-      : easeRange(frame, 192, 336, 1.01, 1.04, Eases.glide);
-  const mapCamX = easeRange(frame, 72, 336, 10, -8, Eases.cruise);
-  const mapCamY = easeRange(frame, 72, 336, 6, -4, Eases.cruise);
+      : easeRange(frame, 192, 330, 1.01, 1.04, Eases.glide);
+  const mapCamX = easeRange(frame, 72, 330, 10, -8, Eases.cruise);
+  const mapCamY = easeRange(frame, 72, 330, 6, -4, Eases.cruise);
   const mapTiltX = easeRange(frame, 72, 192, 4.0, 0, Eases.softLand);
   const mapTiltY = easeRange(frame, 72, 260, -3.0, 1.0, Eases.glide);
 
@@ -99,15 +99,15 @@ const Scene6Inner: React.FC<Scene6Props> = ({
 
   const cursor = evaluateCursorTrack(frame, SCENE6_CURSOR_TRACK);
 
-  const overviewOp = frame < 190 ? 1 : easeRange(frame, 190, 200, 1, 0, Eases.accelExit);
-  const overviewY = frame < 190 ? 0 : easeRange(frame, 190, 200, 0, -18, Eases.accelExit);
+  const overviewOp = frame < 186 ? 1 : easeRange(frame, 186, 206, 1, 0, Eases.softInOut);
+  const overviewY = frame < 186 ? 0 : easeRange(frame, 186, 206, 0, -18, Eases.softInOut);
 
-  const copyY = easeRange(frame, 96, 118, 36, 0, Eases.snapSettle);
-  const copyDriftX = easeRange(frame, 96, 336, 18, -18, Eases.cruise);
-  const copyOp = easeRange(frame, 96, 112, 0, 1, Eases.softLand);
-  const captionCrossfade = frame < 192 ? 0 : easeRange(frame, 192, 208, 0, 1, Eases.softInOut);
+  const copyY = easeRange(frame, 94, 122, 36, 0, Eases.softLand);
+  const copyDriftX = easeRange(frame, 94, 330, 18, -18, Eases.cruise);
+  const copyOp = easeRange(frame, 94, 114, 0, 1, Eases.softLand);
+  const captionCrossfade = frame < 192 ? 0 : easeRange(frame, 192, 214, 0, 1, Eases.softInOut);
 
-  const exitT = easeRange(frame, 334, 360, 0, 1, Eases.softInOut);
+  const exitT = easeRange(frame, 330, 360, 0, 1, Eases.softInOut);
   const exitOp = 1 - exitT;
   const exitScale = interpolate(exitT, [0, 1], [1, 0.93]);
   const exitY = interpolate(exitT, [0, 1], [0, -28]);
@@ -148,7 +148,7 @@ const Scene6Inner: React.FC<Scene6Props> = ({
         </div>
       )}
 
-      {frame >= 72 && (
+      {frame >= 70 && (
         <div
           style={{
             position: 'absolute',
@@ -186,7 +186,7 @@ const Scene6Inner: React.FC<Scene6Props> = ({
               alignItems: 'center',
             }}
           >
-            {frame < 204 && (
+            {frame < 206 && (
               <TelemetryOverviewPanel
                 capMW={capMW}
                 peakMW={peakMW}
@@ -206,13 +206,13 @@ const Scene6Inner: React.FC<Scene6Props> = ({
               const proj = FUTURE_GEN_PROJECTS.find((p) => p.id === beat.id);
               if (!proj) return null;
 
-              const isLeaving = Boolean(nextBeat && frame >= nextBeat.clickFrame - 2);
+              const isLeaving = Boolean(nextBeat && frame >= nextBeat.clickFrame - 4);
               const panelOp = isLeaving && nextBeat
-                ? easeRange(frame, nextBeat.clickFrame - 2, nextBeat.clickFrame + 8, 1, 0, Eases.accelExit)
-                : easeRange(frame, beat.clickFrame, beat.clickFrame + 12, 0, 1, Eases.snapSettle);
+                ? easeRange(frame, nextBeat.clickFrame - 4, nextBeat.clickFrame + 14, 1, 0, Eases.softInOut)
+                : easeRange(frame, beat.clickFrame, beat.clickFrame + 18, 0, 1, Eases.softLand);
               const panelY = isLeaving && nextBeat
-                ? easeRange(frame, nextBeat.clickFrame - 2, nextBeat.clickFrame + 8, 0, -18, Eases.accelExit)
-                : easeRange(frame, beat.clickFrame, beat.clickFrame + 12, 24, 0, Eases.snapSettle);
+                ? easeRange(frame, nextBeat.clickFrame - 4, nextBeat.clickFrame + 14, 0, -18, Eases.softInOut)
+                : easeRange(frame, beat.clickFrame, beat.clickFrame + 18, 24, 0, Eases.softLand);
 
               return (
                 <ProjectBreakdownPanel
@@ -227,7 +227,7 @@ const Scene6Inner: React.FC<Scene6Props> = ({
         </div>
       )}
 
-      {frame >= 96 && (
+      {frame >= 94 && (
         <SceneCaption
           name="Scene 6 Caption"
           prefix={captionPrefix}

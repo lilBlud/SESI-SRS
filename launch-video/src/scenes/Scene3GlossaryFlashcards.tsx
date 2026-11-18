@@ -23,20 +23,20 @@ type Scene3Props = {
 
 const SCENE3_CURSOR_TRACK: CursorTrackSpec = {
   moves: [
-    { start: 76, end: 94, from: [1280, 810], to: [1138, 668], ease: Eases.softLand },
-    { start: 112, end: 130, from: [1138, 668], to: [1280, 790], ease: Eases.accelExit },
-    { start: 170, end: 188, from: [1280, 790], to: [1138, 668], ease: Eases.softLand },
-    { start: 204, end: 236, from: [1138, 668], to: [1345, 224], ease: Eases.softLand },
-    { start: 276, end: 300, from: [1345, 224], to: [1316, 344], ease: Eases.cruise },
-    { start: 356, end: 376, from: [1316, 344], to: [1520, 420], ease: Eases.accelExit },
+    { start: 72, end: 94, from: [1280, 810], to: [1138, 668], ease: Eases.softLand },
+    { start: 112, end: 132, from: [1138, 668], to: [1280, 790], ease: Eases.softInOut },
+    { start: 174, end: 194, from: [1280, 790], to: [1138, 668], ease: Eases.softLand },
+    { start: 208, end: 238, from: [1138, 668], to: [1345, 224], ease: Eases.softLand },
+    { start: 278, end: 306, from: [1345, 224], to: [1316, 344], ease: Eases.cruise },
+    { start: 356, end: 380, from: [1316, 344], to: [1520, 420], ease: Eases.softInOut },
   ],
   visibility: [
-    { start: 76, end: 130, fadeIn: 6, fadeOut: 10 },
-    { start: 170, end: 376, fadeIn: 6, fadeOut: 12 },
+    { start: 72, end: 132, fadeIn: 8, fadeOut: 12 },
+    { start: 174, end: 380, fadeIn: 8, fadeOut: 14 },
   ],
   clicks: [
     { frame: 96 },
-    { frame: 192 },
+    { frame: 196 },
     { frame: 240 },
     { frame: 342 },
   ],
@@ -50,44 +50,44 @@ const Scene3Inner: React.FC<Scene3Props> = ({
 }) => {
   const frame = useCurrentFrame();
 
-  const whipInX = easeRange(frame, 0, 18, 1800, 0, Eases.whip);
-  const whipInBlur = easeRange(frame, 0, 10, 14, 0, Eases.whip);
+  const whipInX = easeRange(frame, 0, 30, 1800, 0, Eases.softLand);
+  const whipInBlur = easeRange(frame, 0, 20, 8, 0, Eases.softLand);
 
-  // Cards clear full 1920px viewport (-1550 / +1550) before unmounting/mounting
-  const card1Flip = easeRange(frame, 46, 72, 0, 180, Eases.softLand);
-  const card1ExitX = easeRange(frame, 118, 138, 0, -1550, Eases.accelExit);
-  const card2InX = easeRange(frame, 122, 144, 1550, 0, Eases.snapSettle);
-  const card2Flip = easeRange(frame, 152, 176, 0, 180, Eases.softLand);
+  // Cards clear full 1920px viewport (-1550 / +1550) smoothly
+  const card1Flip = easeRange(frame, 46, 78, 0, 180, Eases.softInOut);
+  const card1ExitX = easeRange(frame, 116, 148, 0, -1550, Eases.softInOut);
+  const card2InX = easeRange(frame, 124, 160, 1550, 0, Eases.softLand);
+  const card2Flip = easeRange(frame, 158, 188, 0, 180, Eases.softInOut);
 
   const bookmarkPress = pressEnvelope(frame, 96, { release: 18 });
-  const card2BookmarkPress = pressEnvelope(frame, 192, { release: 14 });
+  const card2BookmarkPress = pressEnvelope(frame, 196, { release: 16 });
   const savePdfPress = pressEnvelope(frame, 240, { minScale: 0.92, release: 16 });
   const printReadyPress = pressEnvelope(frame, 342, { minScale: 0.92, release: 16 });
 
-  const stackOutOp = easeRange(frame, 200, 212, 1, 0, Eases.accelExit);
-  const stackOutScale = easeRange(frame, 200, 212, 1, 0.95, Eases.accelExit);
-  const printHubOp = easeRange(frame, 206, 222, 0, 1, Eases.snapSettle);
-  const printHubScale = easeRange(frame, 206, 224, 0.95, 1, Eases.snapSettle);
+  const stackOutOp = easeRange(frame, 198, 224, 1, 0, Eases.softInOut);
+  const stackOutScale = easeRange(frame, 198, 224, 1, 0.95, Eases.softInOut);
+  const printHubOp = easeRange(frame, 208, 236, 0, 1, Eases.softLand);
+  const printHubScale = easeRange(frame, 208, 238, 0.95, 1, Eases.softLand);
 
   const pdfClicked = frame >= 240;
   const pdfExported = frame >= 342;
-  const sheetReveal = easeRange(frame, 242, 268, 0, 1, Eases.snapSettle);
-  const sheetY = easeRange(frame, 242, 268, 44, 0, Eases.snapSettle);
-  const exportBadgeOp = easeRange(frame, 346, 362, 0, 1, Eases.snapSettle);
-  const exportBadgeScale = easeRange(frame, 346, 366, 0.88, 1.0, Eases.popOver);
-  const paperSheen = easeRange(frame, 352, 412, -30, 135, Eases.softInOut);
+  const sheetReveal = easeRange(frame, 244, 278, 0, 1, Eases.softLand);
+  const sheetY = easeRange(frame, 244, 278, 44, 0, Eases.softLand);
+  const exportBadgeOp = easeRange(frame, 346, 366, 0, 1, Eases.softLand);
+  const exportBadgeScale = easeRange(frame, 346, 370, 0.88, 1.0, Eases.popOver);
+  const paperSheen = easeRange(frame, 354, 418, -30, 135, Eases.softInOut);
 
-  const copyY = easeRange(frame, 14, 30, 38, 0, Eases.snapSettle);
-  const copyDriftX = easeRange(frame, 14, 434, 14, -22, Eases.cruise);
-  const copyOp = easeRange(frame, 14, 22, 0, 1, Eases.softLand);
-  const captionCrossfade = easeRange(frame, 204, 222, 0, 1, Eases.softInOut);
+  const copyY = easeRange(frame, 16, 36, 38, 0, Eases.softLand);
+  const copyDriftX = easeRange(frame, 16, 424, 14, -22, Eases.cruise);
+  const copyOp = easeRange(frame, 16, 30, 0, 1, Eases.softLand);
+  const captionCrossfade = easeRange(frame, 204, 232, 0, 1, Eases.softInOut);
 
-  const stackScale = easeRange(frame, 18, 434, 0.985, 1.035, Eases.glide);
-  const exitPushScale = easeRange(frame, 434, 450, 1, 1.42, Eases.accelExit);
-  const exitOp = easeRange(frame, 438, 450, 1, 0, Eases.accelExit);
+  const stackScale = easeRange(frame, 22, 424, 0.985, 1.035, Eases.glide);
+  const exitPushScale = easeRange(frame, 424, 450, 1, 1.24, Eases.softInOut);
+  const exitOp = easeRange(frame, 424, 450, 1, 0, Eases.softInOut);
 
-  const orbitRotY = easeRange(frame, 18, 208, -3.5, 2.5, Eases.cruise);
-  const orbitRotX = easeRange(frame, 18, 208, 2.0, -1.2, Eases.cruise);
+  const orbitRotY = easeRange(frame, 22, 212, -3.5, 2.5, Eases.cruise);
+  const orbitRotX = easeRange(frame, 22, 212, 2.0, -1.2, Eases.cruise);
 
   const cursor = evaluateCursorTrack(frame, SCENE3_CURSOR_TRACK);
   const [card1, card2] = GLOSSARY_CARDS;

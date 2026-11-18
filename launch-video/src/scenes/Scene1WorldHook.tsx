@@ -43,31 +43,31 @@ const Scene1Inner: React.FC<Scene1Props> = ({
 }) => {
   const frame = useCurrentFrame();
 
-  const pulseDraw = easeRange(frame, 0, 38, 2600, 0, Eases.snapSettle);
-  const pulseGlow = easeRange(frame, 0, 20, 0.9, 1, Eases.softLand);
+  const pulseDraw = easeRange(frame, 0, 44, 2600, 0, Eases.snapSettle);
+  const pulseGlow = easeRange(frame, 0, 26, 0.9, 1, Eases.softLand);
 
-  const terrainIntensity = easeRange(frame, 12, 55, 0.2, 1, Eases.softLand);
-  const terrainTilt = easeRange(frame, 18, 160, 14, 4, Eases.glide);
-  const cameraZoom = easeRange(frame, 0, 162, 1.18, 1.0, Eases.glide);
-  const cameraX = easeRange(frame, 0, 180, -36, 18, Eases.cruise);
+  const terrainIntensity = easeRange(frame, 12, 64, 0.2, 1, Eases.softLand);
+  const terrainTilt = easeRange(frame, 18, 175, 14, 4, Eases.glide);
+  const cameraZoom = easeRange(frame, 0, 180, 1.18, 1.0, Eases.glide);
+  const cameraX = easeRange(frame, 0, 195, -36, 18, Eases.cruise);
 
-  const copyAInOp = easeRange(frame, 22, 28, 0, 1, Eases.softLand);
-  const copyAScale = easeRange(frame, 22, 92, 0.98, 1.035, Eases.glide);
-  const copyAOutClip = easeRange(frame, 86, 98, 0, 100, Eases.accelExit);
-  const copyAOutY = easeRange(frame, 86, 98, 0, -34, Eases.accelExit);
-  const showCopyA = frame >= 20 && frame < 100 && copyAInOp >= 0;
+  const copyAInOp = easeRange(frame, 22, 34, 0, 1, Eases.softLand);
+  const copyAScale = easeRange(frame, 22, 108, 0.98, 1.035, Eases.glide);
+  const copyAOutClip = easeRange(frame, 88, 110, 0, 100, Eases.softInOut);
+  const copyAOutY = easeRange(frame, 88, 110, 0, -34, Eases.softInOut);
+  const showCopyA = frame >= 20 && frame < 112 && copyAInOp >= 0;
 
-  const copyBInOp = easeRange(frame, 96, 102, 0, 1, Eases.softLand);
-  const copyBScale = easeRange(frame, 96, 168, 0.97, 1.045, Eases.glide);
-  const copyBOutY = easeRange(frame, 156, 172, 0, -52, Eases.accelExit);
-  const copyBOutOp = easeRange(frame, 158, 172, 1, 0, Eases.accelExit);
-  const showCopyB = frame >= 95 && frame <= 174;
+  const copyBInOp = easeRange(frame, 102, 114, 0, 1, Eases.softLand);
+  const copyBScale = easeRange(frame, 102, 184, 0.97, 1.045, Eases.glide);
+  const copyBOutY = easeRange(frame, 160, 184, 0, -52, Eases.softInOut);
+  const copyBOutOp = easeRange(frame, 160, 184, 1, 0, Eases.softInOut);
+  const showCopyB = frame >= 100 && frame <= 186;
 
-  const morphT = easeRange(frame, 154, 180, 0, 1, Eases.accelExit);
+  const morphT = easeRange(frame, 159, 195, 0, 1, Eases.softInOut);
   const barWidth = interpolate(morphT, [0, 1], [1920, 422]);
   const barHeight = interpolate(morphT, [0, 1], [3.5, 8]);
   const barY = interpolate(morphT, [0, 1], [540, 150]);
-  const barOpacity = easeRange(frame, 152, 166, 0, 1, Eases.softLand);
+  const barOpacity = easeRange(frame, 155, 172, 0, 1, Eases.softLand);
 
   return (
     <>
@@ -112,15 +112,15 @@ const Scene1Inner: React.FC<Scene1Props> = ({
           strokeDashoffset={pulseDraw}
           filter="url(#emeraldPulseGlowLight)"
         />
-        {frame <= 154 && (
+        {frame <= 159 && (
           <path
             d="M-60,640 C320,620 560,460 920,520 C1260,575 1520,380 1980,290"
             stroke="#6ee7b7"
             strokeWidth={5.5}
             strokeLinecap="round"
             strokeDasharray="160 2600"
-            strokeDashoffset={easeRange(frame, 0, 154, 2600, -320, Eases.cruise)}
-            opacity={easeRange(frame, 130, 154, 0.9, 0, Eases.softLand)}
+            strokeDashoffset={easeRange(frame, 0, 159, 2600, -320, Eases.cruise)}
+            opacity={easeRange(frame, 134, 159, 0.9, 0, Eases.softLand)}
           />
         )}
       </svg>
@@ -190,22 +190,23 @@ const Scene1Inner: React.FC<Scene1Props> = ({
               fontFamily: FONT_SANS,
               fontSize: 124,
               fontWeight: 800,
-              letterSpacing: '-0.04em',
+              letterSpacing: '-0.03em',
               color: BRAND.ink,
               lineHeight: 1.08,
               textAlign: 'center',
               display: 'flex',
               gap: 30,
               alignItems: 'baseline',
+              whiteSpace: 'nowrap',
             }}
           >
-            <MaskedWord text={line2Prefix} frame={frame} startFrame={96} />
+            <MaskedWord text={line2Prefix} frame={frame} startFrame={102} />
             <span style={{ display: 'inline-block', overflow: 'hidden', paddingBottom: 8 }}>
               <span
                 style={{
                   display: 'inline-block',
-                  opacity: copyBInOp * easeRange(frame, 100, 106, 0, 1, Eases.softLand),
-                  transform: `translateY(${easeRange(frame, 100, 114, 115, 0, Eases.snapSettle)}%)`,
+                  opacity: copyBInOp * easeRange(frame, 108, 118, 0, 1, Eases.softLand),
+                  transform: `translateY(${easeRange(frame, 108, 126, 115, 0, Eases.snapSettle)}%)`,
                 }}
               >
                 <span style={{ color: BRAND.emerald }}>{line2Accent}</span>.
@@ -216,7 +217,7 @@ const Scene1Inner: React.FC<Scene1Props> = ({
       )}
 
       {/* Match-cut carrier bar */}
-      {frame >= 152 && (
+      {frame >= 155 && (
         <div
           style={{
             position: 'absolute',

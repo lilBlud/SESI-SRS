@@ -10,7 +10,7 @@ export default function DesktopHeader({
     glossary: { title: 'Dictionary', subtitle: 'Formulas, Notations & Corporate Metrics' },
     dictionary: { title: 'Dictionary', subtitle: 'Formulas, Notations & Corporate Metrics' },
     quiz: { title: 'Knowledge Hub', subtitle: 'Test your knowledge & climb the leaderboard' },
-    profile: { title: 'My Staff Profile', subtitle: 'Badges, bookmarks & quiz performance' },
+    profile: { title: 'My Profile', subtitle: 'Score, standing, activity & saved bookmarks' },
     admin: { title: 'Admin Control Center', subtitle: 'Manage users, quizzes, dictionary & traffic analytics' }
   };
 

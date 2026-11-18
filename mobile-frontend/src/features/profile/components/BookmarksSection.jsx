@@ -30,27 +30,20 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab 
     <div className="space-y-3 pt-2">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+              Saved Bookmarks
+            </h3>
+            {bookmarks.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 tabular-nums">
+                {bookmarks.length}
+              </span>
+            )}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base sm:text-[17px] font-black tracking-tight text-slate-900 dark:text-white leading-tight">
-                Saved Bookmarks
-              </h3>
-              {bookmarks.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80">
-                  {bookmarks.length}
-                </span>
-              )}
-            </div>
-            <p className="text-[12px] text-slate-500 dark:text-slate-400 font-normal">
-              Your saved posters and dictionary reference cards
-            </p>
-          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Your saved posters and dictionary reference cards
+          </p>
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -185,7 +178,7 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab 
                     </button>
                   </div>
                   <div className="flex-1 flex flex-col min-h-0 mt-1">
-                    <div className="font-black text-[15px] font-mono mb-1 shrink-0 line-clamp-2 text-slate-900 dark:text-white">
+                    <div className="font-extrabold text-[15px] tracking-tight mb-1 shrink-0 line-clamp-2 text-slate-900 dark:text-white">
                       {bm.term}
                       {bm.full && !bm.term.includes(' ') && (
                         <span className="ml-1 font-sans text-[11px] font-bold text-slate-500">({bm.full})</span>

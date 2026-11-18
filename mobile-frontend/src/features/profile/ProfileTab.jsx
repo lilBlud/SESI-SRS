@@ -122,7 +122,7 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
   }, [filterMonth, USERNAME, user]);
 
   return (
-    <div className="space-y-6 sm:space-y-7 animate-slideUp">
+    <div className="space-y-5 sm:space-y-6 animate-slideUp">
       {errorToast && (
         <div className="toast toast-top toast-center z-[100]" role="alert">
           <button
@@ -134,17 +134,8 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
           </button>
         </div>
       )}
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-          My Activity &amp; Records
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Review your quiz performance, standing, and saved learning materials.
-        </p>
-      </div>
 
-      {/* Full-Width Executive Profile Card */}
+      {/* Profile Identity Header Card */}
       <ProfileHeroCard
         user={user}
         username={USERNAME}
@@ -153,11 +144,12 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
         onOpenEditNameModal={() => setShowEditModal(true)}
       />
 
-      {/* 2-Stat Metric Grid */}
+      {/* Metric Strip */}
       <ProfileStatsBadges
         loading={loading}
         totalScore={totalScore}
         currentRank={currentRank}
+        answeredCount={recentQuizzes.length}
       />
 
       {/* Recent Questions Carousel */}

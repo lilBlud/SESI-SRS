@@ -24,39 +24,39 @@ const Scene5Inner: React.FC<Scene5Props> = ({
 }) => {
   const frame = useCurrentFrame();
 
-  const cardScale = easeRange(frame, 0, 18, 0.94, 1.0, Eases.snapSettle);
-  const cardOp = easeRange(frame, 0, 12, 0, 1, Eases.softLand);
+  const cardScale = easeRange(frame, 0, 28, 0.94, 1.0, Eases.softLand);
+  const cardOp = easeRange(frame, 0, 20, 0, 1, Eases.softLand);
 
   const barHeights: Record<1 | 2 | 3, number> = {
-    1: easeRange(frame, 18, 68, 0, 214, Eases.snapSettle),
-    2: easeRange(frame, 10, 56, 0, 152, Eases.softLand),
-    3: easeRange(frame, 24, 72, 0, 122, Eases.softLand),
+    1: easeRange(frame, 20, 78, 0, 214, Eases.softLand),
+    2: easeRange(frame, 12, 66, 0, 152, Eases.softLand),
+    3: easeRange(frame, 28, 84, 0, 122, Eases.softLand),
   };
 
   const avatarOpacities: Record<1 | 2 | 3, number> = {
-    1: easeRange(frame, 26, 40, 0, 1, Eases.softLand),
-    2: easeRange(frame, 18, 32, 0, 1, Eases.softLand),
-    3: easeRange(frame, 32, 46, 0, 1, Eases.softLand),
+    1: easeRange(frame, 28, 48, 0, 1, Eases.softLand),
+    2: easeRange(frame, 20, 40, 0, 1, Eases.softLand),
+    3: easeRange(frame, 34, 54, 0, 1, Eases.softLand),
   };
 
   const scores: Record<1 | 2 | 3, number> = {
-    1: Math.round(easeRange(frame, 24, 112, 1120, LEADERBOARD_ENTRIES[0].score, Eases.softLand)),
-    2: Math.round(easeRange(frame, 16, 102, 980, LEADERBOARD_ENTRIES[1].score, Eases.softLand)),
-    3: Math.round(easeRange(frame, 28, 106, 890, LEADERBOARD_ENTRIES[2].score, Eases.softLand)),
+    1: Math.round(easeRange(frame, 24, 118, 1120, LEADERBOARD_ENTRIES[0].score, Eases.softLand)),
+    2: Math.round(easeRange(frame, 16, 108, 980, LEADERBOARD_ENTRIES[1].score, Eases.softLand)),
+    3: Math.round(easeRange(frame, 30, 112, 890, LEADERBOARD_ENTRIES[2].score, Eases.softLand)),
   };
 
-  const crownScale = easeRange(frame, 42, 72, 0.5, 1.0, Eases.popOver);
-  const crownFloatY = frame >= 60 ? Math.sin((frame - 60) * 0.1) * 3 : 0;
-  const goldSheen = easeRange(frame, 64, 126, -35, 135, Eases.softInOut);
+  const crownScale = easeRange(frame, 44, 78, 0.5, 1.0, Eases.popOver);
+  const crownFloatY = frame >= 64 ? Math.sin((frame - 64) * 0.1) * 3 : 0;
+  const goldSheen = easeRange(frame, 68, 134, -35, 135, Eases.softInOut);
 
-  const cardDolly = easeRange(frame, 0, 140, 0.975, 1.025, Eases.glide);
-  const copyDriftX = easeRange(frame, 12, 140, 12, -12, Eases.cruise);
-  const copyY = easeRange(frame, 12, 26, 28, 0, Eases.snapSettle);
-  const copyOp = easeRange(frame, 12, 22, 0, 1, Eases.softLand);
+  const cardDolly = easeRange(frame, 0, 148, 0.975, 1.025, Eases.glide);
+  const copyDriftX = easeRange(frame, 14, 148, 12, -12, Eases.cruise);
+  const copyY = easeRange(frame, 14, 34, 28, 0, Eases.softLand);
+  const copyOp = easeRange(frame, 14, 28, 0, 1, Eases.softLand);
 
-  const exitDim = easeRange(frame, 132, 150, 0, 0.88, Eases.softInOut);
-  const exitCardOp = easeRange(frame, 132, 149, 1, 0, Eases.accelExit);
-  const exitScale = easeRange(frame, 132, 150, 1, 0.94, Eases.accelExit);
+  const exitDim = easeRange(frame, 137, 165, 0, 0.88, Eases.softInOut);
+  const exitCardOp = easeRange(frame, 137, 163, 1, 0, Eases.softInOut);
+  const exitScale = easeRange(frame, 137, 165, 1, 0.94, Eases.softInOut);
 
   // Display order on podium: #2 (left), #1 (center), #3 (right)
   const displayEntries = [LEADERBOARD_ENTRIES[1], LEADERBOARD_ENTRIES[0], LEADERBOARD_ENTRIES[2]];
@@ -65,7 +65,7 @@ const Scene5Inner: React.FC<Scene5Props> = ({
     <>
       <TopographicWorld
         cameraX={-230 - frame * 0.45}
-        cameraZoom={easeRange(frame, 0, 150, 1.06, 1.11, Eases.cruise)}
+        cameraZoom={easeRange(frame, 0, 165, 1.06, 1.11, Eases.cruise)}
         dimFactor={exitDim}
       />
 

@@ -14,8 +14,8 @@ type DesktopPwaMockupProps = {
 };
 
 const QUICK_MODULES = [
-  { title: 'Dictionary & IBR', sub: 'IBR, SAIDI, ReSET2030', tag: 'Formulas' },
-  { title: 'Monthly Quiz', sub: 'November 2026', tag: `+${QUIZ_DEMO_DATA.xpReward} XP` },
+  { title: 'Dictionary & Formulas', sub: 'IBR, SAIDI, ReSET2030 & Charts', tag: '113 Terms' },
+  { title: 'Knowledge Hub', sub: 'Monthly Archive · Oct & Nov 2026', tag: `+${QUIZ_DEMO_DATA.xpReward} XP` },
   {
     title: 'Sabah Future Gen',
     sub: `${RESET2030_METRICS.projectCount} Generation Projects`,
@@ -98,7 +98,7 @@ export const DesktopPwaMockup: React.FC<DesktopPwaMockupProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Img src={staticFile('logo.png')} style={{ width: 38, height: 38, borderRadius: 10 }} />
             <div>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 20, fontWeight: 800, color: BRAND.ink }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 20, fontWeight: 800, color: BRAND.emerald }}>
                 SESI
               </div>
               <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: BRAND.inkSubtle }}>
@@ -107,14 +107,14 @@ export const DesktopPwaMockup: React.FC<DesktopPwaMockupProps> = ({
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            {['Home', 'Glossary', 'Quiz', 'Future Gen'].map((tab, i) => (
+            {['Home', 'Dictionary', 'Knowledge Hub', 'My Profile'].map((tab, i) => (
               <div
                 key={tab}
                 style={{
                   fontFamily: FONT_SANS,
                   fontSize: 13,
                   fontWeight: 700,
-                  padding: '8px 16px',
+                  padding: '8px 15px',
                   borderRadius: 12,
                   backgroundColor: i === 0 ? BRAND.emeraldSoft : BRAND.white,
                   color: i === 0 ? '#065f46' : BRAND.inkMuted,

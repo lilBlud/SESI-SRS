@@ -21,29 +21,29 @@ const Scene2Inner: React.FC<Scene2Props> = ({
 }) => {
   const frame = useCurrentFrame();
 
-  const phoneScale = easeRange(frame, 0, 22, 1.24, 0.94, Eases.snapSettle);
-  const phoneRotY = easeRange(frame, 0, 134, -4, -20, Eases.glide);
-  const phoneRotX = easeRange(frame, 0, 134, 2, 7, Eases.glide);
-  const phoneShiftX = easeRange(frame, 28, 86, 0, 440, Eases.softLand);
+  const phoneScale = easeRange(frame, 0, 32, 1.24, 0.94, Eases.snapSettle);
+  const phoneRotY = easeRange(frame, 0, 152, -4, -20, Eases.glide);
+  const phoneRotX = easeRange(frame, 0, 152, 2, 7, Eases.glide);
+  const phoneShiftX = easeRange(frame, 36, 112, 0, 440, Eases.softLand);
   const phoneShiftY =
-    easeRange(frame, 28, 86, 0, 10, Eases.softLand) + Math.sin(frame * 0.08) * 6;
+    easeRange(frame, 36, 112, 0, 10, Eases.softLand) + Math.sin(frame * 0.08) * 6;
 
-  const desktopScale = easeRange(frame, 24, 134, 0.78, 0.98, Eases.glide);
-  const desktopOp = easeRange(frame, 24, 40, 0, 1, Eases.softLand);
-  const desktopRotY = easeRange(frame, 24, 134, 9, 2, Eases.glide);
-  const desktopShiftX = easeRange(frame, 28, 86, 0, -110, Eases.softLand);
+  const desktopScale = easeRange(frame, 28, 152, 0.78, 0.98, Eases.glide);
+  const desktopOp = easeRange(frame, 28, 52, 0, 1, Eases.softLand);
+  const desktopRotY = easeRange(frame, 28, 152, 9, 2, Eases.glide);
+  const desktopShiftX = easeRange(frame, 36, 112, 0, -110, Eases.softLand);
 
-  const driftX = easeRange(frame, 76, 134, 0, -28, Eases.cruise);
+  const driftX = easeRange(frame, 96, 152, 0, -28, Eases.cruise);
   const capCounter = Math.round(
-    easeRange(frame, 36, 118, 850, RESET2030_METRICS.dependableCapacityMW, Eases.softLand),
+    easeRange(frame, 42, 134, 850, RESET2030_METRICS.dependableCapacityMW, Eases.softLand),
   );
-  const copyDriftX = easeRange(frame, 48, 134, 12, -16, Eases.cruise);
-  const copyY = easeRange(frame, 48, 62, 36, 0, Eases.snapSettle);
-  const copyOp = easeRange(frame, 48, 56, 0, 1, Eases.softLand);
+  const copyDriftX = easeRange(frame, 52, 152, 12, -16, Eases.cruise);
+  const copyY = easeRange(frame, 52, 72, 36, 0, Eases.snapSettle);
+  const copyOp = easeRange(frame, 52, 66, 0, 1, Eases.softLand);
 
-  const whipOutX = easeRange(frame, 134, 150, 0, -2100, Eases.accelExit);
-  const whipOutBlur = easeRange(frame, 140, 150, 0, 14, Eases.accelExit);
-  const bgCameraX = easeRange(frame, 0, 150, 18, -140, Eases.cruise) + whipOutX * 0.25;
+  const whipOutX = easeRange(frame, 152, 180, 0, -2100, Eases.softInOut);
+  const whipOutBlur = easeRange(frame, 156, 180, 0, 10, Eases.softInOut);
+  const bgCameraX = easeRange(frame, 0, 180, 18, -140, Eases.cruise) + whipOutX * 0.25;
 
   return (
     <>

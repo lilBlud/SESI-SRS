@@ -33,27 +33,20 @@ export function RecentQuestionsCarousel({
     <div className="space-y-3">
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+              Recent Questions
+            </h3>
+            {!loading && recentQuizzes.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 tabular-nums">
+                {recentQuizzes.length}
+              </span>
+            )}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base sm:text-[17px] font-black tracking-tight text-slate-900 dark:text-white leading-tight">
-                Recent Questions
-              </h3>
-              {!loading && recentQuizzes.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80">
-                  {recentQuizzes.length}
-                </span>
-              )}
-            </div>
-            <p className="text-[12px] text-slate-500 dark:text-slate-400 font-normal">
-              Your latest answered questions &amp; performance
-            </p>
-          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Your latest answered questions and points earned
+          </p>
         </div>
 
         {/* Controls: Month filter & Carousel navigation */}
@@ -174,17 +167,14 @@ export function RecentQuestionsCarousel({
 
                 {/* Footer: Date, Time & Points */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[11px]">
-                    <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px] tabular-nums">
                     <span>{ans.timeTakenSeconds}s</span>
-                    <span>•</span>
+                    <span aria-hidden="true">•</span>
                     <span>{date}</span>
                   </div>
 
                   <span
-                    className={`font-black text-xs px-2 py-0.5 rounded-md ${
+                    className={`font-black text-xs px-2 py-0.5 rounded-md tabular-nums ${
                       ans.isCorrect
                         ? 'bg-emerald-100/70 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'

@@ -65,7 +65,7 @@ export const MobilePhoneMockup: React.FC<MobilePhoneMockupProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Img src={staticFile('logo.png')} style={{ width: 32, height: 32, borderRadius: 8 }} />
-          <span style={{ fontFamily: FONT_SANS, fontSize: 18, fontWeight: 800, color: BRAND.ink }}>
+          <span style={{ fontFamily: FONT_SANS, fontSize: 18, fontWeight: 800, color: BRAND.emerald }}>
             SESI
           </span>
         </div>
@@ -134,7 +134,7 @@ export const MobilePhoneMockup: React.FC<MobilePhoneMockupProps> = ({
           }}
         >
           <div style={{ fontFamily: FONT_SANS, fontSize: 16, fontWeight: 800, color: BRAND.ink }}>
-            Glossary Flashcards
+            Dictionary &amp; Formulas
           </div>
           <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: BRAND.inkSubtle, marginTop: 4 }}>
             IBR • SAIDI • ReSET2030
@@ -174,8 +174,8 @@ export const MobilePhoneMockup: React.FC<MobilePhoneMockupProps> = ({
         }}
       >
         <span style={{ color: BRAND.emerald }}>Home</span>
-        <span>Glossary</span>
-        <span>Quiz</span>
+        <span>Dictionary</span>
+        <span>Hub</span>
         <span>Profile</span>
       </div>
     </Interactive.Div>

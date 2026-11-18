@@ -10,29 +10,54 @@ type QuizIntroCardProps = {
 
 export const QuizIntroCard: React.FC<QuizIntroCardProps> = ({ quizTitle, btnScale }) => (
   <>
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
+    {/* Monthly Archive Strip */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '7px 14px',
+          borderRadius: 12,
+          backgroundColor: BRAND.ground,
+          border: `1px solid ${BRAND.slate200}`,
+          fontFamily: FONT_SANS,
+          fontSize: 13,
+          fontWeight: 700,
+          color: BRAND.inkMuted,
+        }}
+      >
+        <span>October 2026</span>
+        <span style={{ color: BRAND.inkSubtle, fontWeight: 600 }}>• Completed</span>
+      </div>
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '7px 14px',
+          borderRadius: 12,
+          backgroundColor: BRAND.emeraldSoft,
+          border: '1px solid #6ee7b7',
+          fontFamily: FONT_SANS,
+          fontSize: 13,
+          fontWeight: 800,
+          color: '#065f46',
+        }}
+      >
+        <span style={{ width: 7, height: 7, borderRadius: 99, backgroundColor: BRAND.emerald }} />
+        <span>November 2026 · Current</span>
+      </div>
+    </div>
+
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontFamily: FONT_SANS, fontSize: 34, fontWeight: 800, color: BRAND.ink }}>
+          <span style={{ fontFamily: FONT_SANS, fontSize: 32, fontWeight: 800, color: BRAND.ink }}>
             {quizTitle}
           </span>
-          <span
-            style={{
-              fontFamily: FONT_SANS,
-              fontSize: 13,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              backgroundColor: BRAND.emeraldSoft,
-              color: '#065f46',
-              padding: '5px 12px',
-              borderRadius: 8,
-            }}
-          >
-            Current
-          </span>
         </div>
-        <div style={{ fontFamily: FONT_SANS, fontSize: 18, color: BRAND.inkSubtle, marginTop: 8 }}>
+        <div style={{ fontFamily: FONT_SANS, fontSize: 17, color: BRAND.inkSubtle, marginTop: 6 }}>
           {QUIZ_DEMO_DATA.subtitle}
         </div>
       </div>
@@ -57,7 +82,7 @@ export const QuizIntroCard: React.FC<QuizIntroCardProps> = ({ quizTitle, btnScal
       </div>
     </div>
 
-    <p style={{ fontFamily: FONT_SANS, fontSize: 20, color: BRAND.inkMuted, lineHeight: 1.5, margin: '0 0 28px' }}>
+    <p style={{ fontFamily: FONT_SANS, fontSize: 19, color: BRAND.inkMuted, lineHeight: 1.5, margin: '0 0 24px' }}>
       {QUIZ_DEMO_DATA.introCopy}
     </p>
 

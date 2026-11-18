@@ -13,22 +13,22 @@ type Scene7Props = {
 const Scene7Inner: React.FC<Scene7Props> = ({ title, subtitle }) => {
   const frame = useCurrentFrame(); // 0..90 local (global 1680..1770)
 
-  // Continuous specular sweep & subtle push settles cleanly at frame 56 -> 34f (1.13s) resolved hold (passes Gate G3)
-  const settleFrame = Math.min(frame, 56);
+  // Slower settle finishes cleanly at frame 74 -> 46f (1.53s) resolved hold
+  const settleFrame = Math.min(frame, 74);
 
-  const logoScale = easeRange(settleFrame, 0, 28, 0.86, 1.0, Eases.snapSettle);
-  const logoY = easeRange(settleFrame, 0, 28, 28, 0, Eases.softLand);
-  const logoOp = easeRange(settleFrame, 0, 16, 0, 1, Eases.softLand);
+  const logoScale = easeRange(settleFrame, 0, 38, 0.88, 1.0, Eases.softLand);
+  const logoY = easeRange(settleFrame, 0, 38, 28, 0, Eases.softLand);
+  const logoOp = easeRange(settleFrame, 0, 24, 0, 1, Eases.softLand);
 
-  const titleY = easeRange(settleFrame, 12, 36, 22, 0, Eases.softLand);
-  const titleOp = easeRange(settleFrame, 12, 26, 0, 1, Eases.softLand);
+  const titleY = easeRange(settleFrame, 16, 48, 22, 0, Eases.softLand);
+  const titleOp = easeRange(settleFrame, 16, 34, 0, 1, Eases.softLand);
 
-  const subY = easeRange(settleFrame, 20, 44, 18, 0, Eases.softLand);
-  const subOp = easeRange(settleFrame, 20, 36, 0, 1, Eases.softLand);
+  const subY = easeRange(settleFrame, 28, 58, 18, 0, Eases.softLand);
+  const subOp = easeRange(settleFrame, 28, 48, 0, 1, Eases.softLand);
 
-  const sheen = easeRange(settleFrame, 22, 56, -35, 135, Eases.softInOut);
-  const stageZoom = easeRange(settleFrame, 0, 56, 1.035, 1.0, Eases.glide);
-  const bgCameraX = easeRange(settleFrame, 0, 56, -80, 0, Eases.softLand);
+  const sheen = easeRange(settleFrame, 30, 74, -35, 135, Eases.softInOut);
+  const stageZoom = easeRange(settleFrame, 0, 74, 1.035, 1.0, Eases.glide);
+  const bgCameraX = easeRange(settleFrame, 0, 74, -80, 0, Eases.softLand);
 
   return (
     <>
@@ -97,7 +97,8 @@ const Scene7Inner: React.FC<Scene7Props> = ({ title, subtitle }) => {
               fontFamily: FONT_SANS,
               fontSize: 68,
               fontWeight: 800,
-              letterSpacing: '-0.035em',
+              letterSpacing: '-0.02em',
+              wordSpacing: '0.12em',
               color: '#0f172a',
               lineHeight: 1.05,
               textAlign: 'center',

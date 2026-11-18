@@ -1,6 +1,6 @@
 import React from 'react';
 import { Interactive } from 'remotion';
-import { BookmarkIcon, PrinterIcon } from '../../components/Icons';
+import { PrinterIcon } from '../../components/Icons';
 import { BRAND, RESET2030_METRICS, type GlossaryCardData } from '../../data/sesiData';
 import { FONT_MONO, FONT_SANS } from '../../motion/fonts';
 
@@ -62,27 +62,29 @@ export const PrintReferenceShowcase: React.FC<PrintReferenceShowcaseProps> = ({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 12,
-            backgroundColor: '#ecfdf5',
-            border: '1px solid #a7f3d0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: BRAND.emerald,
-          }}
-        >
-          <BookmarkIcon size={20} color={BRAND.emerald} filled />
-        </div>
         <div>
-          <div style={{ fontFamily: FONT_SANS, fontSize: 21, fontWeight: 800, color: BRAND.ink }}>
-            Saved Bookmarks
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontFamily: FONT_SANS, fontSize: 21, fontWeight: 800, color: BRAND.ink }}>
+              My Profile · Saved Bookmarks
+            </span>
+            <span
+              style={{
+                padding: '3px 10px',
+                borderRadius: 999,
+                backgroundColor: BRAND.slate100,
+                border: `1px solid ${BRAND.slate200}`,
+                fontFamily: FONT_SANS,
+                fontSize: 12,
+                fontWeight: 700,
+                color: BRAND.slate700,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {cards.length}
+            </span>
           </div>
-          <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 600, color: BRAND.inkMuted }}>
-            {cards.length} terms &amp; ReSET2030 summary · {cards.map((c) => c.term).join(', ')}
+          <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 600, color: BRAND.inkMuted, marginTop: 2 }}>
+            {cards.map((c) => c.term).join(', ')} &amp; ReSET2030 summary ready to export
           </div>
         </div>
       </div>
@@ -95,7 +97,7 @@ export const PrintReferenceShowcase: React.FC<PrintReferenceShowcaseProps> = ({
               borderRadius: 999,
               backgroundColor: '#ecfdf5',
               border: '1px solid #6ee7b7',
-              fontFamily: FONT_MONO,
+              fontFamily: FONT_SANS,
               fontSize: 13,
               fontWeight: 700,
               color: '#065f46',
