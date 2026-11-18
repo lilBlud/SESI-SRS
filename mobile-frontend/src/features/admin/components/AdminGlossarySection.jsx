@@ -71,12 +71,12 @@ export default function AdminGlossarySection({
 
     try {
       await saveGlossaryTermService(payload, gEditId);
-      setGMsg(gEditId ? '✅ Card updated successfully!' : '✅ New card created successfully!');
+      setGMsg(gEditId ? 'Card updated successfully.' : 'New card created successfully.');
       onRefreshGlossary();
       if (onGlossaryChange) onGlossaryChange();
       cancelEditGlossaryTerm();
     } catch {
-      setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
+      setGMsg(gEditId ? 'Failed to update card.' : 'Failed to add card.');
     }
 
     setTimeout(() => setGMsg(''), 3500);
@@ -103,7 +103,7 @@ export default function AdminGlossarySection({
     }
 
     if (asCopy) {
-      setGMsg(`✅ Duplicating "${t.term}" in category "${t.cat || 'Corporate Performance'}"!`);
+      setGMsg(`Duplicating "${t.term}" in category "${t.cat || 'Corporate Performance'}".`);
       setTimeout(() => setGMsg(''), 4000);
     } else if (t.isPerformanceCard) {
       setDictSubTab('corporate');
@@ -131,10 +131,10 @@ export default function AdminGlossarySection({
     if (existing) {
       setGEditId(existing.id);
       if (existing.cat) setGCat(existing.cat);
-      setGMsg(`✅ Loaded preset "${tmpl.term}" (editing card ID #${existing.id})`);
+      setGMsg(`Loaded preset "${tmpl.term}" (editing card #${existing.id}).`);
     } else {
       setGEditId(null);
-      setGMsg(`✅ Loaded preset "${tmpl.term}" with 2022–2026 historical data!`);
+      setGMsg(`Loaded preset "${tmpl.term}" with 2022–2026 historical data.`);
     }
     setTimeout(() => setGMsg(''), 4000);
     setShowForm(true);
@@ -180,10 +180,10 @@ export default function AdminGlossarySection({
 
       onRefreshGlossary();
       if (onGlossaryChange) onGlossaryChange();
-      setGMsg(`✅ Synced! ${updatedCount} cards updated with 2022–2026 data, ${addedCount} new cards added.`);
+      setGMsg(`Synced ${updatedCount} updated and ${addedCount} new 2022–2026 performance cards.`);
     } catch (e) {
       console.error(e);
-      setGMsg('❌ Error syncing historical data');
+      setGMsg('Error syncing historical data.');
     } finally {
       setSyncingData(false);
       setTimeout(() => setGMsg(''), 5000);
@@ -194,9 +194,9 @@ export default function AdminGlossarySection({
     if (!confirm('Are you sure you want to delete this card / term?')) return;
     try {
       await deleteGlossaryTermService(id);
-      setGMsg('🗑️ Card deleted successfully!');
+      setGMsg('Card deleted.');
     } catch {
-      setGMsg('❌ Failed to delete card');
+      setGMsg('Failed to delete card.');
     }
     setTimeout(() => setGMsg(''), 3500);
     onRefreshGlossary();
@@ -238,98 +238,108 @@ export default function AdminGlossarySection({
   );
 
   return (
-    <div className="space-y-4">
-      {/* Subtab Segmented Switcher */}
-      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-xs">
-        <button
-          type="button"
-          onClick={() => {
-            setDictSubTab('corporate');
-            cancelEditGlossaryTerm();
-            setGCat('Corporate Performance');
-            setGCategoryFilter('All');
-          }}
-          className={`flex-1 py-3 lg:py-3.5 px-4 rounded-xl font-black text-xs sm:text-sm lg:text-[15px] transition-all flex items-center justify-center gap-2 ${
-            dictSubTab === 'corporate'
-              ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-sm'
-              : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <span>📊</span>
-          <span>Corporate Studio</span>
-          <span
-            className={`text-xs lg:text-[13px] px-2 py-0.5 rounded-full font-bold ml-1 ${
-              dictSubTab === 'corporate'
-                ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
-                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {corporateCount}
-          </span>
-        </button>
+    <div className="space-y-4 animate-fadeIn">
+      {/* Studio Mode Switcher & Primary Actions Bar */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/70 dark:border-slate-700/70 flex-1 sm:flex-initial">
+            <button
+              type="button"
+              onClick={() => {
+                setDictSubTab('corporate');
+                cancelEditGlossaryTerm();
+                setGCat('Corporate Performance');
+                setGCategoryFilter('All');
+              }}
+              className={`min-h-[38px] flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs sm:text-[13px] transition-all active:scale-[0.98] inline-flex items-center justify-center gap-2 ${
+                dictSubTab === 'corporate'
+                  ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+              </svg>
+              <span>Corporate Studio</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 tabular-nums font-extrabold">
+                {corporateCount}
+              </span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setDictSubTab('dictionary');
-            cancelEditGlossaryTerm();
-            setGCat('IBR Framework');
-            setGCategoryFilter('All');
-          }}
-          className={`flex-1 py-3 lg:py-3.5 px-4 rounded-xl font-black text-xs sm:text-sm lg:text-[15px] transition-all flex items-center justify-center gap-2 ${
-            dictSubTab === 'dictionary'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <span>📖</span>
-          <span>Dictionary Terms</span>
-          <span
-            className={`text-xs lg:text-[13px] px-2 py-0.5 rounded-full font-bold ml-1 ${
-              dictSubTab === 'dictionary'
-                ? 'bg-emerald-700 text-white'
-                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {dictionaryCount}
-          </span>
-        </button>
-      </div>
+            <button
+              type="button"
+              onClick={() => {
+                setDictSubTab('dictionary');
+                cancelEditGlossaryTerm();
+                setGCat('IBR Framework');
+                setGCategoryFilter('All');
+              }}
+              className={`min-h-[38px] flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs sm:text-[13px] transition-all active:scale-[0.98] inline-flex items-center justify-center gap-2 ${
+                dictSubTab === 'dictionary'
+                  ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span>Dictionary Terms</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200 tabular-nums font-extrabold">
+                {dictionaryCount}
+              </span>
+            </button>
+          </div>
 
-      {/* Top Banner Actions & One-Click Sync */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-        <button
-          type="button"
-          onClick={() => {
-            if (showForm && !gEditId) {
-              setShowForm(false);
-            } else {
-              cancelEditGlossaryTerm();
-              setShowForm(true);
-            }
-          }}
-          className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs sm:text-sm lg:text-base rounded-xl active:scale-95 transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2"
-        >
-          <span>{showForm ? '✕ Close Form' : '+ Add New Card / Term'}</span>
-        </button>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {isPerfStudio && (
+              <button
+                type="button"
+                onClick={syncDefaultHistoricalData}
+                disabled={syncingData}
+                className="min-h-[40px] px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold text-xs rounded-xl active:scale-95 transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <svg className={`w-4 h-4 shrink-0 ${syncingData ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>{syncingData ? 'Syncing Data...' : 'Sync 2022–2026 Presets'}</span>
+              </button>
+            )}
 
-        {isPerfStudio && (
-          <button
-            type="button"
-            onClick={syncDefaultHistoricalData}
-            disabled={syncingData}
-            className="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs sm:text-sm lg:text-[14px] rounded-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <span>{syncingData ? '⏳ Syncing Data...' : '⚡ Seed 2022–2026 Performance Data'}</span>
-          </button>
-        )}
+            <button
+              type="button"
+              onClick={() => {
+                if (showForm && !gEditId) {
+                  setShowForm(false);
+                } else {
+                  cancelEditGlossaryTerm();
+                  setShowForm(true);
+                }
+              }}
+              className="min-h-[40px] flex-1 sm:flex-initial px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-105 text-white font-bold text-xs sm:text-[13px] rounded-xl active:scale-95 transition-all inline-flex items-center justify-center gap-1.5"
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d={showForm ? 'M6 18L18 6M6 6l12 12' : 'M12 4v16m8-8H4'} />
+              </svg>
+              <span>{showForm ? 'Close Editor' : isPerfStudio ? 'Add Performance Card' : 'Add Dictionary Term'}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Action Toast Feedback Banner */}
       {gMsg && (
-        <div className="p-3 bg-emerald-600 text-white rounded-2xl text-xs font-bold shadow-lg flex items-center justify-between animate-fadeIn sticky top-2 z-40">
+        <div className="px-4 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-bold shadow-lg flex items-center justify-between animate-fadeIn sticky top-2 z-40">
           <span>{gMsg}</span>
-          <button type="button" onClick={() => setGMsg('')} className="text-white/80 hover:text-white font-bold ml-2 text-sm leading-none">✕</button>
+          <button
+            type="button"
+            onClick={() => setGMsg('')}
+            aria-label="Dismiss notification"
+            className="text-white/80 hover:text-white p-1"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
 

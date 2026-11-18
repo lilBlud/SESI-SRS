@@ -46,23 +46,26 @@ export function AdminGlossaryForm({
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
         <div>
           <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <span>{gEditId ? '✏️ Edit Card' : '✨ Create New Card'}</span>
+            <span>{gEditId ? 'Edit Card' : 'Create New Card'}</span>
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
               {isPerfStudio ? 'Performance Card' : 'Standard Term'}
             </span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {isPerfStudio
-              ? 'Build interactive historical graphs with 2022-2026 data points'
+              ? 'Build interactive historical graphs with 2022–2026 data points'
               : 'Define glossary definitions, formulas, and category associations'}
           </p>
         </div>
         <button
           type="button"
           onClick={onCancel}
-          className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 font-bold hover:bg-slate-200"
+          aria-label="Close editor"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 transition active:scale-90"
         >
-          ✕
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
@@ -70,7 +73,7 @@ export function AdminGlossaryForm({
       {isPerfStudio && !gEditId && (
         <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-            ⚡ Quick Presets (Click to autofill 2022–2026 dataset):
+            Quick Presets (Click to autofill 2022–2026 dataset):
           </span>
           <div className="flex flex-wrap gap-1.5">
             {Object.keys(DEFAULT_HISTORICAL_METRICS).map(k => (
