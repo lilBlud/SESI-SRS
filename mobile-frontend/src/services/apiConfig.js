@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+const explicitProvider = import.meta.env.VITE_DATA_PROVIDER?.toLowerCase();
+
 const isCloudflarePages = typeof window !== 'undefined' && (
   window.location.hostname.endsWith('.pages.dev') ||
   window.location.hostname.endsWith('.workers.dev')
@@ -46,7 +48,10 @@ export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_p
 /**
  * Local environment connects strictly to local SSMS via C# API on IIS / Intranet.
  * Cloudflare Pages connects strictly to Supabase Cloud.
+ * Can also be overridden explicitly via VITE_DATA_PROVIDER ('supabase' | 'ssms').
  */
-export const IS_LOCAL_SSMS = !isCloudflarePages;
+export const IS_LOCAL_SSMS = explicitProvider
+  ? explicitProvider === 'ssms'
+  : !isCloudflarePages;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

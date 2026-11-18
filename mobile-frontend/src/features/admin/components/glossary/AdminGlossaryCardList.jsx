@@ -1,5 +1,6 @@
 import React from 'react';
 import { CorporatePerformanceChart } from '../../../../components/ui';
+import { normalizeGlossaryTerm } from '../../../../domain/glossaryModel';
 
 export function AdminGlossaryCardList({
   isPerfStudio,
@@ -50,31 +51,27 @@ export function AdminGlossaryCardList({
 
       {/* Cards List in Responsive Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {filteredTerms.map(t => {
-          let parsedChart = [];
-          try {
-            parsedChart = t.chartData ? JSON.parse(t.chartData) : [];
-          } catch {
-            parsedChart = [];
-          }
-          const isPerfCard = t.category === 'Corporate Performance' || parsedChart.length > 0;
+        {filteredTerms.map(raw => {
+          const t = raw.parsedChartData ? raw : normalizeGlossaryTerm(raw);
+          const parsedChart = t.parsedChartData || [];
+          const isPerfCard = t.isPerformanceCard;
           const yearsWithData = [...new Set(parsedChart.map(d => String(d.year)))].sort();
 
           return (
             <div
-              key={t.id}
+              key={t.id || t.term}
               className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white">{t.term}</span>
-                    {t.fullName && <span className="text-xs sm:text-sm lg:text-base text-slate-400 font-medium">({t.fullName})</span>}
+                    {t.full && <span className="text-xs sm:text-sm lg:text-base text-slate-400 font-medium">({t.full})</span>}
                     <span className="text-xs lg:text-[13px] font-bold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                      {t.category}
+                      {t.cat}
                     </span>
                   </div>
-                  {t.description && <p className="text-xs sm:text-sm lg:text-[14.5px] text-slate-500 dark:text-slate-400 leading-relaxed">{t.description}</p>}
+                  {t.desc && <p className="text-xs sm:text-sm lg:text-[14.5px] text-slate-500 dark:text-slate-400 leading-relaxed">{t.desc}</p>}
 
                   {isPerfCard && yearsWithData.length > 0 && (
                     <div className="flex items-center gap-1.5 pt-1 flex-wrap">
@@ -122,13 +119,12 @@ export function AdminGlossaryCardList({
                 </div>
               </div>
 
-              {/* Chart Preview for Performance Cards */}
               {isPerfCard && parsedChart.length > 0 && (
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
                   <CorporatePerformanceChart
                     chartData={t.chartData}
                     term={t.term}
-                    description={t.description || t.desc}
+                    description={t.desc}
                     yAxisFormat={t.formulaNotations}
                     formula={t.formula || 'area'}
                   />

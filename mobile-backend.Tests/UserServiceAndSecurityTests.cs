@@ -164,5 +164,31 @@ namespace mobile_backend.Tests
             var updated = await _db.StaffUsers.FindAsync(user.Id);
             Assert.StartsWith("PBKDF2$", updated!.PasswordHash);
         }
+
+        [Fact]
+        public async Task UpdatePreferredNameAsync_SyncsAcrossAllUserAnswerIdentifiers()
+        {
+            var staff = new StaffUser
+            {
+                FullName = "Nurul Huda",
+                PreferredName = "Nurul",
+                Email = "nurul@sesb.com.my",
+                Division = "Finance",
+                StaffId = "5001",
+                PasswordHash = SecurityHelper.HashPassword("pw")
+            };
+            _db.StaffUsers.Add(staff);
+            _db.UserAnswers.AddRange(
+                new UserAnswer { Username = "Nurul Huda", PreferredName = "Nurul", Month = "2026-11", PointsAwarded = 500 },
+                new UserAnswer { Username = "nurul@sesb.com.my", PreferredName = "Nurul", Month = "2026-11", PointsAwarded = 500 }
+            );
+            await _db.SaveChangesAsync();
+
+            var svc = new UserService(_db, _config);
+            Assert.True(await svc.UpdatePreferredNameAsync("Nurul Huda", "Huda"));
+
+            var answers = await _db.UserAnswers.ToListAsync();
+            Assert.All(answers, a => Assert.Equal("Huda", a.PreferredName));
+        }
     }
 }

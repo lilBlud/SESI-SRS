@@ -31,9 +31,20 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
     answeredQuestionIds: []
   });
   const [isPracticeMode, setIsPracticeMode] = useState(false);
+  const [feedbackToast, setFeedbackToast] = useState(null);
 
-  const USERNAME = user?.preferredName || user?.fullName || user?.username || user?.email || "User";
+  const showToast = useCallback((message, type = 'alert-warning') => {
+    setFeedbackToast({ message, type });
+    setTimeout(() => setFeedbackToast(null), 4000);
+  }, []);
+
+  const USERNAME = user?.fullName || user?.preferredName || user?.username || user?.email || "User";
   const DIVISION = user?.division || "Information & Digital";
+  const isDemoUser =
+    !user ||
+    Number(user.id) === 9999 ||
+    user.staffId === 'DEMO-001' ||
+    user.email === 'demo@sesb.com.my';
 
   // Load all available monthly quizzes and completion status
   const loadQuizzes = useCallback(async () => {
@@ -70,7 +81,7 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
 
       const data = await getQuizQuestionsDirect(targetMonth).catch(() => null);
       if (!data || data.length === 0) {
-        alert("No questions available for this month yet.");
+        showToast("No questions available for this month yet.", "alert-warning");
         setState('idle');
         return;
       }
@@ -92,7 +103,7 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
       setQStartTime(Date.now());
     } catch (e) {
       console.error(e);
-      alert("Network Error: " + e.message + ". Make sure database is accessible.");
+      showToast("Network Error: " + e.message + ". Make sure database is accessible.", "alert-error");
       setState('idle');
     }
   };
@@ -108,7 +119,8 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
     const q = questions[currentQ];
     const isCorrect = idx === q.correctIndex;
 
-    const isFirstTime = !isPracticeMode && !quizStatus.answeredQuestionIds.includes(Number(q.id));
+    const answeredSet = new Set(quizStatus.answeredQuestionIds || []);
+    const isFirstTime = !isPracticeMode && !answeredSet.has(Number(q.id));
 
     let pointsAwarded = 0;
     if (isCorrect && isFirstTime) {
@@ -118,20 +130,26 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
 
     setAnswers(prev => [...prev, { questionId: q.id, selected: idx, correct: q.correctIndex, isCorrect, points: pointsAwarded, isFirstTime }]);
 
+    if (isDemoUser) return;
+
     if (isFirstTime) {
-      recordQuizAnswerDirect({
-        Username: USERNAME,
-        PreferredName: user?.preferredName || "",
-        Division: DIVISION,
-        Month: selectedMonth,
-        QuestionId: q.id || 0,
-        QuestionText: q.question || "",
-        SelectedOption: (q.options || [])[idx] || "",
-        IsCorrect: isCorrect,
-        TimeTakenSeconds: timeTakenSeconds,
-        PointsAwarded: pointsAwarded,
-        staff_id: user?.id || null
-      });
+      try {
+        await recordQuizAnswerDirect({
+          Username: USERNAME,
+          PreferredName: user?.preferredName || "",
+          Division: DIVISION,
+          Month: selectedMonth,
+          QuestionId: q.id || 0,
+          QuestionText: q.question || "",
+          SelectedOption: (q.options || [])[idx] || "",
+          IsCorrect: isCorrect,
+          TimeTakenSeconds: timeTakenSeconds,
+          PointsAwarded: pointsAwarded,
+          staff_id: user?.id || null
+        });
+      } catch (err) {
+        console.warn("Failed to submit quiz answer:", err);
+      }
     }
 
     recordUserActivityDirect(user || USERNAME)
@@ -201,14 +219,27 @@ export function QuizTab({ user, streak, onStreakUpdate }) {
   }
 
   return (
-    <QuizIdleView
-      streak={streak}
-      quizzes={quizzes}
-      loadingQuizzes={loadingQuizzes}
-      selectedYear={selectedYear}
-      onSelectYear={setSelectedYear}
-      onStartQuiz={handleStartQuiz}
-      currentMonth={currentMonth}
-    />
+    <>
+      {feedbackToast && (
+        <div className="toast toast-top toast-center z-[100]" role="alert">
+          <button
+            type="button"
+            onClick={() => setFeedbackToast(null)}
+            className={`alert ${feedbackToast.type} shadow-xl rounded-2xl text-xs sm:text-sm font-bold cursor-pointer`}
+          >
+            <span>{feedbackToast.message}</span>
+          </button>
+        </div>
+      )}
+      <QuizIdleView
+        streak={streak}
+        quizzes={quizzes}
+        loadingQuizzes={loadingQuizzes}
+        selectedYear={selectedYear}
+        onSelectYear={setSelectedYear}
+        onStartQuiz={handleStartQuiz}
+        currentMonth={currentMonth}
+      />
+    </>
   );
 }

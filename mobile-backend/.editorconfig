@@ -1,0 +1,3 @@
+[*.cs]
+# Feature-folder layout uses logical namespaces (mobile_backend.Services / Endpoints / DTOs)
+dotnet_diagnostic.IDE0130.severity = none

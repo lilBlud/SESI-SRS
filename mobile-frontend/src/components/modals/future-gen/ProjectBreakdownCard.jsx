@@ -1,5 +1,15 @@
 import React from 'react';
 
+const WATCH_TONE_CLASSES = {
+  rose: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-800/70 text-rose-900 dark:text-rose-200',
+  amber: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800/70 text-amber-900 dark:text-amber-200',
+  sky: 'bg-sky-50 dark:bg-sky-950/40 border-sky-200/80 dark:border-sky-800/70 text-sky-900 dark:text-sky-200',
+};
+
+/**
+ * Detailed card for the selected Sabah generation pin, showing deduplicated
+ * metrics, status/way forward, and semantic watch item alerts.
+ */
 export function ProjectBreakdownCard({
   selectedProject,
   selectedFuel,
@@ -9,124 +19,128 @@ export function ProjectBreakdownCard({
 }) {
   if (!selectedProject) return null;
 
+  const watchTone = selectedProject.watchItem?.tone || 'amber';
+  const watchClass = WATCH_TONE_CLASSES[watchTone] || WATCH_TONE_CLASSES.amber;
+  const stageLabel = selectedProject.stageCategory === 'contracting'
+    ? 'Contracting & FC'
+    : selectedProject.stageCategory === 'feasibility'
+    ? 'Feasibility'
+    : (selectedProject.stage || 'Pipeline');
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-slate-900 shadow-[0_-8px_25px_rgba(0,0,0,0.08)] lg:shadow-none px-4 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] z-20 custom-scrollbar flex flex-col justify-start">
-      {/* Drawer Handle & Navigation */}
+      {/* Drawer Handle & Pin Stepper */}
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <span
-            className="w-5 h-5 lg:w-6 lg:h-6 rounded-full flex items-center justify-center text-white text-[10px] lg:text-xs font-black"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] font-black tabular-nums"
             style={{ backgroundColor: selectedFuel?.color || '#0F172A' }}
           >
             {selectedProject.pinNumber}
           </span>
-          <span className="text-xs lg:text-[13px] font-extrabold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Project Breakdown
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
           <button
+            type="button"
             onClick={onPrev}
-            className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-xs lg:text-sm active:scale-95 transition-all"
+            className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 active:scale-90 transition-all duration-150"
             title="Previous project"
             aria-label="Previous project"
           >
-            ←
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
-          <span className="text-xs lg:text-[13px] font-bold text-slate-400 px-1">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 px-1.5 tabular-nums">
             {selectedProject.pinNumber} of {totalProjects}
           </span>
           <button
+            type="button"
             onClick={onNext}
-            className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-xs lg:text-sm active:scale-95 transition-all"
+            className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 active:scale-90 transition-all duration-150"
             title="Next project"
             aria-label="Next project"
           >
-            →
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </div>
 
-      {/* Project Card Header */}
-      <div className="pt-3 flex items-start justify-between gap-3">
-        <div>
+      {/* Project Title Header (No duplicate right-side COD/MW) */}
+      <div className="pt-3 flex items-center justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-base sm:text-lg lg:text-2xl font-black text-slate-900 dark:text-white">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {selectedProject.name}
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs lg:text-[13px] font-black bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300/40">
-              {selectedProject.capacity}
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs lg:text-[12px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-              {selectedProject.stageCategory === 'contracting' ? 'Contracting & FC' : 'Feasibility'}
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              {stageLabel}
             </span>
           </div>
-          <p className="text-xs sm:text-sm lg:text-[14.5px] font-semibold text-slate-600 dark:text-slate-300 mt-1">
-            {selectedProject.plantType} · {selectedProject.location}
+          <p className="text-xs sm:text-[13px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+            {selectedProject.plantType}
           </p>
         </div>
+      </div>
 
-        <div className="text-right shrink-0">
-          <div className="text-[11px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider">Target COD</div>
-          <div className="text-sm lg:text-lg font-black text-indigo-600 dark:text-indigo-400 mt-0.5">
-            {selectedProject.cod}
+      {/* Key Project Parameters Grid (4 Distinct Facts — Zero Duplication) */}
+      <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs tabular-nums">
+        <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+          <div className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Capacity</div>
+          <div className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 mt-0.5">{selectedProject.capacity}</div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+          <div className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Target COD</div>
+          <div className="text-sm sm:text-base font-black text-indigo-600 dark:text-indigo-400 mt-0.5">{selectedProject.cod}</div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+          <div className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Location</div>
+          <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate" title={`${selectedProject.location} (${selectedProject.region})`}>
+            {selectedProject.location}
           </div>
         </div>
-      </div>
-
-      {/* Key Project Parameters Grid (4-Column Metric Grid on Desktop) */}
-      <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
-          <div className="text-[11px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider">Capacity</div>
-          <div className="text-base lg:text-xl font-black text-rose-600 dark:text-rose-400 mt-1">{selectedProject.capacity}</div>
-          <div className="text-xs lg:text-[12.5px] text-slate-500 dark:text-slate-400 truncate mt-1">{selectedProject.plantType}</div>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
-          <div className="text-[11px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider">Target COD</div>
-          <div className="text-base lg:text-xl font-black text-indigo-600 dark:text-indigo-400 mt-1">{selectedProject.cod}</div>
-          <div className="text-xs lg:text-[12.5px] text-slate-500 dark:text-slate-400 truncate mt-1">{selectedProject.stage || 'Pipeline'}</div>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
-          <div className="text-[11px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider">Region & Location</div>
-          <div className="text-sm lg:text-[16px] font-bold text-slate-800 dark:text-slate-200 mt-1 truncate">{selectedProject.location}</div>
-          <div className="text-xs lg:text-[12.5px] text-slate-500 dark:text-slate-400 truncate mt-1">{selectedProject.region}</div>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
-          <div className="text-[11px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider">Equity / Ownership</div>
-          <div className="text-sm lg:text-[16px] font-bold text-slate-800 dark:text-slate-200 mt-1 truncate">{selectedProject.equity || 'SE 100%'}</div>
-          <div className="text-xs lg:text-[12.5px] text-slate-500 dark:text-slate-400 truncate mt-1">SESB Stake</div>
+        <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+          <div className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Equity</div>
+          <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedProject.equity || 'SE 100%'}</div>
         </div>
       </div>
 
-      {/* Status and Description */}
-      <div className="mt-3.5 text-xs sm:text-sm lg:text-[14.5px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 border border-slate-200/70 dark:border-slate-700/60">
-        <span className="font-extrabold text-slate-800 dark:text-slate-100">Status & Way Forward: </span>
+      {/* Status and Way Forward */}
+      <div className="mt-3 text-xs sm:text-[13px] text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3.5 border border-slate-200/70 dark:border-slate-700/60">
+        <span className="font-extrabold text-slate-900 dark:text-white">Status &amp; Way Forward: </span>
         {selectedProject.status}
       </div>
 
-      {/* Watch Item Highlight Alert or Milestone Status */}
+      {/* Watch Item Highlight Alert or On-Track Indicator */}
       {selectedProject.watchItem ? (
-        <div className="mt-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300/70 dark:border-amber-700/70 rounded-xl p-3.5 flex items-start gap-3">
-          <span className="text-lg shrink-0">⚠️</span>
+        <div className={`mt-3 border rounded-xl p-3.5 flex items-start gap-2.5 ${watchClass}`}>
+          <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
           <div className="min-w-0">
-            <div className="text-sm lg:text-[15px] font-black text-amber-900 dark:text-amber-200">
-              Watch Item: {selectedProject.watchItem.title}
+            <div className="text-xs sm:text-[13px] font-black">
+              {selectedProject.watchItem.badge ? `${selectedProject.watchItem.badge}: ` : ''}{selectedProject.watchItem.title}
             </div>
-            <p className="text-xs lg:text-[13.5px] text-amber-800 dark:text-amber-300 mt-1 leading-snug">
+            <p className="text-xs mt-0.5 opacity-90 leading-snug">
               {selectedProject.watchItem.text}
             </p>
           </div>
         </div>
       ) : (
-        <div className="mt-3.5 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50 rounded-xl p-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span className="text-xs sm:text-sm lg:text-[14px] font-bold text-emerald-800 dark:text-emerald-300">
-              Pipeline Status: On track for {selectedProject.cod} delivery
+        <div className="mt-3 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50 rounded-xl p-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+              On track for {selectedProject.cod} delivery
             </span>
           </div>
-          <span className="text-xs lg:text-[12.5px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-2.5 py-0.5 rounded-md">
+          <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-md shrink-0">
             No Critical Blockers
           </span>
         </div>

@@ -1,24 +1,30 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
-
-const HomeTab = lazy(() => import('./features/home/HomeTab').then(m => ({ default: m.HomeTab })));
-const GlossaryTab = lazy(() => import('./features/glossary/GlossaryTab').then(m => ({ default: m.GlossaryTab })));
-const QuizTab = lazy(() => import('./features/quiz/QuizTab').then(m => ({ default: m.QuizTab })));
-const ProfileTab = lazy(() => import('./features/profile/ProfileTab').then(m => ({ default: m.ProfileTab })));
-const AdminTab = lazy(() => import('./features/admin/AdminTab'));
 import LoginPage from './features/auth/LoginPage';
 import PasscodeGate from './features/auth/PasscodeGate';
 import { getGlossary } from './features/glossary/glossaryService';
 import { getUserStreak } from './services/userService';
-import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from './components/ui';
-import { DesktopSidebar, DesktopHeader, TopographicBackground } from './components/layout';
+import {
+  DesktopSidebar,
+  DesktopHeader,
+  TopographicBackground,
+  MobileTopBar,
+  MobileBottomNav,
+  InstallAppModal
+} from './components/layout';
 import { useBookmarks } from './hooks/useBookmarks';
 import { useVisitorTracking } from './hooks/useVisitorTracking';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import { useInstallPrompt } from './hooks/useInstallPrompt';
 import { useAuth, useTheme } from './context';
 
+const HomeTab = lazy(() => import('./features/home/HomeTab').then(m => ({ default: m.HomeTab })));
+const GlossaryTab = lazy(() => import('./features/glossary/GlossaryTab').then(m => ({ default: m.GlossaryTab })));
+const QuizTab = lazy(() => import('./features/quiz/QuizTab').then(m => ({ default: m.QuizTab })));
+const ProfileTab = lazy(() => import('./features/profile/ProfileTab').then(m => ({ default: m.ProfileTab })));
+const AdminTab = lazy(() => import('./features/admin/AdminTab'));
+
 function App() {
-  const { user, setUser, isPasscodeUnlocked, setIsPasscodeUnlocked, handleUpdateUser, login, logout } = useAuth();
+  const { user, isPasscodeUnlocked, setIsPasscodeUnlocked, handleUpdateUser, login, logout } = useAuth();
   const { isDark, toggleTheme: handleToggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('home');
   const [activeGlossaryCat, setActiveGlossaryCat] = useState('All');
@@ -32,54 +38,52 @@ function App() {
   });
   const [streak, setStreak] = useState(0);
   const [streakToast, setStreakToast] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [hasShownAlreadySaved, setHasShownAlreadySaved] = useState(false);
+
   const bookmarkActions = useBookmarks();
   const { visitorStats, refreshVisitorStats } = useVisitorTracking(user);
 
-  // Fetch glossary from DB with offline localStorage persistence
   const fetchGlossary = useCallback(() => {
     return getGlossary()
-      .then(d => {
-        if (d && d.length > 0) {
-          setGlossary(d);
+      .then(data => {
+        if (data && data.length > 0) {
+          setGlossary(data);
           try {
-            localStorage.setItem('sesi_glossary_cache', JSON.stringify(d));
-          } catch {}
+            localStorage.setItem('sesi_glossary_cache', JSON.stringify(data));
+          } catch {
+            // Ignore quota errors on cached glossary
+          }
         }
-        return d;
+        return data;
       })
       .catch(err => {
-        console.warn("Direct Supabase glossary fetch failed:", err);
+        console.warn('Glossary fetch failed:', err);
       });
   }, []);
 
-  useEffect(() => { fetchGlossary(); }, [fetchGlossary]);
+  useEffect(() => {
+    fetchGlossary();
+  }, [fetchGlossary]);
 
-  // Fetch streak on mount and whenever user logs in
   const fetchStreak = useCallback(() => {
-    if (user) {
-      return getUserStreak(user)
-        .then(res => {
-          if (res && typeof res.streak === 'number') {
-            setStreak(res.streak);
-          }
-          return res;
-        })
-        .catch(err => {
-          console.warn("Direct streak fetch failed:", err);
-        });
-    } else {
-      setStreak(prev => (prev === 0 ? prev : 0));
-      return Promise.resolve();
-    }
+    if (!user) return Promise.resolve();
+    return getUserStreak(user)
+      .then(res => {
+        if (res && typeof res.streak === 'number') {
+          setStreak(res.streak);
+        }
+        return res;
+      })
+      .catch(err => {
+        console.warn('Streak fetch failed:', err);
+      });
   }, [user]);
 
   useEffect(() => {
     fetchStreak();
   }, [fetchStreak]);
 
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // Hook: PWA Install Prompt lifecycle
   const {
     showInstallPrompt,
     setShowInstallPrompt,
@@ -89,7 +93,6 @@ function App() {
     installApp
   } = useInstallPrompt(user);
 
-  // Global refresh callback
   const handleGlobalRefresh = useCallback(async () => {
     await Promise.allSettled([
       fetchGlossary(),
@@ -99,7 +102,6 @@ function App() {
     setRefreshKey(k => k + 1);
   }, [fetchGlossary, fetchStreak, refreshVisitorStats]);
 
-  // Hook: Elastic pull-to-refresh
   const {
     pullDistance,
     isPulling,
@@ -108,12 +110,6 @@ function App() {
     touchHandlers
   } = usePullToRefresh(handleGlobalRefresh);
 
-  // Profile sync managed by AuthContext
-
-
-  const [hasShownAlreadySaved, setHasShownAlreadySaved] = useState(false);
-
-  // Handle streak updates from child components
   const handleStreakUpdate = (newStreak, newlyRecorded = false) => {
     setStreak(newStreak);
     if (newlyRecorded) {
@@ -125,13 +121,6 @@ function App() {
       setTimeout(() => setStreakToast(null), 3000);
     }
   };
-
-  const tabs = [
-    { id: 'home', label: 'Home', Icon: HomeIcon },
-    { id: 'glossary', label: 'Dictionary', Icon: BookIcon },
-    { id: 'quiz', label: 'Hub', Icon: QuizIcon },
-    { id: 'profile', label: 'Profile', Icon: ProfileIcon },
-  ];
 
   const handleLogin = (userData) => {
     login(userData);
@@ -147,14 +136,17 @@ function App() {
     setStreak(0);
   };
 
-
   if (!isPasscodeUnlocked) {
     return (
       <PasscodeGate
-        isDark={false}
+        isDark={isDark}
         onUnlock={() => {
           setIsPasscodeUnlocked(true);
-          try { localStorage.setItem('sesi_passcode_unlocked', 'true'); } catch { }
+          try {
+            localStorage.setItem('sesi_passcode_unlocked', 'true');
+          } catch {
+            // Ignore storage errors in restricted contexts
+          }
         }}
       />
     );
@@ -166,10 +158,8 @@ function App() {
 
   return (
     <div className={`h-[100dvh] overflow-hidden flex flex-col lg:flex-row text-slate-900 transition-colors duration-200 app-shell-frame relative shadow-2xl ${isDark ? 'dark:text-slate-100' : ''}`}>
-      {/* High-Precision Scalable Vector Topographic Background with Ambient Mesh */}
       <TopographicBackground isDark={isDark} />
 
-      {/* ─── DESKTOP SIDEBAR (hidden on mobile, visible on desktop >= 1024px) ─── */}
       <DesktopSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -180,262 +170,168 @@ function App() {
         onLogout={handleLogout}
       />
 
-      {/* ─── MAIN CONTENT VIEWPORT (Right column on desktop, full width on mobile) ─── */}
       <div className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden relative">
-        {/* Root level Toast Notification */}
         {streakToast && (
-          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-orange-500 text-white px-5 py-3 rounded-2xl shadow-xl shadow-orange-500/30 text-[13px] font-bold animate-scaleIn whitespace-nowrap">
-            {streakToast}
+          <div className="toast toast-top toast-center z-[100] pointer-events-none" role="status" aria-live="polite">
+            <div className="alert alert-warning bg-orange-500 text-white border-none shadow-xl shadow-orange-500/30 rounded-2xl px-5 py-3 text-[13px] font-bold animate-scaleIn whitespace-nowrap">
+              <span>{streakToast}</span>
+            </div>
           </div>
         )}
 
-        {/* ─── DESKTOP HEADER (hidden on mobile, visible on desktop >= 1024px) ─── */}
         <DesktopHeader
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           streak={streak}
         />
 
-        {/* ─── MOBILE TOP BAR (visible on mobile, hidden on desktop) ─── */}
-        <header className="lg:hidden sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 safe-area-top shrink-0">
-        <div className="flex items-center justify-between px-4 h-16">
+        <MobileTopBar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          streak={streak}
+          user={user}
+          isDark={isDark}
+          toggleTheme={handleToggleTheme}
+          onLogout={handleLogout}
+        />
 
-          {/* ─── LOGO AREA + BACK BUTTON ─── */}
-          <div className="flex items-center gap-2.5">
-            {/* Back Button - shown when not on home */}
-            {activeTab !== 'home' && (
-              <button
-                onClick={() => setActiveTab('home')}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all shrink-0 mr-0.5 border border-slate-200/60 dark:border-slate-700/60"
-                aria-label="Back to home"
+        <main
+          ref={scrollContainerRef}
+          {...touchHandlers}
+          className="flex-1 overflow-y-auto scroll-container px-4 sm:px-6 lg:px-8 py-4 lg:py-8 pb-24 lg:pb-12 w-full"
+        >
+          <div className="w-full max-w-[2400px] mx-auto">
+            {(pullDistance > 0 || isGlobalRefreshing) && (
+              <div
+                style={{
+                  height: isGlobalRefreshing ? 44 : pullDistance,
+                  opacity: isGlobalRefreshing ? 1 : Math.min(1, pullDistance / 35),
+                  transition: isPulling ? 'none' : 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                className="overflow-hidden flex items-center justify-center pointer-events-none select-none text-slate-500 dark:text-slate-400 -mt-2 mb-2"
+                aria-hidden="true"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
-              </button>
-            )}
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white dark:bg-white/95 border border-slate-200/90 dark:border-slate-700/80 shadow-xs shrink-0 p-1">
-              <img
-                src="/assets/logo.png"
-                alt="S&S Logo"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="flex flex-col justify-center select-none">
-              <span className="text-[15px] sm:text-[16px] font-extrabold tracking-tight leading-none text-[#059669] dark:text-[#34d399] whitespace-nowrap" style={{ textRendering: 'geometricPrecision' }}>
-                SESI INSIGHT
-              </span>
-              <span className="text-[9px] sm:text-[10px] font-semibold text-slate-600 dark:text-slate-300 mt-0.5 leading-none tracking-tight whitespace-nowrap">
-                Sabah Electricity Supply Industry
-              </span>
-            </div>
-          </div>
-
-          {/* ─── ACTIONS AREA ─── */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-
-            {/* Streak Badge */}
-            {streak > 0 && (
-              <div className="flex items-center gap-1 bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-950/40 dark:to-amber-950/40 border border-orange-200/50 dark:border-orange-800/50 text-orange-600 dark:text-orange-400 px-2.5 py-1.5 rounded-full shadow-sm shrink-0">
-                <span className="text-[12px] leading-none">🔥</span>
-                <span className="text-[13px] font-extrabold tabular-nums leading-none">{streak}</span>
+                <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-md border border-slate-200/80 dark:border-slate-700/80">
+                  {isGlobalRefreshing ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] tracking-tight">
+                        Refreshing feed...
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className={`w-3.5 h-3.5 transition-transform duration-200 ${pullDistance >= 45 ? 'rotate-180 text-emerald-500' : 'text-slate-400'}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                      <span className="text-[11px] font-medium tracking-tight">
+                        {pullDistance >= 45 ? 'Release to refresh' : 'Pull to refresh'}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Settings/Theme Pill Group */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 border border-slate-200 dark:border-slate-700 shrink-0">
-
-              {/* Admin Button - only visible if user is Admin */}
-              {user?.role === 'Admin' && (
-                <button
-                  onClick={() => setActiveTab('admin')}
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all relative"
-                  aria-label="Admin Dashboard"
-                  title="Admin Dashboard"
-                >
-                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /><rect width="7" height="5" x="14" y="3" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /><rect width="7" height="9" x="14" y="12" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /><rect width="7" height="5" x="3" y="16" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full border-[1.5px] border-slate-100 dark:border-slate-800"></div>
-                </button>
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center min-h-[50dvh] space-y-3 text-slate-400">
+                  <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs font-semibold">Loading view...</span>
+                </div>
+              }
+            >
+              {activeTab === 'home' && (
+                <HomeTab
+                  key={`home-${refreshKey}`}
+                  user={user}
+                  streak={streak}
+                  setActiveTab={setActiveTab}
+                  isDark={isDark}
+                  bookmarkActions={bookmarkActions}
+                  onUpdateUser={handleUpdateUser}
+                  visitorStats={visitorStats}
+                  triggerInstallPrompt={triggerInstallPrompt}
+                />
               )}
-
-              {/* Dark Mode Toggle with micro-interaction */}
-              <button
-                onClick={handleToggleTheme}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all hover:text-slate-900 dark:hover:text-white relative overflow-hidden active:scale-90"
-                aria-label="Toggle theme"
-              >
-                <span
-                  className={`flex items-center justify-center transition-all duration-300 transform ${
-                    isDark ? 'rotate-90 scale-0 opacity-0 absolute' : 'rotate-0 scale-100 opacity-100'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                </span>
-                <span
-                  className={`flex items-center justify-center transition-all duration-300 transform ${
-                    isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0 absolute'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                </span>
-              </button>
-
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:shadow-sm transition-all hover:text-rose-600"
-                aria-label="Sign out"
-              >
-                <svg className="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main
-        ref={scrollContainerRef}
-        {...touchHandlers}
-        className="flex-1 overflow-y-auto scroll-container px-4 sm:px-6 lg:px-8 py-4 lg:py-8 pb-24 lg:pb-12 w-full"
-      >
-        <div className="w-full max-w-[2400px] mx-auto">
-          {/* Pull to Refresh Indicator */}
-        {(pullDistance > 0 || isGlobalRefreshing) && (
-          <div
-            style={{
-              height: isGlobalRefreshing ? 44 : pullDistance,
-              opacity: isGlobalRefreshing ? 1 : Math.min(1, pullDistance / 35),
-              transition: isPulling ? 'none' : 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            }}
-            className="overflow-hidden flex items-center justify-center pointer-events-none select-none text-slate-500 dark:text-slate-400 -mt-2 mb-2"
-            aria-hidden="true"
-          >
-            <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-md border border-slate-200/80 dark:border-slate-700/80">
-              {isGlobalRefreshing ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] tracking-tight">Refreshing feed...</span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${pullDistance >= 45 ? 'rotate-180 text-emerald-500' : 'text-slate-400'}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
-                  <span className="text-[11px] font-medium tracking-tight">
-                    {pullDistance >= 45 ? 'Release to refresh' : 'Pull to refresh'}
-                  </span>
-                </>
+              {activeTab === 'glossary' && (
+                <GlossaryTab
+                  key={`glossary-${refreshKey}`}
+                  user={user}
+                  glossary={glossary}
+                  onStreakUpdate={handleStreakUpdate}
+                  activeGlossaryCat={activeGlossaryCat}
+                  setActiveGlossaryCat={setActiveGlossaryCat}
+                  bookmarkActions={bookmarkActions}
+                  isDark={isDark}
+                />
               )}
-            </div>
+              {activeTab === 'quiz' && (
+                <QuizTab
+                  key={`quiz-${refreshKey}`}
+                  user={user}
+                  streak={streak}
+                  setActiveTab={setActiveTab}
+                  onStreakUpdate={handleStreakUpdate}
+                />
+              )}
+              {activeTab === 'profile' && (
+                <ProfileTab
+                  key={`profile-${refreshKey}`}
+                  user={user}
+                  bookmarkActions={bookmarkActions}
+                  onUpdateUser={handleUpdateUser}
+                  setActiveTab={setActiveTab}
+                />
+              )}
+              {activeTab === 'admin' && (
+                user?.role === 'Admin' ? (
+                  <AdminTab
+                    currentUser={user}
+                    onClose={() => setActiveTab('home')}
+                    onGlossaryChange={fetchGlossary}
+                    visitorStats={visitorStats}
+                    onRefreshVisitorStats={refreshVisitorStats}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center min-h-[60dvh] text-center px-4 space-y-4">
+                    <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-500 flex items-center justify-center text-3xl shadow-sm">
+                      🛡️
+                    </div>
+                    <div className="space-y-1">
+                      <h2 className="text-xl font-black text-slate-900 dark:text-white">Admin Privileges Required</h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                        Your account does not currently have administrator access. Please contact an existing administrator to grant access.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('home')}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-600/20 active:scale-95"
+                    >
+                      Return to Home
+                    </button>
+                  </div>
+                )
+              )}
+            </Suspense>
           </div>
-        )}
+        </main>
 
-        <Suspense fallback={
-          <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3 text-slate-400">
-            <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs font-semibold">Loading view...</span>
-          </div>
-        }>
-          {activeTab === 'home' && <HomeTab key={`home-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} isDark={isDark} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} visitorStats={visitorStats} triggerInstallPrompt={triggerInstallPrompt} />}
-          {activeTab === 'glossary' && <GlossaryTab key={`glossary-${refreshKey}`} user={user} glossary={glossary} onStreakUpdate={handleStreakUpdate} activeGlossaryCat={activeGlossaryCat} setActiveGlossaryCat={setActiveGlossaryCat} bookmarkActions={bookmarkActions} isDark={isDark} />}
-          {activeTab === 'quiz' && <QuizTab key={`quiz-${refreshKey}`} user={user} streak={streak} setActiveTab={setActiveTab} onStreakUpdate={handleStreakUpdate} />}
-          {activeTab === 'profile' && <ProfileTab key={`profile-${refreshKey}`} user={user} bookmarkActions={bookmarkActions} onUpdateUser={handleUpdateUser} setActiveTab={setActiveTab} />}
-          {activeTab === 'admin' && (
-            user?.role === 'Admin' ? (
-              <AdminTab
-                currentUser={user}
-                onClose={() => setActiveTab('home')}
-                onGlossaryChange={fetchGlossary}
-                visitorStats={visitorStats}
-                onRefreshVisitorStats={refreshVisitorStats}
-              />
-            ) : (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-500 flex items-center justify-center text-3xl shadow-sm">
-                🛡️
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-xl font-black text-slate-900 dark:text-white">Admin Privileges Required</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                  Your account does not currently have administrator access. Please contact an existing administrator to grant access.
-                </p>
-              </div>
-              <button
-                onClick={() => setActiveTab('home')}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-600/20 active:scale-95"
-              >
-                Return to Home
-              </button>
-            </div>
-            )
-          )}
-        </Suspense>
-        </div>
-      </main>
-
-      <nav className="lg:hidden app-shell-fixed-bottom bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-50 pb-3">
-        <div className="flex items-center justify-around h-[68px] px-2">
-          {tabs.map(({ id, label, Icon }) => (
-            <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center justify-center w-[68px] h-[60px] mx-1 rounded-2xl transition-all ${activeTab === id ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'opacity-60'}`}>
-              <div className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === id ? 'text-emerald-600' : 'text-slate-400'}`}>
-                <Icon active={activeTab === id} />
-                <span className="text-[11px] font-semibold leading-none tracking-tight">{label}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </nav>
+        <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
 
-      {/* Install App Popup */}
-      {showInstallPrompt && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-fadeIn text-center relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
-
-            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-            </div>
-
-            <h3 className="text-[20px] font-black text-slate-900 dark:text-white mb-2">Install SESI App</h3>
-
-            <p className="text-[14px] text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-              For the best experience, install this app on your device!
-              {deferredPrompt ? (
-                <>
-                  <br /><br />
-                  <span className="text-[12px] bg-slate-100 dark:bg-slate-800 p-2 rounded-lg block text-left">
-                    <strong>Android:</strong><br />
-                    Tap the <strong>Install App</strong> button below to add it directly to your home screen!
-                  </span>
-                </>
-              ) : (
-                <>
-                  <br /><br />
-                  <span className="text-[12px] bg-slate-100 dark:bg-slate-800 p-2 rounded-lg block text-left">
-                    <strong>iOS / iPhone:</strong><br />
-                    Tap <strong className="text-slate-700 dark:text-slate-200">Share</strong> <svg className="inline w-4 h-4 text-slate-700 dark:text-slate-200 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> then <strong className="text-slate-700 dark:text-slate-200">Add to Home Screen</strong> <svg className="inline w-4 h-4 text-slate-700 dark:text-slate-200 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                  </span>
-                </>
-              )}
-            </p>
-
-            <div className="flex gap-2">
-              <button onClick={dismissInstallPrompt} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all active:scale-95">
-                Not Now
-              </button>
-              <button onClick={installApp} className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-500/30">
-                Install App
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <InstallAppModal
+        isOpen={showInstallPrompt}
+        deferredPrompt={deferredPrompt}
+        onDismiss={dismissInstallPrompt}
+        onInstall={installApp}
+      />
     </div>
   );
 }

@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { CATEGORIES, API_BASE, getColor } from '../../utils/constants';
-import { CorporatePerformanceChart } from '../../components/ui';
-import { recordUserActivityDirect } from '../../utils/supabaseClient';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { getColor } from '../../utils/constants';
+import { recordUserActivity } from '../../services/userService';
+import { normalizeGlossaryTerm } from '../../domain/glossaryModel';
 import { FutureGenMapModal } from '../../components/modals';
-import { GlossaryFlashcardView, GlossaryFutureGenCard } from './components';
+import {
+  GlossaryCategoryBar,
+  GlossaryFlashcardView,
+  GlossaryFutureGenCard,
+  GlossaryTermDetailCard
+} from './components';
 
 export function GlossaryTab({
   user,
@@ -14,7 +19,7 @@ export function GlossaryTab({
   bookmarkActions,
   isDark = false
 }) {
-  const { isBookmarked, toggleBookmark } = bookmarkActions || { isBookmarked: () => false, toggleBookmark: () => { } };
+  const { isBookmarked, toggleBookmark } = bookmarkActions || { isBookmarked: () => false, toggleBookmark: () => {} };
   const [search, setSearch] = useState('');
   const cat = activeGlossaryCat || 'All';
   const setCat = (c) => {
@@ -28,30 +33,31 @@ export function GlossaryTab({
   const [selectedTermId, setSelectedTermId] = useState(null);
   const [isFutureGenMapOpen, setIsFutureGenMapOpen] = useState(false);
   const searchInputRef = useRef(null);
-  const USERNAME = user?.fullName || user?.preferredName || user?.email || "";
+  const username = user?.fullName || user?.preferredName || user?.email || '';
 
-  // Filter logic
-  const filtered = glossary.filter(item => {
+  const filtered = useMemo(() => {
     const s = search.toLowerCase();
-    const matchSearch =
-      (item.term || '').toLowerCase().includes(s) ||
-      (item.full || '').toLowerCase().includes(s) ||
-      (item.desc || '').toLowerCase().includes(s);
-    const matchCat = cat === 'All' || item.cat === cat;
-    return matchSearch && matchCat;
-  });
+    return glossary.filter(item => {
+      const matchSearch =
+        (item.term || '').toLowerCase().includes(s) ||
+        (item.full || '').toLowerCase().includes(s) ||
+        (item.desc || '').toLowerCase().includes(s);
+      const matchCat = cat === 'All' || item.cat === cat;
+      return matchSearch && matchCat;
+    });
+  }, [glossary, search, cat]);
 
-  // Selected item for desktop master-detail view
+  const catCounts = useMemo(() => {
+    const counts = {};
+    glossary.forEach(item => {
+      counts[item.cat] = (counts[item.cat] || 0) + 1;
+    });
+    return counts;
+  }, [glossary]);
+
   const activeDetailItem = filtered.find(i => (i.id || i.term) === selectedTermId) || filtered[0] || null;
+  const showFutureGenCard = cat === 'BDV';
 
-  // Sync selected term id if current selection is not in filtered list
-  useEffect(() => {
-    if (filtered.length > 0 && (!selectedTermId || !filtered.some(i => (i.id || i.term) === selectedTermId))) {
-      setSelectedTermId(filtered[0].id || filtered[0].term);
-    }
-  }, [filtered, selectedTermId]);
-
-  // Keyboard shortcut: '/' to focus search input
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === '/' && document.activeElement !== searchInputRef.current && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
@@ -63,34 +69,15 @@ export function GlossaryTab({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Pinned Future Generation Map card visibility: ONLY when BDV category is selected
-  const showFutureGenCard = cat === 'BDV';
-
-  // Count per category
-  const catCounts = {};
-  glossary.forEach(item => {
-    catCounts[item.cat] = (catCounts[item.cat] || 0) + 1;
-  });
-
   const triggerActivityRecord = useCallback(async () => {
     try {
-      const res = await recordUserActivityDirect(user || USERNAME);
+      const res = await recordUserActivity(user || username);
       if (res && onStreakUpdate) onStreakUpdate(res.streak, res.recorded);
     } catch {
-      fetch(`${API_BASE}/api/streak/record`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: USERNAME })
-      })
-        .then(r => r.ok && r.json())
-        .then(data => {
-          if (data && onStreakUpdate) onStreakUpdate(data.streak, data.recorded);
-        })
-        .catch(() => { });
+      // Streak updates are best-effort and non-blocking
     }
-  }, [user, USERNAME, onStreakUpdate]);
+  }, [user, username, onStreakUpdate]);
 
-  // Record reading activity when user taps a term (streak trigger)
   const recordRead = useCallback((termId) => {
     if (expandedId === termId) {
       setExpandedId(null);
@@ -101,7 +88,6 @@ export function GlossaryTab({
     triggerActivityRecord();
   }, [expandedId, triggerActivityRecord]);
 
-  // Record read for flashcard flip too
   const handleFlashcardFlip = useCallback(() => {
     setFlipped(prev => {
       if (!prev) triggerActivityRecord();
@@ -109,25 +95,34 @@ export function GlossaryTab({
     });
   }, [triggerActivityRecord]);
 
+  const activeFlashcard = filtered[Math.min(flashcardIdx, Math.max(0, filtered.length - 1))];
+
   return (
     <div className="space-y-6 animate-fadeIn pb-12 relative">
-      {/* ── Top Header & Controls ── */}
+      {/* Top Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Knowledge Repository</span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5 tracking-tight">Dictionary &amp; Directory</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Dictionary
+          </h1>
           <p className="text-[12.5px] text-slate-500 dark:text-slate-400 mt-0.5">
-            Technical definitions, formulas, acronyms, and corporate performance indices across Sabah
+            Sabah Electricity regulatory terms, formulas, and performance metrics
           </p>
         </div>
 
-        {/* View Mode Switcher */}
-        <div className="flex items-center p-1 bg-slate-200 dark:bg-slate-800 rounded-xl space-x-1 shrink-0 self-start sm:self-auto">
+        <div
+          role="tablist"
+          aria-label="Dictionary view mode"
+          className="tabs tabs-box flex items-center concentric-pill-group bg-slate-200/90 dark:bg-slate-800/90 surface-depth-2 border-alpha space-x-1 shrink-0 self-start sm:self-auto"
+        >
           {[['grid', 'Cards'], ['list', 'List'], ['flashcards', 'Flashcards']].map(([mode, label]) => (
             <button
               key={mode}
+              type="button"
+              role="tab"
+              aria-selected={viewMode === mode}
               onClick={() => setViewMode(mode)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3.5 py-1.5 concentric-pill-item text-xs font-bold transition-all ${
                 viewMode === mode
                   ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600 dark:text-emerald-400'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -139,7 +134,7 @@ export function GlossaryTab({
         </div>
       </div>
 
-      {/* ── Search & Filter Bar (Mobile & Compact View) ── */}
+      {/* Mobile Search & Category Filter Bar */}
       <div className="lg:hidden bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 shadow-sm space-y-3">
         <div className="relative">
           <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,380 +153,195 @@ export function GlossaryTab({
           </span>
         </div>
 
-        {/* Category Pills (Mobile) */}
-        <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pb-1 scrollbar-hide">
-          {CATEGORIES.map(c => {
-            const isActive = cat === c.key;
-            const count = c.key === 'All' ? glossary.length : (catCounts[c.key] || 0);
-            const clr = c.key !== 'All' ? getColor(c.key) : null;
-            return (
-              <button
-                key={c.key}
-                onClick={() => setCat(c.key)}
-                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold tracking-tight transition-all flex items-center gap-1 ${
-                  isActive
-                    ? (clr ? `${clr.pill} text-white shadow-md` : 'bg-emerald-600 text-white shadow-md')
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                <div className="w-4 flex items-center justify-center shrink-0">
-                  {c.iconImage ? (
-                    <img src={c.iconImage} alt={c.label} className="h-4 w-auto object-contain scale-[1.5]" />
-                  ) : (
-                    <span className="text-[12px]">{c.emoji}</span>
-                  )}
-                </div>
-                {c.label}
-                <span className={`text-[9px] ${isActive ? 'opacity-80' : 'opacity-50'}`}>({count})</span>
-              </button>
-            );
-          })}
-        </div>
+        <GlossaryCategoryBar
+          cat={cat}
+          setCat={setCat}
+          totalCount={glossary.length}
+          catCounts={catCounts}
+          variant="pills"
+        />
       </div>
 
-      {/* Pinned Future Generation Map Card (Only on BDV category) */}
       {showFutureGenCard && (
         <GlossaryFutureGenCard onOpenMap={() => setIsFutureGenMapOpen(true)} />
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* ── DESKTOP MASTER-DETAIL SPLIT VIEW (Visible >= 1024px) ────────── */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* Desktop Master-Detail Split View */}
       <div className="hidden lg:grid lg:grid-cols-12 gap-8 items-start">
-          {/* ── Left Master Pane (col-span-5 or 4, 3 on 2xl): Category List + Search + Terms List ── */}
-          <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-3 sticky top-6 space-y-4">
-            {/* Search Box */}
-            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-3 shadow-md ring-1 ring-black/5 dark:ring-white/10">
-              <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search terms... (Press / to focus)"
-                  className="w-full pl-10 pr-14 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-                {search ? (
-                  <button
-                    onClick={() => setSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-1"
-                  >
-                    ✕
-                  </button>
-                ) : (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500">
-                    /
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Category Filter Chips / List */}
-            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-3 shadow-md ring-1 ring-black/5 dark:ring-white/10 max-h-56 overflow-y-auto space-y-1 scrollbar-thin">
-              <div className="flex items-center justify-between px-2 py-1">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Filter By Domain
-                </span>
-                <span className="text-[11px] font-bold text-slate-400">
-                  {CATEGORIES.slice(1).length} domains
-                </span>
-              </div>
-              <div className="space-y-1">
-                {CATEGORIES.map(c => {
-                  const isActive = cat === c.key;
-                  const count = c.key === 'All' ? glossary.length : (catCounts[c.key] || 0);
-                  const clr = c.key !== 'All' ? getColor(c.key) : null;
-                  return (
-                    <button
-                      key={c.key}
-                      type="button"
-                      onClick={() => setCat(c.key)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs lg:text-[13px] font-bold transition-all text-left group ${
-                        isActive
-                          ? (clr ? `${clr.bg} ${clr.text} ring-1 ${clr.border} shadow-xs` : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30 shadow-xs')
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2 min-w-0 pr-2">
-                        {c.iconImage ? (
-                          <img src={c.iconImage} alt={c.label} className="w-4 h-4 object-contain shrink-0" />
-                        ) : (
-                          <span className="text-sm shrink-0">{c.emoji}</span>
-                        )}
-                        <span className="whitespace-normal leading-snug">{c.label}</span>
-                      </span>
-                      <span className={`text-[11px] font-semibold tabular-nums shrink-0 px-2 py-0.5 rounded-full ${
-                        isActive
-                          ? 'bg-white/80 dark:bg-slate-900/60 font-bold'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
-                      }`}>
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Scrollable Terms List */}
-            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl shadow-md ring-1 ring-black/5 dark:ring-white/10 overflow-hidden flex flex-col h-[calc(100vh-340px)] min-h-[400px]">
-              <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
-                <span className="text-xs lg:text-sm font-bold text-slate-700 dark:text-slate-300">
-                  Terms in <span className="text-emerald-600 dark:text-emerald-400">{cat}</span>
-                </span>
-                <span className="text-xs lg:text-[13px] font-bold text-slate-400 tabular-nums">
-                  {filtered.length} terms
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-2 space-y-1">
-                {(() => {
-                  const safeIdx = Math.min(flashcardIdx, Math.max(0, filtered.length - 1));
-                  const activeFlashcard = filtered[safeIdx];
-                  return filtered.map(item => {
-                    const isSelected = viewMode === 'flashcards'
-                      ? activeFlashcard && (activeFlashcard.id || activeFlashcard.term) === (item.id || item.term)
-                      : activeDetailItem && (activeDetailItem.id || activeDetailItem.term) === (item.id || item.term);
-                    const clr = getColor(item.cat);
-                    const hasChart = item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]');
-
-                    return (
-                      <button
-                        key={item.id || item.term}
-                        onClick={() => {
-                          if (viewMode === 'flashcards') {
-                            const idx = filtered.findIndex(t => (t.id || t.term) === (item.id || item.term));
-                            if (idx !== -1) {
-                              setFlashcardIdx(idx);
-                              setFlipped(false);
-                            }
-                          } else {
-                            recordRead(item.id || item.term);
-                          }
-                        }}
-                      className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between group ${
-                        isSelected
-                          ? 'bg-emerald-500 text-white shadow-md'
-                          : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-800 dark:text-slate-200'
-                      }`}
-                    >
-                      <div className="min-w-0 pr-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm lg:text-[15.5px] font-bold tracking-tight truncate ${isSelected ? 'text-white' : ''}`}>
-                            {item.term}
-                          </span>
-                          {hasChart && (
-                            <span className={`text-[10px] lg:text-[11px] font-extrabold px-1.5 py-0.5 rounded ${
-                              isSelected ? 'bg-white/20 text-white' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                            }`}>
-                              CHART
-                            </span>
-                          )}
-                        </div>
-                        {item.full && !item.term.includes(' ') && (
-                          <div className={`text-xs lg:text-[13px] truncate mt-0.5 ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
-                            {item.full}
-                          </div>
-                        )}
-                      </div>
-                      <div className="shrink-0 flex items-center gap-1.5">
-                        <span className={`text-[11px] lg:text-xs font-bold px-2 py-0.5 rounded-md ${
-                          isSelected ? 'bg-white/20 text-white' : `${clr.bg} ${clr.text}`
-                        }`}>
-                          {item.cat}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                });
-              })()}
-              </div>
+        <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-3 sticky top-6 space-y-4">
+          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl p-3 shadow-md ring-1 ring-black/5 dark:ring-white/10">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search terms..."
+                className="w-full pl-10 pr-12 py-2.5 bg-slate-50 dark:bg-slate-800 border-alpha rounded-xl text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              {search ? (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-1"
+                >
+                  ✕
+                </button>
+              ) : (
+                <kbd className="kbd kbd-sm absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 border-alpha">
+                  /
+                </kbd>
+              )}
             </div>
           </div>
 
-          {/* ── Right Detail Pane (col-span-7 or 8, 9 on 2xl): Expansive Term Detail or Flashcards ── */}
-          <div className="lg:col-span-7 xl:col-span-8 2xl:col-span-9 space-y-6">
-            {viewMode === 'flashcards' ? (
-              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-lg ring-1 ring-black/5 dark:ring-white/10 space-y-4">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-                  <div>
-                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                      Interactive Flashcards
-                    </span>
-                    <h2 className="text-xl font-black text-slate-900 dark:text-white">
-                      Study Deck • {cat === 'All' ? 'All Domains' : cat}
-                    </h2>
-                  </div>
-                  <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
-                    {filtered.length} Cards in Deck
-                  </span>
-                </div>
-                <GlossaryFlashcardView
-                  key={`desktop-${cat}-${search}`}
-                  filtered={filtered}
-                  flashcardIdx={flashcardIdx}
-                  setFlashcardIdx={setFlashcardIdx}
-                  flipped={flipped}
-                  setFlipped={setFlipped}
-                  onFlip={handleFlashcardFlip}
-                  isBookmarked={isBookmarked}
-                  toggleBookmark={toggleBookmark}
-                />
-              </div>
-            ) : activeDetailItem ? (
-              (() => {
-                const item = activeDetailItem;
+          <GlossaryCategoryBar
+            cat={cat}
+            setCat={setCat}
+            totalCount={glossary.length}
+            catCounts={catCounts}
+            variant="sidebar"
+          />
+
+          <div className="bg-white/90 dark:bg-slate-900/90 surface-depth-1 border-alpha backdrop-blur-2xl rounded-2xl shadow-md overflow-hidden flex flex-col h-[calc(100dvh-340px)] min-h-[400px]">
+            <div className="p-3.5 border-b border-alpha flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
+              <span className="text-xs lg:text-sm font-bold text-slate-700 dark:text-slate-300">
+                Terms in <span className="text-emerald-600 dark:text-emerald-400">{cat}</span>
+              </span>
+              <span className="text-xs lg:text-[13px] font-bold text-slate-400 tabular-nums">
+                {filtered.length} terms
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto mask-fade-y divide-y divide-slate-100 dark:divide-slate-800/60 p-2 space-y-1">
+              {filtered.map(item => {
+                const key = item.id || item.term;
+                const isSelected = viewMode === 'flashcards'
+                  ? activeFlashcard && (activeFlashcard.id || activeFlashcard.term) === key
+                  : activeDetailItem && (activeDetailItem.id || activeDetailItem.term) === key;
                 const clr = getColor(item.cat);
-                const isPerfCard = item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]');
-                const bookmarked = isBookmarked(item.id || item.term, 'glossary');
+                const hasChart = normalizeGlossaryTerm(item).isPerformanceCard;
 
                 return (
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-lg ring-1 ring-black/5 dark:ring-white/10 space-y-6 animate-fadeIn">
-                    {/* Detail Card Header */}
-                    <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`text-xs lg:text-[13px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg ${clr.bg} ${clr.text} border ${clr.border}`}>
-                            {clr.emoji} {item.cat}
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      if (viewMode === 'flashcards') {
+                        const idx = filtered.findIndex(t => (t.id || t.term) === key);
+                        if (idx !== -1) {
+                          setFlashcardIdx(idx);
+                          setFlipped(false);
+                        }
+                      } else {
+                        recordRead(key);
+                      }
+                    }}
+                    className={`w-full text-left p-3 rounded-xl transition-all duration-150 active:scale-[0.985] flex items-center justify-between group ${
+                      isSelected
+                        ? 'bg-emerald-500 text-white shadow-md'
+                        : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-800 dark:text-slate-200'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1 pr-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-sm lg:text-[15.5px] font-bold tracking-tight truncate ${isSelected ? 'text-white' : ''}`}>
+                          {item.term}
+                        </span>
+                        {hasChart && (
+                          <span className={`shrink-0 text-[10px] lg:text-[11px] font-extrabold px-1.5 py-0.5 rounded ${
+                            isSelected ? 'bg-white/20 text-white' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                          }`}>
+                            CHART
                           </span>
-                          {isPerfCard && (
-                            <span className="text-xs lg:text-[13px] font-bold px-3 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300/50 dark:border-emerald-700/50 flex items-center gap-1.5">
-                              📈 Corporate Performance Metric
+                        )}
+                      </div>
+                      {(item.full && !item.term.includes(' ')) || cat === 'All' ? (
+                        <div className="flex items-center gap-2 mt-1 min-w-0">
+                          {cat === 'All' && (
+                            <span className={`shrink-0 text-[10.5px] font-bold px-2 py-0.5 rounded-md ${
+                              isSelected ? 'bg-white/20 text-white' : `${clr.bg} ${clr.text}`
+                            }`}>
+                              {item.cat}
+                            </span>
+                          )}
+                          {item.full && !item.term.includes(' ') && (
+                            <span className={`text-xs truncate ${isSelected ? 'text-white/85' : 'text-slate-400'}`}>
+                              {item.full}
                             </span>
                           )}
                         </div>
-                        <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                          {item.term}
-                        </h1>
-                        {item.full && (
-                          <h2 className="text-base lg:text-lg font-semibold text-slate-500 dark:text-slate-400 mt-1">
-                            {item.full}
-                          </h2>
-                        )}
-                      </div>
-
-                      {/* Bookmark Button */}
-                      <button
-                        onClick={() => toggleBookmark(item, 'glossary')}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl transition-all active:scale-95 text-xs lg:text-sm font-bold ${
-                          bookmarked
-                            ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                            : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        <svg className="w-4 h-4" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                        </svg>
-                        <span>{bookmarked ? 'Saved to Bookmarks' : 'Bookmark Term'}</span>
-                      </button>
+                      ) : null}
                     </div>
-
-                    {/* Definition */}
-                    <div className="space-y-2">
-                      <div className="text-xs lg:text-[13px] font-bold uppercase tracking-wider text-slate-400">
-                        Formal Definition &amp; Description
-                      </div>
-                      <p className="text-[15px] lg:text-[17px] text-slate-700 dark:text-slate-300 leading-relaxed font-normal whitespace-pre-wrap">
-                        {item.desc}
-                      </p>
-                    </div>
-
-                    {/* Formula Box (if exists) */}
-                    {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
-                      <div className={`${clr.bg} border ${clr.border} rounded-2xl p-5 space-y-3`}>
-                        <div className="text-xs lg:text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <span>📐</span> Mathematical Formula
-                        </div>
-                        <div className={`text-base lg:text-lg font-bold font-mono ${clr.text} p-3.5 bg-white/70 dark:bg-slate-900/60 rounded-xl border border-black/5 dark:border-white/5`}>
-                          {item.formula}
-                        </div>
-                        {item.formulaNotations && (
-                          <div className="text-xs lg:text-[14px] text-slate-600 dark:text-slate-300">
-                            <span className="font-bold">Notations: </span>
-                            <span>{item.formulaNotations.replace(/\n/g, ', ')}</span>
-                          </div>
-                        )}
-                        {item.formulaTermMeanings && (
-                          <div className="pt-2 border-t border-black/5 dark:border-white/5">
-                            <div className="text-xs lg:text-[13px] font-bold text-slate-500 mb-1">Term Meanings:</div>
-                            <ul className="text-xs lg:text-[14px] text-slate-700 dark:text-slate-300 space-y-1.5">
-                              {item.formulaTermMeanings.split('\n').map((line, idx) => (
-                                <li key={idx} className="flex items-start gap-1.5">
-                                  <span className="text-emerald-500 font-bold">•</span>
-                                  <span>{line}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Interactive Corporate Performance Chart */}
-                    {isPerfCard && (
-                      <div className="space-y-3 pt-2">
-                        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                          <span>📊</span> Historical Performance Trend
-                        </div>
-                        <div className="bg-slate-50/50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                          <CorporatePerformanceChart
-                            chartData={item.chartData}
-                            term={item.term}
-                            description=""
-                            yAxisFormat={item.formulaNotations || item.yAxisFormat}
-                            formula={item.formula}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Reading Streak Indicator */}
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">Activity Tracked:</span>
-                        <span>Reading this term counts towards your daily learning streak.</span>
-                      </div>
-                      <span className="text-slate-400 font-medium">SESI Standard</span>
-                    </div>
-                  </div>
+                  </button>
                 );
-              })()
-            ) : (
-              <div className="bg-white/90 dark:bg-slate-900/90 rounded-3xl p-12 text-center text-slate-400">
-                Select a term from the left pane to view details.
-              </div>
-            )}
+              })}
+            </div>
           </div>
         </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* ── MOBILE VIEW / FALLBACK (Visible on screen < 1024px) ─────────── */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+        <div className="lg:col-span-7 xl:col-span-8 2xl:col-span-9 space-y-6">
+          {viewMode === 'flashcards' ? (
+            <div className="bg-white/90 dark:bg-slate-900/90 surface-depth-1 border-alpha backdrop-blur-2xl concentric-card p-6 sm:p-8 shadow-lg space-y-4">
+              <div className="flex items-center justify-between pb-4 border-b border-alpha">
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                  Study Deck • {cat === 'All' ? 'All Domains' : cat}
+                </h2>
+                <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+                  {filtered.length} Cards in Deck
+                </span>
+              </div>
+              <GlossaryFlashcardView
+                key={`desktop-${cat}-${search}`}
+                filtered={filtered}
+                flashcardIdx={flashcardIdx}
+                setFlashcardIdx={setFlashcardIdx}
+                flipped={flipped}
+                setFlipped={setFlipped}
+                onFlip={handleFlashcardFlip}
+                isBookmarked={isBookmarked}
+                toggleBookmark={toggleBookmark}
+              />
+            </div>
+          ) : activeDetailItem ? (
+            <GlossaryTermDetailCard
+              item={activeDetailItem}
+              variant="desktop"
+              bookmarked={isBookmarked(activeDetailItem.id || activeDetailItem.term, 'glossary')}
+              onToggleBookmark={toggleBookmark}
+            />
+          ) : (
+            <div className="bg-white/90 dark:bg-slate-900/90 rounded-3xl p-12 text-center text-slate-400">
+              Select a term from the left pane to view details.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Cards & Table Views */}
       <div className="lg:hidden">
-        {/* Empty State */}
         {filtered.length === 0 && !showFutureGenCard && (
           <div className="p-8 text-center text-sm font-medium text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
             No terms found matching your criteria.
           </div>
         )}
 
-        {/* GRID View — Cards that expand on tap */}
         {viewMode === 'grid' && filtered.length > 0 && (
           <div className="space-y-3">
-            {filtered.map((item) => {
+            {filtered.map(item => {
+              const key = item.id || item.term;
               const clr = getColor(item.cat);
-              const isExpanded = expandedId === (item.id || item.term);
-              const isPerfCard = item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]');
+              const isExpanded = expandedId === key;
+              const isPerfCard = normalizeGlossaryTerm(item).isPerformanceCard;
 
               return (
                 <div
-                  key={item.id || item.term}
-                  onClick={() => recordRead(item.id || item.term)}
-                  className={`bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 cursor-pointer transition-all active:scale-[0.99] ${
-                    isExpanded ? `ring-2 ${clr.border}` : 'dark:ring-white/10'
+                  key={key}
+                  onClick={() => recordRead(key)}
+                  className={`bg-white/90 dark:bg-slate-900/90 surface-depth-1 border-alpha backdrop-blur-2xl concentric-card shadow-[0_8px_32px_rgba(0,0,0,0.08)] cursor-pointer transition-all active:scale-[0.99] ${
+                    isExpanded ? `ring-2 ${clr.border}` : ''
                   }`}
                 >
                   <div className="p-4 flex items-center gap-3">
@@ -540,7 +350,9 @@ export function GlossaryTab({
                         <h3 className="font-bold text-[15px] text-slate-900 dark:text-white tracking-tight">
                           {item.term}
                           {item.full && !item.term.includes(' ') && (
-                            <span className="ml-2 font-medium text-[12.5px] text-slate-500 dark:text-slate-400 tracking-normal">({item.full})</span>
+                            <span className="ml-2 font-medium text-[12.5px] text-slate-500 dark:text-slate-400 tracking-normal">
+                              ({item.full})
+                            </span>
                           )}
                         </h3>
                         {isPerfCard && (
@@ -556,63 +368,14 @@ export function GlossaryTab({
                     </svg>
                   </div>
 
-                  {/* Expanded Detail */}
                   {isExpanded && (
                     <div className="px-4 pb-4 pt-0 border-t border-slate-100 dark:border-slate-700 animate-fadeIn">
-                      <div className="mt-2">
-                        {isPerfCard ? (
-                          <div className="space-y-2 mt-3 mb-2">
-                            <p className="text-[13.5px] text-slate-700 dark:text-slate-300 mb-3 leading-relaxed whitespace-pre-wrap font-normal">{item.desc}</p>
-                            <CorporatePerformanceChart
-                              chartData={item.chartData}
-                              term={item.term}
-                              description=""
-                              yAxisFormat={item.formulaNotations || item.yAxisFormat}
-                              formula={item.formula}
-                            />
-                          </div>
-                        ) : (
-                          <p className="text-[13.5px] text-slate-700 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap font-normal">{item.desc}</p>
-                        )}
-                      </div>
-
-                      {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
-                        <div className={`mt-3 ${clr.bg} border ${clr.border} rounded-xl p-3`}>
-                          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">📐 Formula</div>
-                          <div className={`text-[13px] font-semibold ${clr.text} leading-relaxed`}>
-                            {item.formula}
-                          </div>
-                          {item.formulaTermMeanings && (
-                            <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
-                              <ul className="text-[12.5px] text-slate-700 dark:text-slate-300 mt-0.5 space-y-1 leading-relaxed">
-                                {item.formulaTermMeanings.split('\n').map((line, i) => (
-                                  <li key={i}>- {line}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5">
-                        <div className="flex items-center gap-2 text-[11.5px] text-slate-500 dark:text-slate-400 font-medium">
-                          <span className="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">✓ Read</span>
-                          <span>Counts toward your daily streak!</span>
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleBookmark(item, 'glossary'); }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all active:scale-95 text-xs font-bold ${
-                            isBookmarked(item.id || item.term, 'glossary')
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                              : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
-                          }`}
-                        >
-                          <svg className="w-3.5 h-3.5" fill={isBookmarked(item.id || item.term, 'glossary') ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
-                          {isBookmarked(item.id || item.term, 'glossary') ? 'Bookmarked' : 'Bookmark'}
-                        </button>
-                      </div>
+                      <GlossaryTermDetailCard
+                        item={item}
+                        variant="compact"
+                        bookmarked={isBookmarked(key, 'glossary')}
+                        onToggleBookmark={toggleBookmark}
+                      />
                     </div>
                   )}
                 </div>
@@ -621,7 +384,6 @@ export function GlossaryTab({
           </div>
         )}
 
-        {/* LIST View */}
         {viewMode === 'list' && filtered.length > 0 && (
           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 overflow-hidden">
             <table className="w-full text-left text-sm">
@@ -632,13 +394,13 @@ export function GlossaryTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                {filtered.map((item) => {
+                {filtered.map(item => {
+                  const key = item.id || item.term;
                   const clr = getColor(item.cat);
-                  const isPerf = item.cat === 'Corporate Performance' || (item.chartData && item.chartData.length > 5 && item.chartData !== '[]');
                   return (
                     <tr
-                      key={item.id || item.term}
-                      onClick={() => recordRead(item.id || item.term)}
+                      key={key}
+                      onClick={() => recordRead(key)}
                       className="hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 cursor-pointer transition-colors"
                     >
                       <td className="px-4 py-3 align-top">
@@ -649,53 +411,14 @@ export function GlossaryTab({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 align-top whitespace-pre-wrap">
-                        {isPerf ? (
-                          <div className="space-y-1 my-2">
-                            <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{item.desc}</p>
-                            <div className="mt-3">
-                              <CorporatePerformanceChart
-                                chartData={item.chartData}
-                                term={item.term}
-                                description=""
-                                yAxisFormat={item.formulaNotations || item.yAxisFormat}
-                                formula={item.formula}
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          item.desc
-                        )}
-                        {item.formula && item.formula !== 'area' && item.formula !== 'bar' && (
-                          <div className={`mt-2 text-[11.5px] font-bold ${clr.text} ${clr.bg} px-2 py-1 rounded-lg`}>
-                            📐 {item.formula}
-                          </div>
-                        )}
-                        {item.formulaNotations && (
-                          <div className="mt-1 text-[11px] text-slate-500">
-                            <span className="font-bold">Notations:</span> <span>{item.formulaNotations.replace(/\n/g, ', ')}</span>
-                          </div>
-                        )}
-                        {item.formulaTermMeanings && (
-                          <div className="mt-1 text-[11px] text-slate-500">
-                            <span className="font-bold">Meanings:</span> <span className="line-clamp-2">{item.formulaTermMeanings.replace(/\n/g, ' | ')}</span>
-                          </div>
-                        )}
-                        <div className="mt-2 flex">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); toggleBookmark(item, 'glossary'); }}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all active:scale-95 text-[10px] font-bold ${
-                              isBookmarked(item.id || item.term, 'glossary')
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                                : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400'
-                            }`}
-                          >
-                            <svg className="w-3 h-3" fill={isBookmarked(item.id || item.term, 'glossary') ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                            </svg>
-                            {isBookmarked(item.id || item.term, 'glossary') ? 'Saved' : 'Bookmark'}
-                          </button>
-                        </div>
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 align-top">
+                        <GlossaryTermDetailCard
+                          item={item}
+                          variant="compact"
+                          bookmarked={isBookmarked(key, 'glossary')}
+                          onToggleBookmark={toggleBookmark}
+                          showStreakBadge={false}
+                        />
                       </td>
                     </tr>
                   );
@@ -706,7 +429,7 @@ export function GlossaryTab({
         )}
       </div>
 
-      {/* FLASHCARDS View (Mobile Only: on desktop it renders in the right detail pane) */}
+      {/* Mobile Flashcards */}
       {viewMode === 'flashcards' && (
         <div className="lg:hidden">
           <GlossaryFlashcardView
@@ -723,7 +446,6 @@ export function GlossaryTab({
         </div>
       )}
 
-      {/* Full-Screen Interactive Future Generation Map Modal */}
       <FutureGenMapModal
         isOpen={isFutureGenMapOpen}
         onClose={() => setIsFutureGenMapOpen(false)}

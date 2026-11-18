@@ -1,61 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { supabase } from '../../../utils/supabaseClient';
-import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../../services/apiConfig';
 import { PostImageSlider } from '../../../components/ui';
 import { ImageViewerModal } from '../../../components/modals';
-
-// ─── Module-Level Image Compression Helpers ───
-function scaleImage(img, maxDim = 1600, quality = 0.85) {
-  const canvas = document.createElement('canvas');
-  let { width, height } = img;
-  if (width > maxDim || height > maxDim) {
-    if (width > height) {
-      height = Math.round((height * maxDim) / width);
-      width = maxDim;
-    } else {
-      width = Math.round((width * maxDim) / height);
-      height = maxDim;
-    }
-  }
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, width, height);
-  return canvas.toDataURL('image/jpeg', quality);
-}
-
-function compressImage(file) {
-  return new Promise((resolve) => {
-    if (!file || !file.type || !file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(file);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => resolve(scaleImage(img));
-      img.onerror = () => resolve(e.target.result);
-      img.src = e.target.result;
-    };
-    reader.onerror = () => resolve(null);
-    reader.readAsDataURL(file);
-  });
-}
-
-function ensureCompressed(dataUrl) {
-  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/') || dataUrl.length < 450000) {
-    return Promise.resolve(dataUrl);
-  }
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(scaleImage(img));
-    img.onerror = () => resolve(dataUrl);
-    img.src = dataUrl;
-  });
-}
+import { CATEGORIES } from '../../../utils/constants';
+import { compressImage, ensureCompressed } from '../../../utils/imageCompression';
+import { unpackPosterImages } from '../../../domain/glossaryModel';
+import { saveInfographic as saveInfographicService, deleteInfographic as deleteInfographicService } from '../../glossary/glossaryService';
 
 export default function AdminInfographicsSection({
   infographics,
@@ -72,21 +21,7 @@ export default function AdminInfographicsSection({
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [viewerData, setViewerData] = useState(null); // { images, idx }
 
-  const availableCategories = [
-    'All',
-    'General',
-    'IBR Framework',
-    'Strategy and Sustainability',
-    'Energy Market and Industry',
-    'ESG',
-    'EPSB',
-    'BDV',
-    'Governance',
-    'Corporate Performance',
-    'ISO Management',
-    'SE Risk',
-    'ReSET2030'
-  ];
+  const availableCategories = ['All', 'General', ...CATEGORIES.filter(c => c.key !== 'All').map(c => c.key)];
 
   const list = Array.isArray(infographics) ? infographics : (infographics?.value || []);
   const filteredInfographics = list.filter(item => {
@@ -144,78 +79,28 @@ export default function AdminInfographicsSection({
     setIMsg('⏳ Optimizing & uploading poster...');
 
     try {
-      const nowIso = new Date().toISOString();
       const compressedImages = await Promise.all(iImages.map(ensureCompressed));
       const primaryImage = compressedImages[0] || '';
       const additional = compressedImages.length > 1 ? JSON.stringify(compressedImages.slice(1)) : '';
-      
-      const supabasePayload = {
-        Title: iTitle.trim(),
-        Description: (iDesc || '').trim(),
-        ImageUrl: primaryImage,
-        AdditionalImages: additional,
-        Category: iCat || 'General',
-        PostedAt: nowIso
-      };
 
-      let directSuccess = false;
-      if (!IS_LOCAL_SSMS) {
-        try {
-          if (iEditId) {
-            const { error } = await supabase
-              .from('Infographics')
-              .update(supabasePayload)
-              .eq('Id', iEditId);
-            if (error) throw error;
-          } else {
-            const { error } = await supabase
-              .from('Infographics')
-              .insert([supabasePayload]);
-            if (error) throw error;
-          }
-          directSuccess = true;
-        } catch (sbErr) {
-          console.warn("Direct Supabase post error, trying API fallback:", sbErr);
-        }
-      }
-
-      if (directSuccess) {
-        setIMsg(iEditId ? '✅ Updated!' : '✅ Posted!');
-        if (onRefreshInfographics) await onRefreshInfographics();
-        cancelEditInfographic();
-      } else {
-        const payload = {
+      await saveInfographicService(
+        {
           title: iTitle.trim(),
           description: (iDesc || '').trim(),
           imageUrl: primaryImage,
           additionalImages: additional,
-          category: iCat || 'General'
-        };
+          category: iCat || 'General',
+          postedAt: new Date().toISOString(),
+        },
+        iEditId,
+      );
 
-        const url = iEditId 
-          ? `${API_BASE}/api/admin/infographics/${iEditId}` 
-          : `${API_BASE}/api/admin/infographics`;
-        const method = iEditId ? 'PUT' : 'POST';
-
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.ok) { 
-          setIMsg(iEditId ? '✅ Updated!' : '✅ Posted!'); 
-          if (onRefreshInfographics) await onRefreshInfographics(); 
-          cancelEditInfographic();
-        } else {
-          const errorText = await res.text();
-          console.error('Post failed:', res.status, errorText);
-          setIMsg(`❌ Server error: ${errorText.slice(0, 100) || 'Failed to post'}`);
-        }
-      }
+      setIMsg(iEditId ? '✅ Updated!' : '✅ Posted!');
+      if (onRefreshInfographics) await onRefreshInfographics();
+      cancelEditInfographic();
     } catch (err) {
       console.error('Post error:', err);
-      setIMsg(`❌ Network error: ${err.message || 'Could not connect to server'}`);
+      setIMsg(`❌ Network error: ${err.message || 'Could not save poster'}`);
     } finally {
       setIPosting(false);
       setTimeout(() => setIMsg(''), 4000);
@@ -227,32 +112,15 @@ export default function AdminInfographicsSection({
     setITitle(item.title);
     setIDesc(item.description || '');
     setICat(item.category || 'General');
-    
-    const allImages = [];
-    if (item.imageUrl) allImages.push(item.imageUrl);
-    if (item.additionalImages) {
-      try {
-        const parsed = typeof item.additionalImages === 'string' ? JSON.parse(item.additionalImages) : item.additionalImages;
-        if (Array.isArray(parsed)) allImages.push(...parsed);
-      } catch (e) {
-        console.warn("Failed to parse additionalImages:", e);
-      }
-    }
-    setIImages(allImages);
+    setIImages(unpackPosterImages(item));
   };
 
   const deleteInfographic = async (id) => {
     if (!confirm('Delete this post?')) return;
-    if (!IS_LOCAL_SSMS) {
-      try {
-        const { error } = await supabase.from('Infographics').delete().eq('Id', id);
-        if (error) throw error;
-      } catch (err) {
-        console.warn("Direct Supabase delete failed, trying API:", err);
-        await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', headers: getAuthHeaders(), signal: AbortSignal.timeout(4000) }).catch(() => null);
-      }
-    } else {
-      await fetch(`${API_BASE}/api/admin/infographics/${id}`, { method: 'DELETE', headers: getAuthHeaders(), signal: AbortSignal.timeout(4000) }).catch(() => null);
+    try {
+      await deleteInfographicService(id);
+    } catch (err) {
+      console.warn('Delete poster failed:', err);
     }
     if (onRefreshInfographics) onRefreshInfographics();
   };
@@ -276,17 +144,9 @@ export default function AdminInfographicsSection({
               onChange={e => setICat(e.target.value)}
             >
               <option value="General">General</option>
-              <option value="IBR Framework">IBR Framework</option>
-              <option value="Strategy and Sustainability">Strategy & Sustainability</option>
-              <option value="Energy Market and Industry">Energy Market & Industry</option>
-              <option value="ESG">ESG</option>
-              <option value="EPSB">EPSB</option>
-              <option value="BDV">BDV</option>
-              <option value="Governance">Governance</option>
-              <option value="Corporate Performance">Corporate Performance</option>
-              <option value="ISO Management">ISO Management</option>
-              <option value="SE Risk">Sabah Electricity Risk</option>
-              <option value="ReSET2030">ReSET2030</option>
+              {CATEGORIES.filter(c => c.key !== 'All').map(cat => (
+                <option key={cat.key} value={cat.key}>{cat.label}</option>
+              ))}
             </select>
           </div>
           <textarea 
@@ -440,14 +300,7 @@ export default function AdminInfographicsSection({
           </div>
         ) : (
           filteredInfographics.map(item => {
-            const allImages = [];
-            if (item.imageUrl) allImages.push(item.imageUrl);
-            if (item.additionalImages) {
-              try {
-                const parsed = typeof item.additionalImages === 'string' ? JSON.parse(item.additionalImages) : item.additionalImages;
-                if (Array.isArray(parsed)) allImages.push(...parsed);
-              } catch {}
-            }
+            const allImages = unpackPosterImages(item);
             const hasImages = allImages.length > 0;
 
             return (

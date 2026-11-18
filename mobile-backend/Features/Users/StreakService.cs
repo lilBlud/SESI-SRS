@@ -10,30 +10,45 @@ namespace mobile_backend.Services
     {
         public static async Task<int> CalculateStreakAsync(string username, AppDbContext db)
         {
-            var dates = await db.UserActivities
+            var rawDates = await db.UserActivities
+                .AsNoTracking()
                 .Where(a => a.Username == username)
-                .OrderByDescending(a => a.ActivityDate)
                 .Select(a => a.ActivityDate)
                 .ToListAsync();
 
-            if (dates.Count == 0) return 0;
+            var dates = rawDates
+                .Select(d => d.Date)
+                .Distinct()
+                .OrderByDescending(d => d)
+                .ToList();
+
+            if (dates.Count == 0)
+                return 0;
 
             var today = DateTime.UtcNow.AddHours(8).Date;
-            if (dates[0] < today.AddDays(-1)) return 0;
+            var latest = dates[0];
+
+            // Active streak requires activity today or yesterday (UTC+8)
+            if (latest != today && latest != today.AddDays(-1))
+                return 0;
 
             int streak = 0;
-            var expected = dates[0];
+            var expectedDate = latest;
+
             foreach (var date in dates)
             {
-                if (date == expected)
+                if (date == expectedDate)
                 {
                     streak++;
-                    expected = expected.AddDays(-1);
+                    expectedDate = expectedDate.AddDays(-1);
                 }
-                else break;
+                else
+                {
+                    break;
+                }
             }
+
             return streak;
         }
     }
 }
-

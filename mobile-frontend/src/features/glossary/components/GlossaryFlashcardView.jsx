@@ -1,5 +1,6 @@
 import React from 'react';
 import { getColor } from '../../../utils/constants';
+import { isMathFormula } from '../../../domain/glossaryModel';
 
 export function GlossaryFlashcardView({
   filtered = [],
@@ -11,14 +12,9 @@ export function GlossaryFlashcardView({
   isBookmarked,
   toggleBookmark
 }) {
-  if (filtered.length === 0) return null;
-
-  const safeIdx = Math.min(flashcardIdx, Math.max(0, filtered.length - 1));
-  const card = filtered[safeIdx];
-  const clr = getColor(card.cat);
-
   // Keyboard navigation for desktop: Space to flip, Arrows to navigate
   React.useEffect(() => {
+    if (filtered.length === 0) return undefined;
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (e.code === 'Space') {
@@ -38,17 +34,36 @@ export function GlossaryFlashcardView({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [filtered.length, onFlip, setFlashcardIdx, setFlipped]);
 
+  if (filtered.length === 0) return null;
+
+  const safeIdx = Math.min(flashcardIdx, Math.max(0, filtered.length - 1));
+  const card = filtered[safeIdx];
+  const clr = getColor(card.cat);
+  const deckProgress = filtered.length > 0 ? Math.round(((safeIdx + 1) / filtered.length) * 100) : 0;
+
   return (
-    <div className="flex flex-col items-center w-full py-4">
+    <div className="flex flex-col items-center w-full py-3">
+      {/* Subtle Deck Progress Bar (Staging & Pose-to-Pose orientation) */}
+      <div className="w-full max-w-md lg:max-w-2xl xl:max-w-3xl mb-4">
+        <div className="h-1.5 w-full rounded-full bg-slate-200/80 dark:bg-slate-800 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-300 ease-out"
+            style={{ width: `${deckProgress}%` }}
+          />
+        </div>
+      </div>
+
       <div
-        className={`w-full max-w-md lg:max-w-2xl xl:max-w-3xl h-72 lg:h-[380px] xl:h-[420px] flashcard cursor-pointer ${flipped ? 'flipped' : ''}`}
+        className={`w-full max-w-md lg:max-w-2xl xl:max-w-3xl h-72 lg:h-[380px] xl:h-[420px] flashcard cursor-pointer transition-transform duration-150 active:scale-[0.99] ${flipped ? 'flipped' : ''}`}
         onClick={onFlip}
       >
         <div className="flashcard-inner relative w-full h-full rounded-3xl shadow-lg border border-slate-200/80 dark:border-slate-700/80">
           {/* Front */}
           <div className={`flashcard-front absolute w-full h-full flex flex-col items-center justify-center ${clr.bg} rounded-3xl p-6 lg:p-10 shadow-sm border border-slate-200 dark:border-slate-700`}>
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4 bg-slate-100 dark:bg-slate-700/50 px-3 py-1 rounded-full">
-              Tap or press Space to reveal
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4 bg-slate-100 dark:bg-slate-700/50 px-3 py-1 rounded-full">
+              <span>Tap or press</span>
+              <kbd className="kbd kbd-xs font-mono">Space</kbd>
+              <span>to reveal</span>
             </span>
             <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-extrabold text-center tracking-tight ${clr.text}`}>{card.term}</h2>
             {card.full && !card.term.includes(' ') && (
@@ -74,10 +89,13 @@ export function GlossaryFlashcardView({
                   {card.desc}
                 </p>
 
-                {card.formula && card.formula !== 'area' && card.formula !== 'bar' && (
+                {isMathFormula(card.formula) && (
                   <div className="w-full flex flex-col items-center justify-center text-center pt-2.5 border-t border-slate-300/40 dark:border-slate-700/40">
-                    <div className={`text-[13px] sm:text-[13.5px] lg:text-[15px] font-bold text-center mb-1.5 leading-snug ${clr.text}`}>
-                      📐 {card.formula}
+                    <div className={`inline-flex items-center gap-1.5 text-[13px] sm:text-[13.5px] lg:text-[15px] font-bold text-center mb-1.5 leading-snug ${clr.text}`}>
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" d="M4 7h16M4 17h16M7 4v16M17 4v16" />
+                      </svg>
+                      <span>{card.formula}</span>
                     </div>
                     {card.formulaNotations && (
                       <div className="text-[11.5px] lg:text-xs text-slate-800 dark:text-slate-200 mt-1 leading-normal text-center max-w-md">
@@ -118,28 +136,34 @@ export function GlossaryFlashcardView({
       </div>
 
       {/* Navigation Controls */}
-      <div className="w-full max-w-md lg:max-w-2xl xl:max-w-3xl flex justify-between items-center mt-6">
+      <div className="w-full max-w-md lg:max-w-2xl xl:max-w-3xl flex justify-between items-center mt-5 gap-2">
         <button
           onClick={() => { setFlashcardIdx(i => Math.max(0, i - 1)); setFlipped(false); }}
           disabled={safeIdx === 0}
-          className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
+          className="min-h-[44px] px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-xl text-xs sm:text-[13px] font-bold transition-all duration-150 active:scale-[0.97] disabled:opacity-45 disabled:active:scale-100 inline-flex items-center gap-1.5"
         >
-          ← Previous
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>Previous</span>
         </button>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-600 dark:text-slate-300 tabular-nums">
+          <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 tabular-nums">
             {safeIdx + 1} of {filtered.length}
           </span>
-          <span className="hidden sm:inline text-[11px] text-slate-400">
-            • Space to flip • Arrows to navigate
+          <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-slate-400">
+            <kbd className="kbd kbd-xs">Space</kbd> to flip • <kbd className="kbd kbd-xs">←</kbd> <kbd className="kbd kbd-xs">→</kbd> navigate
           </span>
         </div>
         <button
           onClick={() => { setFlashcardIdx(i => Math.min(filtered.length - 1, i + 1)); setFlipped(false); }}
           disabled={safeIdx === filtered.length - 1}
-          className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
+          className="min-h-[44px] px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-xl text-xs sm:text-[13px] font-bold transition-all duration-150 active:scale-[0.97] disabled:opacity-45 disabled:active:scale-100 inline-flex items-center gap-1.5"
         >
-          Next →
+          <span>Next</span>
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>

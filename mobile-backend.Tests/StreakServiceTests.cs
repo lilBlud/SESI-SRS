@@ -74,5 +74,22 @@ namespace mobile_backend.Tests
             var streak = await StreakService.CalculateStreakAsync("dave", _db);
             Assert.Equal(0, streak);
         }
+
+        [Fact]
+        public async Task CalculateStreakAsync_IgnoresDuplicateSameDayEntries()
+        {
+            var today = DateTime.UtcNow.AddHours(8).Date;
+            _db.UserActivities.AddRange(
+                new UserActivity { Username = "eve", ActivityDate = today },
+                new UserActivity { Username = "eve", ActivityDate = today.AddHours(3) },
+                new UserActivity { Username = "eve", ActivityDate = today.AddDays(-1) },
+                new UserActivity { Username = "eve", ActivityDate = today.AddDays(-1).AddHours(5) },
+                new UserActivity { Username = "eve", ActivityDate = today.AddDays(-2) }
+            );
+            await _db.SaveChangesAsync();
+
+            var streak = await StreakService.CalculateStreakAsync("eve", _db);
+            Assert.Equal(3, streak);
+        }
     }
 }

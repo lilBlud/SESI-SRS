@@ -186,18 +186,19 @@ export function HomeTab({
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 active:scale-95 transition disabled:opacity-50 border border-slate-200/60 dark:border-slate-700/60"
-                  title="Refresh feed and leaderboard"
-                  aria-label="Refresh feed and leaderboard"
-                >
-                  <svg className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : 'transition-transform duration-300 hover:rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-                <span className="text-xs lg:text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg tabular-nums">
+                <div className="tooltip tooltip-bottom" data-tip="Refresh feed & leaderboard">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 active:scale-90 transition-all duration-150 disabled:opacity-50 border-alpha"
+                    aria-label="Refresh feed and leaderboard"
+                  >
+                    <svg className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : 'transition-transform duration-300 hover:rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" vectorEffect="non-scaling-stroke" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
+                <span className="text-xs lg:text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-lg tabular-nums">
                   {filteredPosts.length} posts
                 </span>
               </div>
@@ -209,7 +210,7 @@ export function HomeTab({
               <button
                 type="button"
                 onClick={scrollCatLeft}
-                className="hidden sm:flex w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white items-center justify-center transition active:scale-95 shadow-xs shrink-0"
+                className="hidden sm:flex w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white items-center justify-center transition-all duration-150 active:scale-90 shadow-xs shrink-0"
                 title="Scroll categories left"
                 aria-label="Scroll categories left"
               >
@@ -218,7 +219,7 @@ export function HomeTab({
                 </svg>
               </button>
 
-              {/* Scrollable Container with horizontal-only onWheel */}
+              {/* Scrollable Container with horizontal-only onWheel + #6 Masked Edges */}
               <div
                 ref={catScrollRef}
                 onWheel={(e) => {
@@ -228,7 +229,7 @@ export function HomeTab({
                     e.currentTarget.scrollLeft += e.deltaX;
                   }
                 }}
-                className="flex-1 flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none no-scrollbar scroll-smooth"
+                className="flex-1 flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 px-2 scrollbar-none no-scrollbar scroll-smooth mask-fade-x"
               >
                 {CATEGORIES.map(c => {
                   const isSelected = postCat === c.key;
@@ -240,7 +241,7 @@ export function HomeTab({
                         setPostCat(c.key);
                         e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                       }}
-                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold whitespace-nowrap transition-all active:scale-95 shrink-0 border ${
+                      className={`min-h-[38px] flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold whitespace-nowrap transition-all duration-150 active:scale-95 shrink-0 border ${
                         isSelected
                           ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm'
                           : 'bg-white dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/70 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white'
@@ -265,7 +266,7 @@ export function HomeTab({
               <button
                 type="button"
                 onClick={scrollCatRight}
-                className="hidden sm:flex w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white items-center justify-center transition active:scale-95 shadow-xs shrink-0"
+                className="hidden sm:flex w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white items-center justify-center transition-all duration-150 active:scale-90 shadow-xs shrink-0"
                 title="Scroll categories right"
                 aria-label="Scroll categories right"
               >
@@ -295,7 +296,7 @@ export function HomeTab({
                 return (
                   <div
                     key={post.id}
-                    className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 relative overflow-hidden transition-all flex flex-col justify-between"
+                    className="bg-white/90 dark:bg-slate-900/90 surface-depth-1 border-alpha backdrop-blur-2xl concentric-card p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)] relative overflow-hidden transition-all flex flex-col justify-between"
                   >
                     <div>
                       {/* Consistent Header Area with Standardized Height */}
@@ -311,7 +312,7 @@ export function HomeTab({
                         {/* Bookmark Toggle */}
                         <button
                           onClick={() => toggleBookmark(post, 'poster')}
-                          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95 absolute top-5 right-5 ${
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 absolute top-5 right-5 ${
                             bookmarked
                               ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
@@ -344,12 +345,12 @@ export function HomeTab({
                     </div>
 
                     {/* Action Buttons: Save Image */}
-                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         {hasImages && (
                           <button
                             onClick={() => saveImage(allImages[0], `${post.title.replace(/\s+/g, '_')}.png`)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11.5px] font-semibold rounded-xl transition-all active:scale-95"
+                            className="min-h-[38px] flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[12px] font-semibold rounded-xl transition-all duration-150 active:scale-95"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -360,7 +361,9 @@ export function HomeTab({
                       </div>
 
                       <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px] font-semibold tracking-normal">
-                        <span>💡</span>
+                        <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         <span>SESI Regulatory Insight</span>
                       </div>
                     </div>

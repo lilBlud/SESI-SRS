@@ -5,17 +5,20 @@ export default function AdminRoleModal({
   pendingRole,
   isUpdating = false,
   onConfirm,
+  onCancel,
   onClose
 }) {
+  const handleClose = onCancel || onClose;
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && !isUpdating) {
-        onClose();
+      if (e.key === 'Escape' && !isUpdating && handleClose) {
+        handleClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isUpdating, onClose]);
+  }, [isUpdating, handleClose]);
 
   if (!targetUser || !pendingRole) return null;
 
@@ -25,7 +28,7 @@ export default function AdminRoleModal({
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn"
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isUpdating) onClose();
+        if (e.target === e.currentTarget && !isUpdating && handleClose) handleClose();
       }}
     >
       <div 
@@ -66,7 +69,7 @@ export default function AdminRoleModal({
 
         <div className="flex gap-2 pt-2">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isUpdating}
             className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-xs sm:text-sm font-bold transition disabled:opacity-50"
           >

@@ -1,0 +1,5 @@
+# cuts from detected scene>=0.3 | scene>=0.12+structure | pixel spike (time s, frame, timecode, source)
+16.633	frame 499	0:16.63	scene 0.44
+18.533	frame 556	0:18.53	scene 0.59
+22.633	frame 679	0:22.63	scene 0.37
+54.533	frame 1636	0:54.53	scene 0.41

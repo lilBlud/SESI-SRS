@@ -68,7 +68,10 @@ export function QuizIdleView({
       <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🎯</span> Monthly Quizzes
+            <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" vectorEffect="non-scaling-stroke" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Monthly Quizzes
           </h3>
           <div className="flex items-center gap-2">
             {availableYears.length > 1 && (

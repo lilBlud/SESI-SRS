@@ -51,25 +51,44 @@ export function HomeLeaderboardPodium({
               <div className="absolute top-1/2 left-1/2 w-2 h-1 bg-emerald-400 rounded-sm animate-confetti-pop" style={{ '--tx': '12px', '--ty': '10px', '--rot': '135deg', animationDelay: '0.05s' }} />
             </div>
           </div>
-          <div>
-            <h2 className="text-base sm:text-lg lg:text-xl font-extrabold text-white tracking-tight">Monthly Leaderboard</h2>
-            <p className="text-white/80 text-xs lg:text-[13px] font-medium tracking-normal mt-0.5">{currentMonthLabel}</p>
+          <div className="min-w-0">
+            <h2 className="text-[15px] sm:text-base lg:text-[17px] font-extrabold text-white tracking-tight leading-tight">Monthly Leaderboard</h2>
+            <p className="text-white/85 text-xs font-medium tracking-normal mt-0.5">{currentMonthLabel}</p>
           </div>
         </div>
-        <button onClick={onViewAll} className="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs lg:text-[13px] font-bold tracking-tight rounded-lg backdrop-blur-sm transition-all">
-          View All →
+        <button onClick={onViewAll} className="min-h-[36px] px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold tracking-tight rounded-xl backdrop-blur-sm transition-all duration-150 active:scale-95 whitespace-nowrap shrink-0 inline-flex items-center gap-1">
+          <span>View All</span>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
 
       <div className="p-4 sm:p-5">
         {loadingLb ? (
-          <div className="flex items-center justify-center py-6">
-            <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <div className="grid grid-cols-3 items-end gap-2 pt-6 px-1" aria-label="Loading leaderboard">
+            <div className="flex flex-col items-center gap-2">
+              <div className="skeleton w-10 h-10 rounded-full" />
+              <div className="skeleton w-14 h-3 rounded" />
+              <div className="skeleton w-full h-[115px] rounded-t-2xl" />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="skeleton w-12 h-12 rounded-full" />
+              <div className="skeleton w-16 h-3 rounded" />
+              <div className="skeleton w-full h-[145px] rounded-t-2xl" />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="skeleton w-10 h-10 rounded-full" />
+              <div className="skeleton w-14 h-3 rounded" />
+              <div className="skeleton w-full h-[95px] rounded-t-2xl" />
+            </div>
           </div>
         ) : leaderboard.length === 0 ? (
           <div className="py-6 px-4 text-center flex flex-col items-center justify-center space-y-3.5">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-center text-3xl shadow-inner">
-              🎯
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200/70 dark:border-amber-800/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-inner">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 21h8m-4-4v4m-5-17h10v6a5 5 0 01-10 0V4zM5 6H3v2a3 3 0 003 3h1M19 6h2v2a3 3 0 01-3 3h-1" />
+              </svg>
             </div>
             <div>
               <p className="text-slate-900 dark:text-white font-extrabold text-base sm:text-lg lg:text-xl tracking-tight">
@@ -82,10 +101,12 @@ export function HomeLeaderboardPodium({
             {onTakeQuiz && (
               <button
                 onClick={onTakeQuiz}
-                className="w-full py-3 px-5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs sm:text-sm lg:text-[14.5px] rounded-xl shadow-md shadow-orange-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 mt-2"
+                className="w-full min-h-[44px] py-3 px-5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs sm:text-sm lg:text-[14.5px] rounded-xl shadow-md shadow-orange-500/20 active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 mt-2"
               >
                 <span>Take Monthly Quiz</span>
-                <span>⚡</span>
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
               </button>
             )}
           </div>

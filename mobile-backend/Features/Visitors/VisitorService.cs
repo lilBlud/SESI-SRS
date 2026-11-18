@@ -10,20 +10,18 @@ namespace mobile_backend.Services
 {
     public class VisitorService(AppDbContext db) : IVisitorService
     {
-        private IQueryable<VisitorLog> GetAuthenticatedLogsQuery() =>
-            db.VisitorLogs.Where(v =>
+        private IQueryable<VisitorLog> GetAuthenticatedLogsQuery()
+        {
+            var excluded = AccountExclusionPolicy.ExcludedVisitorUsernamesLower;
+            return db.VisitorLogs.Where(v =>
                 !v.VisitorId.StartsWith("v_seed_") &&
                 !string.IsNullOrEmpty(v.Username) &&
-                v.Username != "Anonymous Visitor" &&
-                v.Username != "Demo User" &&
-                v.Username != "Test User" &&
-                v.Username != "test_admin_user" &&
-                v.Username != "test_role_probe" &&
-                v.Username != "Cameron");
+                !excluded.Contains(v.Username.ToLower()));
+        }
 
-        public async Task<VisitorStatsDto> GetVisitorStatsAsync()
+        private async Task<(int TotalVisits, int TodayVisits, int UniqueVisitors)> ComputeSummaryCountsAsync(
+            IQueryable<VisitorLog> baseQuery)
         {
-            var baseQuery = GetAuthenticatedLogsQuery();
             var todayStart = DateTime.UtcNow.AddHours(8).Date.AddHours(-8);
 
             var totalVisits = await baseQuery.CountAsync();
@@ -33,11 +31,20 @@ namespace mobile_backend.Services
                 .Distinct()
                 .CountAsync();
 
-            var uniqueVisitors = await db.StaffUsers.CountAsync();
+            var uniqueVisitors = await db.StaffUsers
+                .CountAsync(u => u.Division != "DELETED" && !u.Email.StartsWith("deleted_"));
             if (uniqueVisitors == 0)
             {
                 uniqueVisitors = await baseQuery.Select(v => v.Username).Distinct().CountAsync();
             }
+
+            return (totalVisits, todayVisits, uniqueVisitors);
+        }
+
+        public async Task<VisitorStatsDto> GetVisitorStatsAsync()
+        {
+            var baseQuery = GetAuthenticatedLogsQuery();
+            var (totalVisits, todayVisits, uniqueVisitors) = await ComputeSummaryCountsAsync(baseQuery);
 
             var rawBreakdown = await baseQuery
                 .Where(v => !string.IsNullOrEmpty(v.Division) && v.Division != "General" && v.Division != "IDD")
@@ -54,10 +61,11 @@ namespace mobile_backend.Services
             var rawRecent = await baseQuery
                 .OrderByDescending(v => v.VisitedAt)
                 .Take(25)
-                .Select(v => new {
+                .Select(v => new
+                {
                     v.Id,
                     v.VisitorId,
-                    Username = v.Username,
+                    v.Username,
                     Division = string.IsNullOrWhiteSpace(v.Division) ? "General" : v.Division,
                     v.VisitedAt
                 })
@@ -106,7 +114,7 @@ namespace mobile_backend.Services
 
                 if (!recentVisit)
                 {
-                    var log = new VisitorLog
+                    db.VisitorLogs.Add(new VisitorLog
                     {
                         VisitorId = visitorId,
                         Username = cleanUsername,
@@ -114,26 +122,12 @@ namespace mobile_backend.Services
                         Path = req.Path ?? "/",
                         UserAgent = userAgent,
                         VisitedAt = DateTime.UtcNow
-                    };
-                    db.VisitorLogs.Add(log);
+                    });
                     await db.SaveChangesAsync();
                 }
             }
 
-            var baseQuery = GetAuthenticatedLogsQuery();
-            var todayStart = DateTime.UtcNow.AddHours(8).Date.AddHours(-8);
-            var totalVisits = await baseQuery.CountAsync();
-            var todayVisits = await baseQuery
-                .Where(v => v.VisitedAt >= todayStart)
-                .Select(v => v.Username)
-                .Distinct()
-                .CountAsync();
-            var uniqueVisitors = await db.StaffUsers.CountAsync();
-            if (uniqueVisitors == 0)
-            {
-                uniqueVisitors = await baseQuery.Select(v => v.Username).Distinct().CountAsync();
-            }
-
+            var (totalVisits, todayVisits, uniqueVisitors) = await ComputeSummaryCountsAsync(GetAuthenticatedLogsQuery());
             return new RecordVisitorResultDto(totalVisits, todayVisits, uniqueVisitors);
         }
     }

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../../utils/supabaseClient';
-import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../../services/apiConfig';
+import { addQuizQuestion as addQuizQuestionService, deleteQuizQuestion as deleteQuizQuestionService } from '../../quiz/quizService';
 
 export default function AdminQuizSection({
   selectedMonth,
@@ -22,27 +21,16 @@ export default function AdminQuizSection({
     e.preventDefault();
     setIsSubmitting(true);
 
-    const payload = {
-      Month: selectedMonth,
-      QuestionText: qText,
-      OptionA: optA,
-      OptionB: optB,
-      OptionC: optC,
-      OptionD: optD,
-      CorrectOption: correct
-    };
-
-    let directSuccess = false;
-    if (!IS_LOCAL_SSMS) {
-      try {
-        const { error } = await supabase.from('QuizQuestions').insert([payload]);
-        if (!error) directSuccess = true;
-      } catch (sbErr) {
-        console.warn("Direct Supabase addQuestion failed, trying fallback:", sbErr);
-      }
-    }
-
-    if (directSuccess) {
+    try {
+      await addQuizQuestionService({
+        month: selectedMonth,
+        questionText: qText,
+        optionA: optA,
+        optionB: optB,
+        optionC: optC,
+        optionD: optD,
+        correctOption: correct,
+      });
       setQMsg('✅ Question added!');
       onRefreshQuestions();
       setQText('');
@@ -51,37 +39,8 @@ export default function AdminQuizSection({
       setOptC('');
       setOptD('');
       setCorrect('A');
-    } else {
-      try {
-        const res = await fetch(`${API_BASE}/api/admin/questions`, {
-          signal: AbortSignal.timeout(4000),
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
-            month: selectedMonth,
-            questionText: qText,
-            optionA: optA,
-            optionB: optB,
-            optionC: optC,
-            optionD: optD,
-            correctOption: correct
-          })
-        });
-        if (res.ok) {
-          setQMsg('✅ Question added!');
-          onRefreshQuestions();
-          setQText('');
-          setOptA('');
-          setOptB('');
-          setOptC('');
-          setOptD('');
-          setCorrect('A');
-        } else {
-          setQMsg('❌ Failed to add question');
-        }
-      } catch {
-        setQMsg('❌ Failed to add question');
-      }
+    } catch {
+      setQMsg('❌ Failed to add question');
     }
 
     setIsSubmitting(false);
@@ -90,14 +49,10 @@ export default function AdminQuizSection({
 
   const deleteQuestion = async (id) => {
     if (!confirm('Delete this question?')) return;
-    if (!IS_LOCAL_SSMS) {
-      try {
-        await supabase.from('QuizQuestions').delete().eq('Id', id);
-      } catch (err) {
-        console.warn("Direct Supabase deleteQuestion failed:", err);
-      }
-    } else {
-      await fetch(`${API_BASE}/api/admin/questions/${id}`, { method: 'DELETE', headers: getAuthHeaders(), signal: AbortSignal.timeout(4000) }).catch(() => null);
+    try {
+      await deleteQuizQuestionService(id);
+    } catch (err) {
+      console.warn('Delete question failed:', err);
     }
     onRefreshQuestions();
   };

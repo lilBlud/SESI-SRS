@@ -25,9 +25,10 @@ export function LeaderboardAvatar({
   const pic = !imgErr && (entry?.profilePicture || (isMe ? user?.profilePicture : null));
   const initials = (entry?.displayName || entry?.username || '??').substring(0, 2).toUpperCase();
 
-  const streakCount = typeof entry?.streak === 'number'
-    ? entry.streak
-    : (isMe && typeof currentStreak === 'number' ? currentStreak : 0);
+  const streakCount =
+    typeof entry?.streak === 'number' && entry.streak > 0
+      ? entry.streak
+      : (isMe && typeof currentStreak === 'number' ? currentStreak : (entry?.streak ?? 0));
 
   if (isPodium) {
     return (

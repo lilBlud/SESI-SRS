@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getActiveProvider, dataProvider, IS_LOCAL_SSMS } from '../services/dataProvider';
+import { getActiveProvider, IS_LOCAL_SSMS } from '../services/dataProvider';
 import { ssmsProvider } from '../services/providers/ssms/ssmsProvider';
 import { supabaseProvider } from '../services/providers/supabase/supabaseProvider';
 
@@ -15,12 +15,19 @@ describe('Dual-Database Provider Architecture', () => {
     }
   });
 
-  it('both providers implement required domain interface methods', () => {
+  it('both providers implement required domain & admin CRUD interface methods', () => {
     const requiredMethods = [
       'checkHealth',
       'getInfographics',
+      'saveInfographic',
+      'deleteInfographic',
       'getGlossary',
+      'saveGlossaryTerm',
+      'deleteGlossaryTerm',
       'getQuizQuestions',
+      'getAdminQuizQuestions',
+      'addQuizQuestion',
+      'deleteQuizQuestion',
       'getQuizSummary',
       'getLeaderboard',
       'submitQuizAnswer',
@@ -33,6 +40,7 @@ describe('Dual-Database Provider Architecture', () => {
       'updateProfilePicture',
       'updatePreferredName',
       'updateUserRole',
+      'deleteUser',
       'login',
       'signup',
       'getVisitorStats',
@@ -62,4 +70,3 @@ describe('Dual-Database Provider Architecture', () => {
     }
   });
 });
-

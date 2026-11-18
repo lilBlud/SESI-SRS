@@ -1,4 +1,11 @@
 import { API_BASE, getAuthHeaders } from '../../apiConfig';
+import {
+  mapGlossaryTermDto,
+  mapInfographicDto,
+  mapLeaderboardEntryDto,
+  mapQuizQuestionDto,
+  mapUserAnswerDto,
+} from '../dtoMappers';
 
 /**
  * Dedicated local SSMS driver communicating via mobile-backend ASP.NET Core API on port 5195.
@@ -11,8 +18,8 @@ async function request(path, options = {}) {
     headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders(),
-      ...(options.headers || {})
-    }
+      ...(options.headers || {}),
+    },
   });
   if (!res.ok) {
     const errorBody = await res.text().catch(() => '');
@@ -54,55 +61,59 @@ export const ssmsProvider = {
   // ─── Glossary & Posters ───
   async getInfographics() {
     const data = await request('/api/infographics');
-    return (data || []).map(p => ({
-      id: p.Id ?? p.id,
-      title: p.Title ?? p.title ?? '',
-      description: p.Description ?? p.description ?? '',
-      imageUrl: p.ImageUrl ?? p.imageUrl ?? '',
-      additionalImages: p.AdditionalImages ?? p.additionalImages ?? '',
-      category: p.Category ?? p.category ?? 'General',
-      postedAt: p.PostedAt ?? p.postedAt ?? new Date().toISOString()
-    }));
+    return (data || []).map(mapInfographicDto);
+  },
+
+  async saveInfographic(payload, editId = null) {
+    const path = editId ? `/api/admin/infographics/${editId}` : '/api/admin/infographics';
+    return await request(path, {
+      method: editId ? 'PUT' : 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteInfographic(id) {
+    return await request(`/api/admin/infographics/${id}`, { method: 'DELETE' });
   },
 
   async getGlossary() {
     const data = await request('/api/glossary');
-    return (data || []).map(g => ({
-      id: g.Id ?? g.id,
-      term: g.Term ?? g.term ?? '',
-      full: g.FullName ?? g.full ?? g.fullName ?? '',
-      desc: g.Description ?? g.desc ?? g.description ?? '',
-      formula: g.Formula ?? g.formula ?? '',
-      formulaNotations: g.FormulaNotations ?? g.formulaNotations ?? '',
-      formulaTermMeanings: g.FormulaTermMeanings ?? g.formulaTermMeanings ?? '',
-      cat: g.Category ?? g.cat ?? g.category ?? 'General',
-      chartData: g.ChartData ?? g.chartData ?? ''
-    }));
+    return (data || []).map(mapGlossaryTermDto);
+  },
+
+  async saveGlossaryTerm(payload, editId = null) {
+    const path = editId ? `/api/admin/glossary/${editId}` : '/api/admin/glossary';
+    return await request(path, {
+      method: editId ? 'PUT' : 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteGlossaryTerm(id) {
+    return await request(`/api/admin/glossary/${id}`, { method: 'DELETE' });
   },
 
   // ─── Quiz & Leaderboard ───
   async getQuizQuestions(month) {
     const data = await request(`/api/quiz/${encodeURIComponent(month)}`);
-    return (data || []).map(q => {
-      const correctOpt = q.CorrectOption ?? q.correctOption ?? (q.CorrectIndex !== undefined ? ['A', 'B', 'C', 'D'][q.CorrectIndex] : 'A');
-      const optMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-      const correctIdx = q.CorrectIndex ?? q.correctIndex ?? optMap[String(correctOpt).toUpperCase()] ?? 0;
-      const options = q.Options ?? q.options ?? [
-        q.OptionA ?? q.optionA ?? '',
-        q.OptionB ?? q.optionB ?? '',
-        q.OptionC ?? q.optionC ?? '',
-        q.OptionD ?? q.optionD ?? ''
-      ];
-      const questionText = q.Question ?? q.question ?? q.QuestionText ?? q.questionText ?? '';
-      const id = q.Id ?? q.id;
+    return (data || []).map(mapQuizQuestionDto);
+  },
 
-      return {
-        id,
-        question: questionText,
-        options,
-        correctIndex: correctIdx
-      };
+  async getAdminQuizQuestions(month) {
+    const d = await request(`/api/admin/questions/${encodeURIComponent(month)}`);
+    const mapped = (d.questions || []).map(mapQuizQuestionDto);
+    return { month, questions: mapped, count: d.count ?? mapped.length };
+  },
+
+  async addQuizQuestion(payload) {
+    return await request('/api/admin/questions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
+  },
+
+  async deleteQuizQuestion(id) {
+    return await request(`/api/admin/questions/${id}`, { method: 'DELETE' });
   },
 
   async getQuizSummary() {
@@ -111,23 +122,13 @@ export const ssmsProvider = {
 
   async getLeaderboard(month) {
     const data = await request(`/api/leaderboard/${encodeURIComponent(month)}`);
-    return (data || []).map((entry, idx) => ({
-      key: entry.key || (entry.staffId ? `staff_${entry.staffId}` : (entry.username || `entry_${idx}`)),
-      username: entry.username || entry.displayName || 'Anonymous',
-      displayName: entry.displayName || entry.username || 'Anonymous',
-      score: Number(entry.score || 0),
-      division: entry.division || 'General',
-      dateTaken: entry.dateTaken || '',
-      streak: Number(entry.streak || 0),
-      profilePicture: entry.profilePicture || null,
-      staffId: entry.staffId ?? null
-    }));
+    return (data || []).map(mapLeaderboardEntryDto);
   },
 
   async submitQuizAnswer(payload) {
     return await request('/api/submit-answer', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
   },
 
@@ -142,17 +143,7 @@ export const ssmsProvider = {
       ? `/api/profile/${encodeURIComponent(username)}/recent-answers?month=${encodeURIComponent(month)}`
       : `/api/profile/${encodeURIComponent(username)}/recent-answers`;
     const data = await request(path);
-    return (data || []).map(a => ({
-      id: a.id ?? a.Id,
-      questionId: a.questionId ?? a.QuestionId ?? a.Question_Id ?? null,
-      questionText: a.questionText ?? a.QuestionText ?? '',
-      isCorrect: a.isCorrect ?? a.IsCorrect ?? false,
-      pointsAwarded: Number(a.pointsAwarded ?? a.PointsAwarded ?? 0),
-      timeTakenSeconds: Number(a.timeTakenSeconds ?? a.TimeTakenSeconds ?? 0),
-      dateAnswered: a.dateAnswered ?? a.DateAnswered ?? new Date().toISOString(),
-      selectedOption: a.selectedOption ?? a.SelectedOption ?? '',
-      month: a.month ?? a.Month ?? ''
-    }));
+    return (data || []).map(mapUserAnswerDto);
   },
 
   async getUserActiveMonths(userOrUsername) {
@@ -172,7 +163,7 @@ export const ssmsProvider = {
     const username = resolveUsername(userOrUsername);
     const json = await request('/api/streak/record', {
       method: 'POST',
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ username }),
     });
     return { streak: Number(json.streak || 0), recorded: Boolean(json.recorded) };
   },
@@ -189,27 +180,27 @@ export const ssmsProvider = {
   async updateProfilePicture(username, profilePicture) {
     return await request('/api/user/profile-picture', {
       method: 'POST',
-      body: JSON.stringify({ username, profilePicture })
+      body: JSON.stringify({ username, profilePicture }),
     });
   },
 
   async updatePreferredName(username, preferredName) {
     return await request('/api/user/preferred-name', {
       method: 'POST',
-      body: JSON.stringify({ username, preferredName })
+      body: JSON.stringify({ username, preferredName }),
     });
   },
 
   async updateUserRole(userId, newRole) {
     return await request(`/api/admin/users/${userId}/role`, {
       method: 'PUT',
-      body: JSON.stringify({ role: newRole })
+      body: JSON.stringify({ role: newRole }),
     });
   },
 
   async deleteUser(userId) {
     return await request(`/api/admin/users/${userId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   },
 
@@ -217,14 +208,14 @@ export const ssmsProvider = {
   async login(email, password) {
     return await request('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
     });
   },
 
   async signup(payload) {
     return await request('/api/auth/signup', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
   },
 
@@ -236,8 +227,7 @@ export const ssmsProvider = {
   async recordVisitor(payload) {
     return await request('/api/visitors/record', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
-  }
+  },
 };
-

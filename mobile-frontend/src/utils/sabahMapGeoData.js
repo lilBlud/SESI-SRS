@@ -267,7 +267,6 @@ export const TRANSMISSION_GRID = {
     { id: "beaufort-labuan", d: "M 88.3,228.5 L 43.7,235.4", isFeeder: true },
     { id: "beaufort-keningau", d: "M 88.3,228.5 L 132.8,228.9" },
     { id: "keningau-tenom-padas", d: "M 132.8,228.9 L 109.3,251.8 L 85.0,278.4" },
-    { id: "keningau-existing-plant", d: "M 132.8,228.9 L 148.0,248.0", isFeeder: true },
     { id: "segaliud-sandakan", d: "M 306.6,192.6 L 336.3,174.8" },
     { id: "lahad-datu-tawau", d: "M 362.6,262.7 L 354.4,299.4 L 325.0,336.0 L 315.8,346.3" },
     { id: "kunak-semporna-tawau", d: "M 354.4,299.4 L 392.8,321.0 L 325.0,336.0" },
@@ -295,10 +294,10 @@ export const TRANSMISSION_GRID = {
     }
   ],
 
-  // Central Inter-Regional Transfer Arrow
+  // Central Inter-Regional Transfer Arrow (clear of Ranau and Sapi Nangoh)
   powerFlowArrow: {
-    x: 225,
-    y: 172,
+    x: 200,
+    y: 171,
     label: "~340 MW"
   },
 

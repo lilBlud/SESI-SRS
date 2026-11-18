@@ -12,8 +12,8 @@ namespace mobile_backend.Services
 {
     public class GlossaryService(AppDbContext db, IMemoryCache cache) : IGlossaryService
     {
-        private const string GlossaryCacheKey = "sesi_glossary_all";
-        private const string InfographicsCacheKey = "sesi_infographics_all";
+        public const string GlossaryCacheKey = "sesi_glossary_all";
+        public const string InfographicsCacheKey = "sesi_infographics_all";
 
         public async Task<List<GlossaryTermDto>> GetGlossaryAsync()
         {

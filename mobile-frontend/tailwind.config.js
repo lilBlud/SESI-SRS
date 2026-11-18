@@ -11,33 +11,33 @@ export default {
         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       colors: {
-        // Logo Green
+        // Logo Green (OKLCH perceptually calibrated)
         emerald: {
-          50: '#ecf8ef',
-          100: '#d1eed8',
-          200: '#a8dfb7',
-          300: '#72c88c',
-          400: '#43af68',
-          500: '#44B369', // exact logo green
-          600: '#208d47',
-          700: '#1b6f3a',
-          800: '#185830',
-          900: '#154929',
-          950: '#0b2816',
+          50: 'oklch(0.97 0.022 148)',
+          100: 'oklch(0.93 0.048 148)',
+          200: 'oklch(0.86 0.088 148)',
+          300: 'oklch(0.77 0.124 148)',
+          400: 'oklch(0.69 0.145 148)',
+          500: 'oklch(0.66 0.148 148)', // exact logo green in OKLCH
+          600: 'oklch(0.55 0.135 148)',
+          700: 'oklch(0.46 0.115 148)',
+          800: 'oklch(0.39 0.095 148)',
+          900: 'oklch(0.34 0.08 148)',
+          950: 'oklch(0.22 0.055 148)',
         },
-        // Logo Dark Blue
+        // Logo Dark Blue (OKLCH perceptually calibrated)
         teal: {
-          50: '#f0f6fd',
-          100: '#dcebfa',
-          200: '#c1ddf7',
-          300: '#96c7f1',
-          400: '#64abe8',
-          500: '#4090dd',
-          600: '#115497', // mapped 600 to exact logo dark blue (since it's used in gradients)
-          700: '#235da3',
-          800: '#204f85',
-          900: '#14355e', 
-          950: '#122c4f',
+          50: 'oklch(0.96 0.018 242)',
+          100: 'oklch(0.92 0.036 242)',
+          200: 'oklch(0.86 0.062 242)',
+          300: 'oklch(0.78 0.092 242)',
+          400: 'oklch(0.70 0.115 242)',
+          500: 'oklch(0.62 0.130 242)',
+          600: 'oklch(0.44 0.125 250)', // mapped 600 to exact logo dark blue
+          700: 'oklch(0.46 0.115 250)',
+          800: 'oklch(0.41 0.095 250)',
+          900: 'oklch(0.33 0.075 250)',
+          950: 'oklch(0.28 0.065 250)',
         },
         // Grid Governance Corporate Palette
         governance: {

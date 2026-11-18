@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { getYAxisUnit } from '../../../components/ui';
 import { DEFAULT_HISTORICAL_METRICS } from '../../../data/historicalPerformanceData';
-import { supabase } from '../../../utils/supabaseClient';
-import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../../services/apiConfig';
+import { normalizeGlossaryTerm } from '../../../domain/glossaryModel';
+import { saveGlossaryTerm as saveGlossaryTermService, deleteGlossaryTerm as deleteGlossaryTermService } from '../../glossary/glossaryService';
 import { AdminGlossaryForm, AdminGlossaryCardList } from './glossary';
 
 export default function AdminGlossarySection({
@@ -18,7 +18,7 @@ export default function AdminGlossarySection({
   const [gNotations, setGNotations] = useState('');
   const [gMeanings, setGMeanings] = useState('');
   const [gCat, setGCat] = useState('Corporate Performance');
-  const [gChartData, setGChartData] = useState([]); // Array of {month, year, value}
+  const [gChartData, setGChartData] = useState([]);
   const [gYAxisFormat, setGYAxisFormat] = useState('in %');
   const [cYear, setCYear] = useState('2026');
   const [gMsg, setGMsg] = useState('');
@@ -29,6 +29,11 @@ export default function AdminGlossarySection({
   const [showForm, setShowForm] = useState(false);
 
   const isPerfStudio = dictSubTab === 'corporate';
+
+  const normalizedTerms = useMemo(
+    () => (Array.isArray(glossaryTerms) ? glossaryTerms : []).map(normalizeGlossaryTerm),
+    [glossaryTerms],
+  );
 
   const cancelEditGlossaryTerm = useCallback(() => {
     setGEditId(null);
@@ -52,108 +57,44 @@ export default function AdminGlossarySection({
   const addGlossaryTerm = useCallback(async (e) => {
     e.preventDefault();
     const finalChartData = [...gChartData];
-    const nowIso = new Date().toISOString();
 
-    const supabasePayload = {
-      Term: gTerm.trim(),
-      FullName: isPerfStudio ? '' : (gFull || ''),
-      Description: gDesc || '',
-      Formula: isPerfStudio ? (gFormula || 'area') : (gFormula || ''),
-      FormulaNotations: isPerfStudio ? (gYAxisFormat || 'in %') : (gNotations || ''),
-      FormulaTermMeanings: isPerfStudio ? '' : (gMeanings || ''),
-      Category: gCat || (isPerfStudio ? 'Corporate Performance' : 'IBR Framework'),
-      ChartData: isPerfStudio && finalChartData.length > 0 ? JSON.stringify(finalChartData) : '',
-      CreatedAt: nowIso
+    const payload = {
+      term: gTerm.trim(),
+      fullName: isPerfStudio ? '' : (gFull || ''),
+      description: gDesc || '',
+      formula: isPerfStudio ? (gFormula || 'area') : (gFormula || ''),
+      formulaNotations: isPerfStudio ? (gYAxisFormat || 'in %') : (gNotations || ''),
+      formulaTermMeanings: isPerfStudio ? '' : (gMeanings || ''),
+      category: gCat || (isPerfStudio ? 'Corporate Performance' : 'IBR Framework'),
+      chartData: isPerfStudio && finalChartData.length > 0 ? JSON.stringify(finalChartData) : '',
     };
 
-    let directSuccess = false;
-    if (!IS_LOCAL_SSMS) {
-      try {
-        if (gEditId) {
-          const { error } = await supabase
-            .from('GlossaryTerms')
-            .update(supabasePayload)
-            .eq('Id', gEditId);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from('GlossaryTerms')
-            .insert([supabasePayload]);
-          if (error) throw error;
-        }
-        directSuccess = true;
-      } catch (sbErr) {
-        console.warn("Direct Supabase glossary post error, trying API fallback:", sbErr);
-      }
-    }
-
-    if (directSuccess) {
+    try {
+      await saveGlossaryTermService(payload, gEditId);
       setGMsg(gEditId ? '✅ Card updated successfully!' : '✅ New card created successfully!');
       onRefreshGlossary();
       if (onGlossaryChange) onGlossaryChange();
       cancelEditGlossaryTerm();
-    } else {
-      const payload = {
-        term: gTerm.trim(),
-        fullName: isPerfStudio ? '' : (gFull || ''),
-        description: gDesc,
-        formula: isPerfStudio ? (gFormula || 'area') : (gFormula || ''),
-        formulaNotations: isPerfStudio ? (gYAxisFormat || 'in %') : (gNotations || ''),
-        formulaTermMeanings: isPerfStudio ? '' : (gMeanings || ''),
-        category: gCat || (isPerfStudio ? 'Corporate Performance' : 'IBR Framework'),
-        chartData: isPerfStudio && finalChartData.length > 0 ? JSON.stringify(finalChartData) : ''
-      };
-
-      try {
-        let res;
-        if (gEditId) {
-          res = await fetch(`${API_BASE}/api/admin/glossary/${gEditId}`, {
-          signal: AbortSignal.timeout(4000),
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify(payload)
-          });
-        } else {
-          res = await fetch(`${API_BASE}/api/admin/glossary`, {
-          signal: AbortSignal.timeout(4000),
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify(payload)
-          });
-        }
-        if (res && res.ok) {
-          setGMsg(gEditId ? '✅ Card updated successfully!' : '✅ New card created successfully!');
-          onRefreshGlossary();
-          if (onGlossaryChange) onGlossaryChange();
-          cancelEditGlossaryTerm();
-        } else {
-          setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
-        }
-      } catch {
-        setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
-      }
+    } catch {
+      setGMsg(gEditId ? '❌ Failed to update card' : '❌ Failed to add card');
     }
 
     setTimeout(() => setGMsg(''), 3500);
   }, [gTerm, isPerfStudio, gFull, gDesc, gFormula, gYAxisFormat, gNotations, gMeanings, gCat, gChartData, gEditId, onRefreshGlossary, onGlossaryChange, cancelEditGlossaryTerm]);
 
-  const editGlossaryTerm = (t) => {
-    setGEditId(t.id);
-    setGTerm(t.term);
-    setGFull(t.fullName || '');
-    setGDesc(t.description || '');
+  const populateFormFromTerm = (raw, { asCopy = false } = {}) => {
+    const t = raw.parsedChartData ? raw : normalizeGlossaryTerm(raw);
+    const chart = t.parsedChartData || [];
+
+    setGEditId(asCopy ? null : t.id);
+    setGTerm(asCopy ? `Copy of ${t.term}` : t.term);
+    setGFull(t.full || '');
+    setGDesc(t.desc || '');
     setGFormula(t.formula || 'area');
     setGNotations(t.formulaNotations || '');
     setGMeanings(t.formulaTermMeanings || '');
-    setGCat(t.category || 'Corporate Performance');
-    setGYAxisFormat(t.formulaNotations || getYAxisUnit(t.term));
-
-    let chart = [];
-    try {
-      chart = t.chartData ? JSON.parse(t.chartData) : [];
-    } catch {
-      chart = [];
-    }
+    setGCat(t.cat || 'Corporate Performance');
+    setGYAxisFormat(t.formulaNotations || (asCopy ? 'in %' : getYAxisUnit(t.term)));
     setGChartData(chart);
 
     if (chart.length > 0) {
@@ -161,42 +102,16 @@ export default function AdminGlossarySection({
       setCYear(years[years.length - 1] || '2026');
     }
 
-    const isPerfCard = t.category === 'Corporate Performance' || (chart && chart.length > 0);
-    if (isPerfCard) {
+    if (asCopy) {
+      setGMsg(`✅ Duplicating "${t.term}" in category "${t.cat || 'Corporate Performance'}"!`);
+      setTimeout(() => setGMsg(''), 4000);
+    } else if (t.isPerformanceCard) {
       setDictSubTab('corporate');
       setGCategoryFilter('All');
     } else {
       setDictSubTab('dictionary');
     }
-    setShowForm(true);
-    window.scrollTo({ top: 180, behavior: 'smooth' });
-  };
 
-  const duplicateGlossaryTerm = (t) => {
-    setGEditId(null);
-    setGTerm(`Copy of ${t.term}`);
-    setGFull(t.fullName || '');
-    setGDesc(t.description || '');
-    setGFormula(t.formula || 'area');
-    setGNotations(t.formulaNotations || '');
-    setGMeanings(t.formulaTermMeanings || '');
-    setGCat(t.category || 'Corporate Performance');
-    setGYAxisFormat(t.formulaNotations || 'in %');
-
-    let chart = [];
-    try {
-      chart = t.chartData ? JSON.parse(t.chartData) : [];
-    } catch {
-      chart = [];
-    }
-    setGChartData(chart);
-
-    if (chart.length > 0) {
-      const years = [...new Set(chart.map(d => String(d.year)))].sort();
-      setCYear(years[years.length - 1] || '2026');
-    }
-    setGMsg(`✅ Duplicating "${t.term}" in category "${t.category || 'Corporate Performance'}"!`);
-    setTimeout(() => setGMsg(''), 4000);
     setShowForm(true);
     window.scrollTo({ top: 180, behavior: 'smooth' });
   };
@@ -212,10 +127,10 @@ export default function AdminGlossarySection({
     setGChartData([...tmpl.chartData]);
     setCYear('2026');
 
-    const existing = glossaryTerms.find(t => (t.term || '').trim().toUpperCase() === key.toUpperCase());
+    const existing = normalizedTerms.find(t => (t.term || '').trim().toUpperCase() === key.toUpperCase());
     if (existing) {
       setGEditId(existing.id);
-      if (existing.category) setGCat(existing.category);
+      if (existing.cat) setGCat(existing.cat);
       setGMsg(`✅ Loaded preset "${tmpl.term}" (editing card ID #${existing.id})`);
     } else {
       setGEditId(null);
@@ -230,8 +145,10 @@ export default function AdminGlossarySection({
       !confirm(
         'This will synchronize and update all Performance cards with rich historical data from 2022 to 2026 (including EPSB Revenue, Financial Performance, and Technical Performance). Continue?'
       )
-    )
+    ) {
       return;
+    }
+
     setSyncingData(true);
     try {
       const keys = Object.keys(DEFAULT_HISTORICAL_METRICS);
@@ -240,48 +157,11 @@ export default function AdminGlossarySection({
 
       for (const key of keys) {
         const tmpl = DEFAULT_HISTORICAL_METRICS[key];
-        const existing = glossaryTerms.find(t => (t.term || '').trim().toUpperCase() === key.toUpperCase());
+        const existing = normalizedTerms.find(t => (t.term || '').trim().toUpperCase() === key.toUpperCase());
         const targetCat = tmpl.category || (key.includes('EPSB') ? 'EPSB' : 'Corporate Performance');
 
-        const supabasePayload = {
-          Term: tmpl.term,
-          FullName: '',
-          Description: tmpl.description,
-          Formula: tmpl.formula || 'area',
-          FormulaNotations: tmpl.yAxisFormat,
-          FormulaTermMeanings: '',
-          Category: targetCat,
-          ChartData: JSON.stringify(tmpl.chartData)
-        };
-
-        let directSuccess = false;
-        if (!IS_LOCAL_SSMS) {
-          try {
-            if (existing) {
-              const { error } = await supabase
-                .from('GlossaryTerms')
-                .update(supabasePayload)
-                .eq('Id', existing.id);
-              if (!error) {
-                directSuccess = true;
-                updatedCount++;
-              }
-            } else {
-              const { error } = await supabase
-                .from('GlossaryTerms')
-                .insert([supabasePayload]);
-              if (!error) {
-                directSuccess = true;
-                addedCount++;
-              }
-            }
-          } catch {
-            // fallback below
-          }
-        }
-
-        if (!directSuccess) {
-          const payload = {
+        await saveGlossaryTermService(
+          {
             term: tmpl.term,
             fullName: '',
             description: tmpl.description,
@@ -289,24 +169,13 @@ export default function AdminGlossarySection({
             formulaNotations: tmpl.yAxisFormat,
             formulaTermMeanings: '',
             category: targetCat,
-            chartData: JSON.stringify(tmpl.chartData)
-          };
-          if (existing) {
-            await fetch(`${API_BASE}/api/admin/glossary/${existing.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-              body: JSON.stringify(payload)
-            }).catch(() => null);
-            updatedCount++;
-          } else {
-            await fetch(`${API_BASE}/api/admin/glossary`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-              body: JSON.stringify(payload)
-            }).catch(() => null);
-            addedCount++;
-          }
-        }
+            chartData: JSON.stringify(tmpl.chartData),
+          },
+          existing?.id ?? null,
+        );
+
+        if (existing) updatedCount++;
+        else addedCount++;
       }
 
       onRefreshGlossary();
@@ -321,28 +190,12 @@ export default function AdminGlossarySection({
     }
   };
 
-
   const deleteGlossaryTerm = async (id) => {
     if (!confirm('Are you sure you want to delete this card / term?')) return;
-    let deleted = false;
-    if (!IS_LOCAL_SSMS) {
-      try {
-        const { error } = await supabase.from('GlossaryTerms').delete().eq('Id', id);
-        if (error) throw error;
-        deleted = true;
-      } catch (err) {
-        console.warn("Direct Supabase delete glossary failed, trying API:", err);
-      }
-    }
-    if (!deleted) {
-      try {
-        const res = await fetch(`${API_BASE}/api/admin/glossary/${id}`, { method: 'DELETE', headers: getAuthHeaders(), signal: AbortSignal.timeout(4000) });
-        if (res.ok) deleted = true;
-      } catch {}
-    }
-    if (deleted) {
+    try {
+      await deleteGlossaryTermService(id);
       setGMsg('🗑️ Card deleted successfully!');
-    } else {
+    } catch {
       setGMsg('❌ Failed to delete card');
     }
     setTimeout(() => setGMsg(''), 3500);
@@ -350,48 +203,39 @@ export default function AdminGlossarySection({
     if (onGlossaryChange) onGlossaryChange();
   };
 
-  // Filtered lists
-  const filteredTerms = glossaryTerms.filter(t => {
-    let c = [];
-    try {
-      c = t.chartData ? JSON.parse(t.chartData) : [];
-    } catch {
-      c = [];
-    }
-    const isPerf = t.category === 'Corporate Performance' || c.length > 0;
-    if (dictSubTab === 'corporate' && !isPerf) return false;
-    if (dictSubTab === 'dictionary' && isPerf) return false;
+  const corporateCount = useMemo(
+    () => normalizedTerms.filter(t => t.isPerformanceCard).length,
+    [normalizedTerms],
+  );
+  const dictionaryCount = normalizedTerms.length - corporateCount;
 
-    if (gCategoryFilter !== 'All' && t.category !== gCategoryFilter) return false;
+  const filteredTerms = useMemo(() => {
+    const q = gFilter.toLowerCase();
+    return normalizedTerms.filter(t => {
+      if (dictSubTab === 'corporate' && !t.isPerformanceCard) return false;
+      if (dictSubTab === 'dictionary' && t.isPerformanceCard) return false;
+      if (gCategoryFilter !== 'All' && t.cat !== gCategoryFilter) return false;
+      if (!q) return true;
+      return (
+        (t.term || '').toLowerCase().includes(q) ||
+        (t.full || '').toLowerCase().includes(q) ||
+        (t.desc || '').toLowerCase().includes(q)
+      );
+    });
+  }, [normalizedTerms, dictSubTab, gCategoryFilter, gFilter]);
 
-    if (gFilter) {
-      const q = gFilter.toLowerCase();
-      const termMatch = (t.term || '').toLowerCase().includes(q);
-      const fullMatch = (t.fullName || '').toLowerCase().includes(q);
-      const descMatch = (t.description || t.desc || '').toLowerCase().includes(q);
-      return termMatch || fullMatch || descMatch;
-    }
-    return true;
-  });
-
-  const availableCategories = [
-    'All',
-    ...new Set(
-      glossaryTerms
-        .filter(t => {
-          let c = [];
-          try {
-            c = t.chartData ? JSON.parse(t.chartData) : [];
-          } catch {
-            c = [];
-          }
-          const isPerf = t.category === 'Corporate Performance' || c.length > 0;
-          return dictSubTab === 'corporate' ? isPerf : !isPerf;
-        })
-        .map(t => t.category)
-        .filter(Boolean)
-    )
-  ];
+  const availableCategories = useMemo(
+    () => [
+      'All',
+      ...new Set(
+        normalizedTerms
+          .filter(t => (dictSubTab === 'corporate' ? t.isPerformanceCard : !t.isPerformanceCard))
+          .map(t => t.cat)
+          .filter(Boolean),
+      ),
+    ],
+    [normalizedTerms, dictSubTab],
+  );
 
   return (
     <div className="space-y-4">
@@ -420,17 +264,7 @@ export default function AdminGlossarySection({
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
             }`}
           >
-            {
-              glossaryTerms.filter(t => {
-                let c = [];
-                try {
-                  c = t.chartData ? JSON.parse(t.chartData) : [];
-                } catch {
-                  c = [];
-                }
-                return t.category === 'Corporate Performance' || c.length > 0;
-              }).length
-            }
+            {corporateCount}
           </span>
         </button>
 
@@ -457,17 +291,7 @@ export default function AdminGlossarySection({
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
             }`}
           >
-            {
-              glossaryTerms.filter(t => {
-                let c = [];
-                try {
-                  c = t.chartData ? JSON.parse(t.chartData) : [];
-                } catch {
-                  c = [];
-                }
-                return t.category !== 'Corporate Performance' && c.length === 0;
-              }).length
-            }
+            {dictionaryCount}
           </span>
         </button>
       </div>
@@ -511,13 +335,13 @@ export default function AdminGlossarySection({
 
       {/* Add / Edit Form Modal Dialog */}
       {showForm && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fadeIn"
           onClick={(e) => {
             if (e.target === e.currentTarget) cancelEditGlossaryTerm();
           }}
         >
-          <div className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl shadow-2xl custom-scrollbar my-auto" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-lg max-h-[92dvh] overflow-y-auto concentric-card surface-depth-3 border-alpha shadow-2xl custom-scrollbar my-auto" onClick={e => e.stopPropagation()}>
             <AdminGlossaryForm
               isPerfStudio={isPerfStudio}
               gEditId={gEditId}
@@ -559,8 +383,8 @@ export default function AdminGlossarySection({
         setGCategoryFilter={setGCategoryFilter}
         availableCategories={availableCategories}
         filteredTerms={filteredTerms}
-        onEditTerm={editGlossaryTerm}
-        onDuplicateTerm={duplicateGlossaryTerm}
+        onEditTerm={(t) => populateFormFromTerm(t, { asCopy: false })}
+        onDuplicateTerm={(t) => populateFormFromTerm(t, { asCopy: true })}
         onDeleteTerm={deleteGlossaryTerm}
       />
     </div>

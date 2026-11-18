@@ -1,28 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  getInfographicsDirect,
-  getGlossaryDirect,
-  getVisitorStatsDirect,
-  getAllUsersDirect,
-  updateUserRoleDirect,
-  deleteUserDirect,
-  supabase
-} from '../../utils/supabaseClient';
+import { currentMonth } from '../../utils/constants';
+import { getInfographics, getGlossary } from '../glossary/glossaryService';
+import { getAdminQuizQuestions } from '../quiz/quizService';
+import { getAllUsers, updateUserRole, deleteUser } from '../../services/userService';
+import { getVisitorStats } from '../../services/visitorService';
 import { matchesUser } from '../../utils/rbac';
-import { IS_LOCAL_SSMS, API_BASE, getAuthHeaders } from '../../services/apiConfig';
 import AdminTrafficSection from './components/AdminTrafficSection';
 import AdminUsersSection from './components/AdminUsersSection';
 import AdminQuizSection from './components/AdminQuizSection';
 import AdminGlossarySection from './components/AdminGlossarySection';
 import AdminInfographicsSection from './components/AdminInfographicsSection';
 
-const currentMonth = new Date().toISOString().slice(0, 7);
 const defaultMonth = currentMonth < '2026-01' ? '2026-01' : currentMonth;
 
 export default function AdminTab({ currentUser, onClose, onGlossaryChange, visitorStats, onRefreshVisitorStats }) {
-  const [activeSection, setActiveSection] = useState('traffic'); // 'traffic' | 'users' | 'questions' | 'glossary' | 'infographics'
+  const [activeSection, setActiveSection] = useState('traffic');
 
-  // ─── Domain States ───
   const [trafficData, setTrafficData] = useState(null);
   const [loadingTraffic, setLoadingTraffic] = useState(false);
 
@@ -37,32 +30,16 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   const [glossaryTerms, setGlossaryTerms] = useState([]);
   const [infographics, setInfographics] = useState([]);
 
-  // ─── Fetch Handlers ───
   const fetchTraffic = useCallback(async () => {
     setLoadingTraffic(true);
     try {
-      let data = null;
-      try {
-        data = await getVisitorStatsDirect();
-      } catch (e) {
-        console.warn('Direct fetch traffic failed in AdminTab:', e);
-      }
-
-      if (!data) {
-        try {
-          const res = await fetch((API_BASE || "") + `/api/visitors/stats?t=${Date.now()}`, { signal: AbortSignal.timeout(3500) });
-          if (res.ok) {
-            data = await res.json();
-          }
-        } catch (e) {
-          console.error('Failed to fetch traffic stats fallback:', e);
-        }
-      }
-
+      const data = await getVisitorStats();
       if (data) {
         setTrafficData(data);
         if (onRefreshVisitorStats) onRefreshVisitorStats();
       }
+    } catch (e) {
+      console.warn('Failed to fetch traffic stats in AdminTab:', e);
     } finally {
       setLoadingTraffic(false);
     }
@@ -71,170 +48,70 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
     try {
-      let list = null;
-      try {
-        list = await getAllUsersDirect();
-      } catch (err) {
-        console.warn("Direct fetch users error in AdminTab:", err);
-      }
-
-      if (!list) {
-        try {
-          const res = await fetch((API_BASE || "") + `/api/admin/users`, { headers: getAuthHeaders(), signal: AbortSignal.timeout(3500) });
-          if (res && res.ok) {
-            list = await res.json();
-          }
-        } catch (apiErr) {
-          console.warn("API fetch users error in AdminTab:", apiErr);
-        }
-      }
-
-      if (list && Array.isArray(list)) {
-        setUsers(list);
-      }
+      const list = await getAllUsers();
+      if (Array.isArray(list)) setUsers(list);
+    } catch (err) {
+      console.warn('Fetch users error in AdminTab:', err);
     } finally {
       setLoadingUsers(false);
     }
   }, []);
 
   const handleUpdateRole = async (targetIdOrEmail, newRole) => {
-    // Optimistic update for instant UI feedback
     setUsers(prev => prev.map(u =>
       matchesUser(u, targetIdOrEmail) ? { ...u, role: newRole } : u
     ));
 
     try {
-      await updateUserRoleDirect(targetIdOrEmail, newRole);
+      await updateUserRole(targetIdOrEmail, newRole);
       await fetchUsers();
     } catch (err) {
-      await fetchUsers(); // Revert on failure
-
-      // Do NOT trigger API fallback if failure was a validation rule
-      if (err.message && (err.message.includes('Cannot demote') || err.message.includes('Invalid role'))) {
-        throw err;
-      }
-
-      // Fallback to API if available
-      try {
-        const targetUser = users.find(u => matchesUser(u, targetIdOrEmail));
-        const targetId = typeof targetIdOrEmail === 'number' ? targetIdOrEmail : targetUser?.id;
-
-        if (IS_LOCAL_SSMS && targetId) {
-          const res = await fetch(`${API_BASE}/api/admin/users/${targetId}/role`, {
-          signal: AbortSignal.timeout(4000),
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ role: newRole })
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.error || 'Failed to update user role');
-          }
-          await fetchUsers();
-          return;
-        }
-      } catch (apiErr) {
-        throw new Error(apiErr.message || err.message || 'Failed to update user role');
-      }
+      await fetchUsers();
       throw err;
     }
   };
 
   const handleDeleteUser = async (userToDelete) => {
-    // Optimistic removal from state
     setUsers(prev => prev.filter(u => !matchesUser(u, userToDelete)));
     try {
-      await deleteUserDirect(userToDelete);
+      await deleteUser(userToDelete);
       await fetchUsers();
     } catch (err) {
-      await fetchUsers(); // Revert on failure
+      await fetchUsers();
       throw err;
     }
   };
 
   const fetchQuestions = useCallback(async () => {
-    if (!IS_LOCAL_SSMS) {
-      try {
-        let { data, error } = await supabase
-          .from('QuizQuestions')
-          .select('*')
-          .eq('Month', selectedMonth);
-        if (!error && data) {
-          if (data.length === 0 && !hasAutoResolvedMonth.current) {
-            hasAutoResolvedMonth.current = true;
-            const { data: latest } = await supabase
-              .from('QuizQuestions')
-              .select('Month')
-              .order('Month', { ascending: false })
-              .limit(1);
-            const latestMonth = latest?.[0]?.Month ?? latest?.[0]?.month;
-            if (latestMonth && latestMonth !== selectedMonth) {
-              setSelectedMonth(latestMonth);
-              const { data: fallbackData } = await supabase
-                .from('QuizQuestions')
-                .select('*')
-                .eq('Month', latestMonth);
-              if (fallbackData) data = fallbackData;
-            }
-          }
-          hasAutoResolvedMonth.current = true;
-          const formatted = data.map(q => ({
-            id: q.Id ?? q.id,
-            month: q.Month ?? q.month,
-            questionText: q.QuestionText ?? q.questionText,
-            optionA: q.OptionA ?? q.optionA,
-            optionB: q.OptionB ?? q.optionB,
-            optionC: q.OptionC ?? q.optionC,
-            optionD: q.OptionD ?? q.optionD,
-            correctOption: q.CorrectOption ?? q.correctOption ?? 'A'
-          }));
-          setQuestions(formatted);
-          setQCount(formatted.length);
-          return;
-        }
-      } catch (sbErr) {
-        console.warn('Direct fetch questions error in AdminTab:', sbErr);
+    try {
+      const shouldResolve = !hasAutoResolvedMonth.current;
+      hasAutoResolvedMonth.current = true;
+      const result = await getAdminQuizQuestions(selectedMonth, shouldResolve);
+      if (result.month && result.month !== selectedMonth) {
+        setSelectedMonth(result.month);
       }
-    }
-
-    const res = await fetch((API_BASE || "") + `/api/admin/questions/${selectedMonth}`, { headers: getAuthHeaders(), signal: AbortSignal.timeout(3500) }).catch(() => null);
-    if (res && res.ok) {
-      const d = await res.json();
-      setQuestions(d.questions || []);
-      setQCount(d.count || 0);
+      setQuestions(result.questions || []);
+      setQCount(result.count || 0);
+    } catch (err) {
+      console.warn('Fetch questions error in AdminTab:', err);
     }
   }, [selectedMonth]);
 
   const fetchGlossary = useCallback(async () => {
     try {
-      const direct = await getGlossaryDirect();
-      if (direct && direct.length > 0) {
-        setGlossaryTerms(direct);
-        return;
-      }
+      const direct = await getGlossary();
+      if (Array.isArray(direct)) setGlossaryTerms(direct);
     } catch (e) {
-      console.warn('Direct fetch glossary failed in AdminTab:', e);
-    }
-    const res = await fetch((API_BASE || "") + "/api/admin/glossary?t=" + Date.now(), { headers: getAuthHeaders(), signal: AbortSignal.timeout(3500) }).catch(() => null);
-    if (res && res.ok) {
-      setGlossaryTerms(await res.json());
+      console.warn('Fetch glossary failed in AdminTab:', e);
     }
   }, []);
 
   const fetchInfographics = useCallback(async () => {
     try {
-      const direct = await getInfographicsDirect();
-      if (direct && direct.length > 0) {
-        setInfographics(direct);
-        return;
-      }
+      const direct = await getInfographics();
+      if (Array.isArray(direct)) setInfographics(direct);
     } catch (err) {
-      console.warn('Direct Supabase fetch failed in AdminTab:', err);
-    }
-    const res = await fetch((API_BASE || "") + "/api/admin/infographics", { headers: getAuthHeaders(), signal: AbortSignal.timeout(3500) }).catch(() => null);
-    if (res && res.ok) {
-      const d = await res.json();
-      setInfographics(Array.isArray(d) ? d : (d.value || []));
+      console.warn('Fetch infographics failed in AdminTab:', err);
     }
   }, []);
 

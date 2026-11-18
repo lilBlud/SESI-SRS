@@ -1,20 +1,22 @@
-import { supabase } from '../../apiConfig';
-import { 
-  resolveUserRole, 
-  normalizeUser, 
-  buildStaffIndex, 
+import { supabase } from '../../../services/apiConfig';
+import {
+  extractUserTargets,
+  resolveUserRole,
+  normalizeUser,
   isExcludedLeaderboardAccount,
+  buildStaffIndex,
   calculateStreakFromDates,
-  extractUserTargets
 } from '../../../utils/rbac';
+import {
+  mapGlossaryTermDto,
+  mapInfographicDto,
+  mapQuizQuestionDto,
+  mapUserAnswerDto,
+} from '../dtoMappers';
 
-export { calculateStreakFromDates, extractUserTargets };
+const SAFE_STAFF_COLUMNS =
+  'Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, Role, CreatedAt';
 
-/**
- * Builds safe, exact PostgREST filter clauses without unconstrained substring wildcards.
- * Strips PostgREST grammar delimiters (commas, parentheses, quotes) to prevent injection
- * or HTTP 400 syntax parse errors.
- */
 function buildSafeUserFilterClauses(targets) {
   const clauses = [];
   for (const t of targets) {
@@ -30,7 +32,27 @@ function buildSafeUserFilterClauses(targets) {
   return clauses.join(',');
 }
 
-const SAFE_STAFF_COLUMNS = 'Id, FullName, PreferredName, Email, Division, StaffId, ProfilePicture, CreatedAt';
+function buildActivityFilterClauses(targets) {
+  const clauses = [];
+  for (const t of targets) {
+    if (/^\d+$/.test(t)) {
+      clauses.push(`staff_id.eq.${t}`);
+    } else {
+      const safe = t.replace(/[,()"\\]/g, '').trim();
+      if (safe) {
+        clauses.push(`Username.ilike.${safe}`);
+      }
+    }
+  }
+  return clauses.join(',');
+}
+
+function isDeletedStaffRow(u) {
+  const div = String(u?.Division ?? u?.division ?? '').trim().toUpperCase();
+  const email = String(u?.Email ?? u?.email ?? '').trim().toLowerCase();
+  const full = String(u?.FullName ?? u?.fullName ?? '').trim().toLowerCase();
+  return div === 'DELETED' || email.startsWith('deleted_') || full.startsWith('[deleted user]');
+}
 
 async function findStaffByTarget(target) {
   const safe = String(target || '').replace(/[,()"\\]/g, '').trim();
@@ -44,6 +66,8 @@ async function findStaffByTarget(target) {
   if (error) return null;
   return data;
 }
+
+export { calculateStreakFromDates };
 
 export const supabaseProvider = {
   name: 'Supabase Cloud (Production)',
@@ -65,16 +89,30 @@ export const supabaseProvider = {
       .order('PostedAt', { ascending: false });
 
     if (error) throw error;
+    return (data || []).map(mapInfographicDto);
+  },
 
-    return (data || []).map(p => ({
-      id: p.Id ?? p.id,
-      title: p.Title ?? p.title ?? '',
-      description: p.Description ?? p.description ?? '',
-      imageUrl: p.ImageUrl ?? p.imageUrl ?? '',
-      additionalImages: p.AdditionalImages ?? p.additionalImages ?? '',
-      category: p.Category ?? p.category ?? 'General',
-      postedAt: p.PostedAt ?? p.postedAt ?? new Date().toISOString()
-    }));
+  async saveInfographic(payload, editId = null) {
+    const row = {
+      Title: payload.title,
+      Description: payload.description || '',
+      ImageUrl: payload.imageUrl || '',
+      AdditionalImages: payload.additionalImages || '',
+      Category: payload.category || 'General',
+      PostedAt: payload.postedAt || new Date().toISOString(),
+    };
+    const q = editId
+      ? supabase.from('Infographics').update(row).eq('Id', editId)
+      : supabase.from('Infographics').insert([row]);
+    const { error } = await q;
+    if (error) throw error;
+    return { success: true };
+  },
+
+  async deleteInfographic(id) {
+    const { error } = await supabase.from('Infographics').delete().eq('Id', id);
+    if (error) throw error;
+    return { success: true };
   },
 
   async getGlossary() {
@@ -84,18 +122,33 @@ export const supabaseProvider = {
       .order('Term', { ascending: true });
 
     if (error) throw error;
+    return (data || []).map(mapGlossaryTermDto);
+  },
 
-    return (data || []).map(g => ({
-      id: g.Id ?? g.id,
-      term: g.Term ?? g.term ?? '',
-      full: g.FullName ?? g.full ?? g.fullName ?? '',
-      desc: g.Description ?? g.desc ?? g.description ?? '',
-      formula: g.Formula ?? g.formula ?? '',
-      formulaNotations: g.FormulaNotations ?? g.formulaNotations ?? '',
-      formulaTermMeanings: g.FormulaTermMeanings ?? g.formulaTermMeanings ?? '',
-      cat: g.Category ?? g.cat ?? g.category ?? 'General',
-      chartData: g.ChartData ?? g.chartData ?? ''
-    }));
+  async saveGlossaryTerm(payload, editId = null) {
+    const row = {
+      Term: payload.term,
+      FullName: payload.fullName || '',
+      Description: payload.description || '',
+      Formula: payload.formula || '',
+      FormulaNotations: payload.formulaNotations || '',
+      FormulaTermMeanings: payload.formulaTermMeanings || '',
+      Category: payload.category || 'General',
+      ChartData: payload.chartData || '',
+      ...(editId ? {} : { CreatedAt: new Date().toISOString() }),
+    };
+    const q = editId
+      ? supabase.from('GlossaryTerms').update(row).eq('Id', editId)
+      : supabase.from('GlossaryTerms').insert([row]);
+    const { error } = await q;
+    if (error) throw error;
+    return { success: true };
+  },
+
+  async deleteGlossaryTerm(id) {
+    const { error } = await supabase.from('GlossaryTerms').delete().eq('Id', id);
+    if (error) throw error;
+    return { success: true };
   },
 
   // ─── Quiz & Leaderboard ───
@@ -106,31 +159,58 @@ export const supabaseProvider = {
       .eq('Month', month);
 
     if (error) throw error;
+    return (data || []).map(mapQuizQuestionDto);
+  },
 
-    return (data || []).map(q => {
-      const correctOpt = q.CorrectOption ?? q.correctOption ?? 'A';
-      const optMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-      const correctIdx = optMap[String(correctOpt).toUpperCase()] ?? 0;
-      const options = [
-        q.OptionA ?? q.optionA ?? '',
-        q.OptionB ?? q.optionB ?? '',
-        q.OptionC ?? q.optionC ?? '',
-        q.OptionD ?? q.optionD ?? ''
-      ];
-      const questionText = q.QuestionText ?? q.questionText ?? '';
-      const id = q.Id ?? q.id;
+  async getAdminQuizQuestions(month, resolveLatest = false) {
+    let resolvedMonth = month;
+    let { data, error } = await supabase
+      .from('QuizQuestions')
+      .select('*')
+      .eq('Month', resolvedMonth);
+    if (error) throw error;
 
-      return {
-        id,
-        Id: id,
-        question: questionText,
-        Question: questionText,
-        options,
-        Options: options,
-        correctIndex: correctIdx,
-        CorrectIndex: correctIdx
-      };
-    });
+    if ((!data || data.length === 0) && resolveLatest) {
+      const { data: latest } = await supabase
+        .from('QuizQuestions')
+        .select('Month')
+        .order('Month', { ascending: false })
+        .limit(1);
+      const latestMonth = latest?.[0]?.Month ?? latest?.[0]?.month;
+      if (latestMonth && latestMonth !== resolvedMonth) {
+        resolvedMonth = latestMonth;
+        const { data: fallbackData, error: fallbackErr } = await supabase
+          .from('QuizQuestions')
+          .select('*')
+          .eq('Month', latestMonth);
+        if (!fallbackErr && fallbackData) data = fallbackData;
+      }
+    }
+
+    const formatted = (data || []).map(mapQuizQuestionDto);
+    return { month: resolvedMonth, questions: formatted, count: formatted.length };
+  },
+
+  async addQuizQuestion(payload) {
+    const { error } = await supabase.from('QuizQuestions').insert([
+      {
+        Month: payload.month,
+        QuestionText: payload.questionText,
+        OptionA: payload.optionA,
+        OptionB: payload.optionB,
+        OptionC: payload.optionC,
+        OptionD: payload.optionD,
+        CorrectOption: payload.correctOption,
+      },
+    ]);
+    if (error) throw error;
+    return { success: true };
+  },
+
+  async deleteQuizQuestion(id) {
+    const { error } = await supabase.from('QuizQuestions').delete().eq('Id', id);
+    if (error) throw error;
+    return { success: true };
   },
 
   async getQuizSummary() {
@@ -142,17 +222,15 @@ export const supabaseProvider = {
   },
 
   async getLeaderboard(month) {
-    const [ansRes, actRes, staffRes] = await Promise.all([
+    const [ansRes, staffRes] = await Promise.all([
       supabase.from('UserAnswers').select('*').eq('Month', month),
-      supabase.from('UserActivities').select('Username, ActivityDate, staff_id'),
-      supabase.from('StaffUsers').select('Id, FullName, PreferredName, Email, StaffId, Division, ProfilePicture')
+      supabase.from('StaffUsers').select('Id, FullName, PreferredName, Email, StaffId, Division, ProfilePicture'),
     ]);
 
     if (ansRes.error) throw ansRes.error;
 
     const raw = ansRes.data || [];
     const staffData = staffRes.data || [];
-    const actData = actRes.data || [];
 
     const staffIndex = buildStaffIndex(staffData);
     const groups = {};
@@ -166,7 +244,14 @@ export const supabaseProvider = {
       if (isExcludedLeaderboardAccount(u, p, staff, sid)) continue;
 
       const key = staff ? `staff_${staff.Id ?? staff.id}` : (u || p || 'Anonymous');
-      const currentDisplayName = staff?.PreferredName?.trim() || staff?.preferredName?.trim() || p || staff?.FullName?.trim() || staff?.fullName?.trim() || u || 'Anonymous';
+      const currentDisplayName =
+        staff?.PreferredName?.trim() ||
+        staff?.preferredName?.trim() ||
+        p ||
+        staff?.FullName?.trim() ||
+        staff?.fullName?.trim() ||
+        u ||
+        'Anonymous';
       const realFullName = staff?.FullName?.trim() || staff?.fullName?.trim() || u || currentDisplayName;
 
       if (!groups[key]) {
@@ -179,7 +264,7 @@ export const supabaseProvider = {
           dateTaken: a.DateAnswered ?? a.dateAnswered ?? '',
           streak: 0,
           profilePicture: staff?.ProfilePicture || null,
-          staffId: staff?.Id ?? staff?.id ?? sid ?? null
+          staffId: staff?.Id ?? staff?.id ?? sid ?? null,
         };
       }
       groups[key].score += Number(a.PointsAwarded ?? a.pointsAwarded ?? 0);
@@ -191,10 +276,12 @@ export const supabaseProvider = {
   },
 
   async submitQuizAnswer(payload) {
-    const { data, error } = await supabase.from('UserAnswers').insert([{
-      ...payload,
-      DateAnswered: new Date().toISOString()
-    }]);
+    const { data, error } = await supabase.from('UserAnswers').insert([
+      {
+        ...payload,
+        DateAnswered: new Date().toISOString(),
+      },
+    ]);
     if (error) throw error;
     return data;
   },
@@ -203,15 +290,9 @@ export const supabaseProvider = {
     const targets = extractUserTargets(usernameOrTargets);
     if (!targets.length) return [];
 
-    let q = supabase
-      .from('UserAnswers')
-      .select('*')
-      .eq('Month', month);
-
+    let q = supabase.from('UserAnswers').select('*').eq('Month', month);
     const clauses = buildSafeUserFilterClauses(targets);
-    if (clauses) {
-      q = q.or(clauses);
-    }
+    if (clauses) q = q.or(clauses);
     const { data, error } = await q;
     if (error) throw error;
     return data || [];
@@ -227,38 +308,21 @@ export const supabaseProvider = {
       .order('DateAnswered', { ascending: false });
 
     const clauses = buildSafeUserFilterClauses(targets);
-    if (clauses) {
-      q = q.or(clauses);
-    }
-
+    if (clauses) q = q.or(clauses);
     if (month) q = q.eq('Month', month);
-    const { data, error } = await q.limit(50);
+
+    const { data, error } = await q.limit(200);
     if (error) throw error;
-    return (data || []).map(a => ({
-      id: a.Id ?? a.id,
-      questionId: a.QuestionId ?? a.questionId ?? a.Question_Id ?? null,
-      questionText: a.QuestionText ?? a.questionText ?? '',
-      isCorrect: a.IsCorrect ?? a.isCorrect ?? false,
-      pointsAwarded: Number(a.PointsAwarded ?? a.pointsAwarded ?? 0),
-      timeTakenSeconds: Number(a.TimeTakenSeconds ?? a.timeTakenSeconds ?? 0),
-      dateAnswered: a.DateAnswered ?? a.dateAnswered ?? new Date().toISOString(),
-      selectedOption: a.SelectedOption ?? a.selectedOption ?? '',
-      month: a.Month ?? a.month ?? ''
-    }));
+    return (data || []).map(mapUserAnswerDto);
   },
 
   async getUserActiveMonths(userOrTarget) {
     const targets = extractUserTargets(userOrTarget);
     if (!targets.length) return [];
 
-    let q = supabase
-      .from('UserAnswers')
-      .select('Month');
-
+    let q = supabase.from('UserAnswers').select('Month');
     const clauses = buildSafeUserFilterClauses(targets);
-    if (clauses) {
-      q = q.or(clauses);
-    }
+    if (clauses) q = q.or(clauses);
 
     const { data, error } = await q.limit(500);
     if (error) throw error;
@@ -271,12 +335,17 @@ export const supabaseProvider = {
     const targets = extractUserTargets(userOrUsername);
     if (targets.length === 0) return { streak: 0, dates: [] };
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('UserActivities')
       .select('Username, ActivityDate, staff_id')
-      .order('ActivityDate', { ascending: false })
-      .limit(500);
+      .order('ActivityDate', { ascending: false });
 
+    const clauses = buildActivityFilterClauses(targets);
+    if (clauses) {
+      query = query.or(clauses);
+    }
+
+    const { data, error } = await query.limit(500);
     if (error || !data) return { streak: 0, dates: [] };
 
     const matched = data.filter(a => {
@@ -291,36 +360,35 @@ export const supabaseProvider = {
   },
 
   async recordUserActivity(userOrUsername) {
-    const primaryName = typeof userOrUsername === 'object'
-      ? (userOrUsername?.fullName || userOrUsername?.preferredName || userOrUsername?.username || 'User')
-      : String(userOrUsername || 'User');
+    const primaryName =
+      typeof userOrUsername === 'object'
+        ? (userOrUsername?.fullName || userOrUsername?.preferredName || userOrUsername?.username || 'User')
+        : String(userOrUsername || 'User');
 
     const now = new Date();
-    const nowMy = new Date(now.getTime() + (8 * 3600 * 1000));
+    const nowMy = new Date(now.getTime() + 8 * 3600 * 1000);
     const todayDateOnly = nowMy.toISOString().slice(0, 10);
     const todayTimestamp = todayDateOnly + 'T00:00:00+00:00';
 
     const { data: existing } = await supabase
       .from('UserActivities')
-      .select('Id, Username, ActivityDate')
+      .select('Id, Username, ActivityDate, staff_id')
       .gte('ActivityDate', todayDateOnly + 'T00:00:00')
       .lte('ActivityDate', todayDateOnly + 'T23:59:59');
 
+    const targets = extractUserTargets(userOrUsername);
     const alreadyDone = (existing || []).some(a => {
       const u = String(a.Username || '').trim().toLowerCase();
-      return u === primaryName.trim().toLowerCase();
+      const sid = a.staff_id != null ? String(a.staff_id).trim() : '';
+      return targets.includes(u) || (sid && targets.includes(sid));
     });
 
     let newlyRecorded = false;
     if (!alreadyDone) {
-      const staffId = (typeof userOrUsername === 'object' && userOrUsername?.id) ? userOrUsername.id : null;
+      const staffId = typeof userOrUsername === 'object' && userOrUsername?.id ? userOrUsername.id : null;
       const { error: insErr } = await supabase
         .from('UserActivities')
-        .insert([{
-          Username: primaryName,
-          ActivityDate: todayTimestamp,
-          staff_id: staffId
-        }]);
+        .insert([{ Username: primaryName, ActivityDate: todayTimestamp, staff_id: staffId }]);
       if (!insErr) newlyRecorded = true;
     }
 
@@ -335,7 +403,9 @@ export const supabaseProvider = {
       .select(SAFE_STAFF_COLUMNS)
       .order('FullName', { ascending: true });
     if (error) throw error;
-    return (data || []).map(u => normalizeUser(u, resolveUserRole(u)));
+    return (data || [])
+      .filter(u => !isDeletedStaffRow(u))
+      .map(u => normalizeUser(u, resolveUserRole(u)));
   },
 
   async getUserProfile(usernameOrEmail) {
@@ -345,7 +415,7 @@ export const supabaseProvider = {
 
   async updateProfilePicture(usernameOrEmail, profilePicture) {
     const match = await findStaffByTarget(usernameOrEmail);
-    if (!match) throw new Error("User not found");
+    if (!match) throw new Error('User not found');
     const { error: upErr } = await supabase
       .from('StaffUsers')
       .update({ ProfilePicture: profilePicture || '' })
@@ -368,10 +438,25 @@ export const supabaseProvider = {
       .from('StaffUsers')
       .update({ Role: newRole })
       .eq('Id', userId)
-      .select()
+      .select(SAFE_STAFF_COLUMNS)
       .single();
     if (error) throw error;
-    return data;
+    return normalizeUser(data, resolveUserRole(data));
+  },
+
+  async deleteUser(userId) {
+    const { error } = await supabase
+      .from('StaffUsers')
+      .update({
+        FullName: '[deleted user]',
+        PreferredName: null,
+        Email: `deleted_${userId}@deleted.local`,
+        Division: 'DELETED',
+        Role: 'Staff',
+      })
+      .eq('Id', userId);
+    if (error) throw error;
+    return { success: true };
   },
 
   // ─── Auth ───
@@ -379,7 +464,7 @@ export const supabaseProvider = {
     const clean = String(identifier || '').trim();
     const safe = clean.replace(/[,()"\\]/g, '');
     if (!safe) {
-      throw new Error("Invalid Staff ID/Email or password");
+      throw new Error('Invalid Staff ID/Email or password');
     }
 
     const { data, error } = await supabase
@@ -390,7 +475,7 @@ export const supabaseProvider = {
       .maybeSingle();
 
     if (error || !data || data.PasswordHash === '__AD_AUTH__' || data.PasswordHash !== password) {
-      throw new Error("Invalid Staff ID/Email or password");
+      throw new Error('Invalid Staff ID/Email or password');
     }
 
     const { PasswordHash: _discarded, ...safeRow } = data;
@@ -409,7 +494,7 @@ export const supabaseProvider = {
       StaffId: payload.staffId || '',
       ProfilePicture: '',
       Role: 'Staff',
-      CreatedAt: new Date().toISOString()
+      CreatedAt: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
@@ -426,7 +511,7 @@ export const supabaseProvider = {
   async getVisitorStats() {
     const [logsRes, staffRes] = await Promise.all([
       supabase.from('VisitorLogs').select('Id, VisitorId, Username, Division, VisitedAt').order('VisitedAt', { ascending: false }).limit(5000),
-      supabase.from('StaffUsers').select('Id')
+      supabase.from('StaffUsers').select('Id'),
     ]);
 
     const excludedUsers = new Set([
@@ -436,7 +521,7 @@ export const supabaseProvider = {
       'test user',
       'test_admin_user',
       'test_role_probe',
-      'cameron'
+      'cameron',
     ]);
 
     const validLogs = (logsRes.data || []).filter(v => {
@@ -483,8 +568,8 @@ export const supabaseProvider = {
         visitorId: v.VisitorId ?? '',
         username: v.Username,
         division: v.Division || 'General',
-        visitedAt: v.VisitedAt || new Date().toISOString()
-      }))
+        visitedAt: v.VisitedAt || new Date().toISOString(),
+      })),
     };
   },
 
@@ -505,16 +590,17 @@ export const supabaseProvider = {
         .limit(1);
 
       if (!recent || recent.length === 0) {
-        await supabase.from('VisitorLogs').insert([{
-          VisitorId: payload.visitorId,
-          Username: cleanUsername,
-          Division: payload.division || '',
-          Path: payload.path || '/',
-          VisitedAt: new Date().toISOString()
-        }]);
+        await supabase.from('VisitorLogs').insert([
+          {
+            VisitorId: payload.visitorId,
+            Username: cleanUsername,
+            Division: payload.division || '',
+            Path: payload.path || '/',
+            VisitedAt: new Date().toISOString(),
+          },
+        ]);
       }
     }
     return await this.getVisitorStats();
-  }
+  },
 };
-

@@ -52,4 +52,7 @@ graphify-out/.graphify*
 .codex/
 OpenMontage/
 my-video/
+AI editor/
 .aider-desk/
+
+aiden-video/public/video/*.mp4

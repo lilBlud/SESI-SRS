@@ -25,11 +25,10 @@ export function AuthProvider({ children }) {
       const saved = localStorage.getItem('sesi_user');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (!parsed.division || parsed.division === 'General' || parsed.fullName === 'Demo User' || parsed.staffId === 'DEMO-001' || parsed.email === 'demo@sesb.com.my') {
+        const isDemo = parsed.fullName === 'Demo User' || parsed.staffId === 'DEMO-001' || parsed.email === 'demo@sesb.com.my' || Number(parsed.id) === 9999;
+        if (isDemo) {
           parsed.division = 'Information & Digital';
-          if (parsed.email === 'demo@sesb.com.my' || parsed.fullName === 'Demo User') {
-            parsed.role = 'Staff';
-          }
+          parsed.role = 'Staff';
           try { localStorage.setItem('sesi_user', JSON.stringify(parsed)); } catch {}
         }
         return parsed;
@@ -76,8 +75,15 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  // Sync latest user profile & refresh backend token on mount
+  // Sync latest user profile & refresh backend token on mount (skip offline demo user)
   useEffect(() => {
+    const isDemo =
+      !user ||
+      Number(user.id) === 9999 ||
+      user.staffId === 'DEMO-001' ||
+      user.email === 'demo@sesb.com.my';
+    if (isDemo) return;
+
     if (user?.email || user?.fullName || user?.staffId) {
       const u = user.email || user.fullName || user.staffId;
       getUserProfile(u)
@@ -96,7 +102,7 @@ export function AuthProvider({ children }) {
           console.warn("User profile sync failed:", err);
         });
     }
-  }, [user?.email, user?.fullName, user?.staffId, handleUpdateUser]);
+  }, [user, user?.email, user?.fullName, user?.staffId, handleUpdateUser]);
 
   return (
     <AuthContext.Provider value={{

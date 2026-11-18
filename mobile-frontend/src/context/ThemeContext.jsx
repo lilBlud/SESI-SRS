@@ -30,6 +30,7 @@ export function ThemeProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDark ? 'sesi-dark' : 'sesi-light');
     if (isDark) {
       document.documentElement.classList.add('dark');
       try { localStorage.setItem('sesi_theme', 'dark'); } catch {}

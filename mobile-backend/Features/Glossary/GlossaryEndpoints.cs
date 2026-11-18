@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using mobile_backend.Data;
 using mobile_backend.Models;
 using mobile_backend.Services;
@@ -37,9 +38,11 @@ namespace mobile_backend.Endpoints
                 return Results.Ok();
             }).WithName("AdminDeleteGlossaryTerm");
 
-            adminGlossary.MapPost("/reseed-performance", () =>
+            adminGlossary.MapPost("/reseed-performance", (IMemoryCache cache) =>
             {
                 DbInitializer.Initialize(app);
+                cache.Remove(GlossaryService.GlossaryCacheKey);
+                cache.Remove(GlossaryService.InfographicsCacheKey);
                 return Results.Ok(new { success = true, message = "Performance metrics reseeded successfully" });
             }).WithName("AdminReseedPerformance");
 

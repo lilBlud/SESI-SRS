@@ -11,6 +11,16 @@ namespace mobile_backend.Services
 {
     public class QuizService(AppDbContext db) : IQuizService
     {
+        private sealed record StaffIndexRow(
+            int Id,
+            string FullName,
+            string PreferredName,
+            string Email,
+            string Division,
+            string StaffId,
+            string ProfilePicture
+        );
+
         public async Task<List<QuizQuestionDto>> GetQuizQuestionsAsync(string month)
         {
             var questions = await db.QuizQuestions.AsNoTracking().Where(q => q.Month == month).ToListAsync();
@@ -43,83 +53,92 @@ namespace mobile_backend.Services
                 })
                 .ToListAsync();
 
-            var excludedMock = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "demo", "demo user", "demo-001", "ka", "evelien", "quizwiz", "coolcat", "cameron", "petrus"
-            };
-
-            var groupedTop = allAnswers
-                .Where(a =>
-                {
-                    var u = (a.Username ?? "").Trim();
-                    var p = (a.PreferredName ?? "").Trim();
-                    return !excludedMock.Contains(u) && !excludedMock.Contains(p) && !u.Contains("demo", StringComparison.OrdinalIgnoreCase);
-                })
-                .GroupBy(a => a.Username)
-                .Select(g => new
-                {
-                    RawUsername = g.Key,
-                    Key = (g.Key ?? "").Trim().ToLower(),
-                    Preferred = g.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.PreferredName))?.PreferredName,
-                    First = g.FirstOrDefault(),
-                    Score = g.Sum(a => a.PointsAwarded)
-                })
-                .OrderByDescending(x => x.Score)
-                .Take(10)
-                .ToList();
-
-            if (groupedTop.Count == 0)
+            if (allAnswers.Count == 0)
                 return [];
 
-            var matchKeys = groupedTop
-                .SelectMany(x => new[] { x.Key, (x.Preferred ?? "").Trim().ToLower() })
-                .Where(k => !string.IsNullOrEmpty(k))
-                .Distinct()
-                .ToList();
-
-            var candidateStaff = await db.StaffUsers
+            var allStaff = await db.StaffUsers
                 .AsNoTracking()
-                .Where(s =>
-                    (!string.IsNullOrEmpty(s.FullName) && matchKeys.Contains(s.FullName.Trim().ToLower())) ||
-                    (!string.IsNullOrEmpty(s.Email) && matchKeys.Contains(s.Email.Trim().ToLower())) ||
-                    (!string.IsNullOrEmpty(s.PreferredName) && matchKeys.Contains(s.PreferredName.Trim().ToLower())))
-                .Select(s => new
-                {
+                .Select(s => new StaffIndexRow(
                     s.Id,
                     s.FullName,
                     s.PreferredName,
                     s.Email,
                     s.Division,
+                    s.StaffId,
                     s.ProfilePicture
-                })
+                ))
                 .ToListAsync();
 
-            return [.. groupedTop.Select(g =>
-            {
-                var prefLower = (g.Preferred ?? "").Trim().ToLower();
-                var staff = candidateStaff.FirstOrDefault(s =>
-                    (!string.IsNullOrWhiteSpace(s.FullName) && string.Equals(s.FullName.Trim(), g.Key, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrWhiteSpace(s.Email) && string.Equals(s.Email.Trim(), g.Key, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrWhiteSpace(prefLower) && !string.IsNullOrWhiteSpace(s.PreferredName) && string.Equals(s.PreferredName.Trim(), prefLower, StringComparison.OrdinalIgnoreCase)));
+            var deletedIdentifiers = BuildDeletedIdentifierSet(allStaff);
+            var activeStaff = allStaff
+                .Where(s => !AccountExclusionPolicy.IsDeleted(s.Division, s.Email, s.FullName))
+                .ToList();
 
-                var displayName = !string.IsNullOrWhiteSpace(g.Preferred)
-                    ? g.Preferred
-                    : (!string.IsNullOrWhiteSpace(staff?.PreferredName)
+            var activeEntries = allAnswers
+                .Select(a =>
+                {
+                    var u = (a.Username ?? "").Trim();
+                    var p = (a.PreferredName ?? "").Trim();
+                    if (AccountExclusionPolicy.IsExcludedQuizAccount(u, p) ||
+                        AccountExclusionPolicy.IsDeleted("", u, u) ||
+                        AccountExclusionPolicy.IsDeleted("", "", p))
+                    {
+                        return null;
+                    }
+
+                    var staff = FindActiveStaff(activeStaff, u, p);
+                    if (staff == null && (deletedIdentifiers.Contains(u) || (!string.IsNullOrEmpty(p) && deletedIdentifiers.Contains(p))))
+                    {
+                        return null;
+                    }
+
+                    var groupKey = staff != null
+                        ? $"staff:{staff.Id}"
+                        : $"raw:{u.ToLowerInvariant()}";
+
+                    return new
+                    {
+                        GroupKey = groupKey,
+                        Staff = staff,
+                        Answer = a
+                    };
+                })
+                .Where(x => x != null)
+                .ToList();
+
+            var groupedTop = activeEntries
+                .GroupBy(x => x!.GroupKey)
+                .Select(g =>
+                {
+                    var first = g.First()!;
+                    var staff = g.Select(x => x!.Staff).FirstOrDefault(s => s != null);
+                    var rawUsername = !string.IsNullOrWhiteSpace(staff?.FullName)
+                        ? staff.FullName
+                        : first.Answer.Username;
+                    var preferred = g.Select(x => x!.Answer.PreferredName).FirstOrDefault(p => !string.IsNullOrWhiteSpace(p))
+                                    ?? staff?.PreferredName;
+                    var key = (rawUsername ?? "").Trim().ToLowerInvariant();
+                    var displayName = !string.IsNullOrWhiteSpace(staff?.PreferredName)
                         ? staff.PreferredName
-                        : (!string.IsNullOrWhiteSpace(g.First?.PreferredName) ? g.First.PreferredName : g.RawUsername));
+                        : (!string.IsNullOrWhiteSpace(preferred) ? preferred : rawUsername);
 
-                return new LeaderboardEntryDto(
-                    g.Key,
-                    g.RawUsername ?? "Anonymous",
-                    displayName ?? g.RawUsername ?? "Anonymous",
-                    g.Score,
-                    staff?.Division ?? g.First?.Division ?? "General",
-                    g.First?.DateAnswered,
-                    0,
-                    staff?.ProfilePicture,
-                    staff?.Id
-                );
-            })];
+                    return new LeaderboardEntryDto(
+                        key,
+                        rawUsername ?? "Anonymous",
+                        displayName ?? rawUsername ?? "Anonymous",
+                        g.Sum(x => x!.Answer.PointsAwarded),
+                        !string.IsNullOrWhiteSpace(staff?.Division) ? staff.Division : (first.Answer.Division ?? "General"),
+                        g.Max(x => x!.Answer.DateAnswered),
+                        0,
+                        staff?.ProfilePicture,
+                        staff?.Id
+                    );
+                })
+                .OrderByDescending(x => x.Score)
+                .Take(10)
+                .ToList();
+
+            return groupedTop;
         }
 
         public async Task<UserAnswer> SubmitAnswerAsync(UserAnswer answer)
@@ -175,7 +194,8 @@ namespace mobile_backend.Services
 
             if (string.IsNullOrWhiteSpace(answer.PreferredName))
             {
-                var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(u => u.FullName == answer.Username || u.Email == answer.Username);
+                var staff = await db.StaffUsers.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Division != "DELETED" && (u.FullName == answer.Username || u.Email == answer.Username));
                 if (staff != null && !string.IsNullOrWhiteSpace(staff.PreferredName))
                 {
                     answer.PreferredName = staff.PreferredName;
@@ -189,19 +209,7 @@ namespace mobile_backend.Services
 
         public async Task<List<UserAnswerDto>> GetUserRecentAnswersAsync(string username, string? month)
         {
-            var u = (username ?? "").Trim();
-            var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(s =>
-                s.FullName == u ||
-                s.PreferredName == u ||
-                s.Email == u);
-
-            var targets = new List<string> { u };
-            if (staff != null)
-            {
-                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim());
-                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim());
-                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim());
-            }
+            var targets = await ResolveUserTargetIdentifiersAsync(username);
 
             var query = db.UserAnswers.AsNoTracking().Where(a =>
                 targets.Contains(a.Username) ||
@@ -213,7 +221,7 @@ namespace mobile_backend.Services
 
             var history = await query
                 .OrderByDescending(a => a.DateAnswered)
-                .Take(50)
+                .Take(200)
                 .ToListAsync();
 
             return [.. history.Select(a => new UserAnswerDto(
@@ -234,19 +242,7 @@ namespace mobile_backend.Services
 
         public async Task<List<string>> GetUserActiveMonthsAsync(string username)
         {
-            var u = (username ?? "").Trim();
-            var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(s =>
-                s.FullName == u ||
-                s.PreferredName == u ||
-                s.Email == u);
-
-            var targets = new List<string> { u };
-            if (staff != null)
-            {
-                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim());
-                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim());
-                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim());
-            }
+            var targets = await ResolveUserTargetIdentifiersAsync(username);
 
             return await db.UserAnswers.AsNoTracking()
                 .Where(a => targets.Contains(a.Username) || targets.Contains(a.PreferredName))
@@ -254,6 +250,91 @@ namespace mobile_backend.Services
                 .Distinct()
                 .OrderByDescending(m => m)
                 .ToListAsync();
+        }
+
+        private async Task<List<string>> ResolveUserTargetIdentifiersAsync(string? username)
+        {
+            var u = (username ?? "").Trim();
+            if (string.IsNullOrEmpty(u))
+                return [];
+
+            var staff = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(s =>
+                s.Division != "DELETED" &&
+                (s.FullName == u || s.Email == u || s.StaffId == u))
+                ?? await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(s =>
+                    s.Division != "DELETED" && s.PreferredName == u);
+
+            var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { u };
+            if (staff != null)
+            {
+                if (!string.IsNullOrWhiteSpace(staff.FullName)) targets.Add(staff.FullName.Trim());
+                if (!string.IsNullOrWhiteSpace(staff.PreferredName)) targets.Add(staff.PreferredName.Trim());
+                if (!string.IsNullOrWhiteSpace(staff.Email)) targets.Add(staff.Email.Trim());
+                if (!string.IsNullOrWhiteSpace(staff.StaffId)) targets.Add(staff.StaffId.Trim());
+            }
+
+            return [.. targets];
+        }
+
+        private static StaffIndexRow? FindActiveStaff(List<StaffIndexRow> activeStaff, string username, string preferredName)
+        {
+            if (!string.IsNullOrWhiteSpace(username))
+            {
+                var exactMatch = activeStaff.FirstOrDefault(s =>
+                    string.Equals(s.FullName.Trim(), username, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(s.Email.Trim(), username, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrWhiteSpace(s.StaffId) && string.Equals(s.StaffId.Trim(), username, StringComparison.OrdinalIgnoreCase)));
+                if (exactMatch != null) return exactMatch;
+            }
+
+            if (!string.IsNullOrWhiteSpace(preferredName))
+            {
+                return activeStaff.FirstOrDefault(s =>
+                    !string.IsNullOrWhiteSpace(s.PreferredName) &&
+                    string.Equals(s.PreferredName.Trim(), preferredName, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return null;
+        }
+
+        private static HashSet<string> BuildDeletedIdentifierSet(IEnumerable<StaffIndexRow> allStaff)
+        {
+            var deleted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var s in allStaff.Where(row => AccountExclusionPolicy.IsDeleted(row.Division, row.Email, row.FullName)))
+            {
+                var rawFull = (s.FullName ?? "").Trim();
+                if (!string.IsNullOrEmpty(rawFull))
+                {
+                    deleted.Add(rawFull);
+                    const string deletedPrefix = "[deleted user]";
+                    if (rawFull.StartsWith(deletedPrefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var originalName = rawFull[deletedPrefix.Length..].Trim();
+                        if (!string.IsNullOrEmpty(originalName)) deleted.Add(originalName);
+                    }
+                }
+
+                var rawEmail = (s.Email ?? "").Trim();
+                if (!string.IsNullOrEmpty(rawEmail))
+                {
+                    deleted.Add(rawEmail);
+                    if (rawEmail.StartsWith("deleted_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var firstUnderscore = rawEmail.IndexOf('_');
+                        var secondUnderscore = firstUnderscore >= 0 ? rawEmail.IndexOf('_', firstUnderscore + 1) : -1;
+                        if (secondUnderscore > firstUnderscore)
+                        {
+                            var originalEmail = rawEmail[(secondUnderscore + 1)..].Trim();
+                            if (!string.IsNullOrEmpty(originalEmail)) deleted.Add(originalEmail);
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(s.StaffId))
+                    deleted.Add(s.StaffId.Trim());
+            }
+
+            return deleted;
         }
     }
 }

@@ -18,7 +18,6 @@ export function QuizActiveView({
   onExit
 }) {
   const q = questions[currentQ];
-  const progress = ((currentQ + 1) / questions.length) * 100;
   const lastAns = answers[answers.length - 1];
 
   return (
@@ -47,13 +46,13 @@ export function QuizActiveView({
         </div>
       </div>
 
-      {/* ─── Animated Progress Bar ─── */}
-      <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      {/* ─── daisyUI Progress Bar ─── */}
+      <progress
+        className="progress progress-primary w-full h-2"
+        value={currentQ + 1}
+        max={questions.length}
+        aria-label="Quiz progress"
+      />
 
       {/* ─── Question Card ─── */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
@@ -88,21 +87,22 @@ export function QuizActiveView({
               className={`w-full text-left p-4 rounded-2xl border-2 text-[14.5px] font-medium leading-snug transition-all ${styles}`}
             >
               <div className="flex items-center">
-                <span
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold mr-3 shrink-0 ${
-                    answered && idx === q.correctIndex
+                {answered ? (
+                  <span
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold mr-3 shrink-0 ${idx === q.correctIndex
                       ? 'bg-emerald-500 text-white'
-                      : answered && idx === selected
-                      ? 'bg-red-500 text-white'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  {answered && idx === q.correctIndex
-                    ? '✓'
-                    : answered && idx === selected
-                    ? '✗'
-                    : String.fromCharCode(65 + idx)}
-                </span>
+                      : idx === selected
+                        ? 'bg-red-500 text-white'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      }`}
+                  >
+                    {idx === q.correctIndex ? '✓' : idx === selected ? '✗' : String.fromCharCode(65 + idx)}
+                  </span>
+                ) : (
+                  <kbd className="kbd kbd-sm w-8 h-8 rounded-lg mr-3 shrink-0 font-bold text-slate-600 dark:text-slate-300 border-alpha">
+                    {String.fromCharCode(65 + idx)}
+                  </kbd>
+                )}
                 <span>{opt}</span>
               </div>
             </button>
@@ -112,21 +112,26 @@ export function QuizActiveView({
 
       {/* ─── Results Feedback & Next Button ─── */}
       {answered && (
-        <div className="mt-6 animate-scaleIn space-y-3">
-          <div className="text-center">
+        <div className="mt-6 animate-scaleIn space-y-3" role="status" aria-live="polite">
+          <div
+            className={`alert justify-center rounded-2xl border-alpha py-3 ${lastAns?.isCorrect
+              ? 'alert-success bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'
+              : 'alert-error bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-200'
+              }`}
+          >
             {isPracticeMode ? (
-              <div className="flex flex-col items-center justify-center gap-1">
-                <span className={`font-black text-xl ${lastAns?.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
+              <div className="flex flex-col items-center justify-center gap-0.5 text-center">
+                <span className="font-black text-lg">
                   {lastAns?.isCorrect ? '✓ Correct Answer' : '✗ Incorrect Answer'}
                 </span>
-                <span className="text-xs font-semibold text-slate-400">
+                <span className="text-xs font-semibold opacity-80">
                   Practice Mode • 0 pts awarded
                 </span>
               </div>
             ) : (
-              <div className={`font-extrabold text-xl tabular-nums tracking-tight ${lastAns?.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
-                +{lastAns?.points || 0} Points
-              </div>
+              <span className="font-extrabold text-lg tabular-nums tracking-tight">
+                {lastAns?.isCorrect ? `✓ +${lastAns?.points || 0} Points` : '✗ 0 Points'}
+              </span>
             )}
           </div>
           <button

@@ -1,8 +1,21 @@
 import { dataProvider } from '../../services/dataProvider';
+import { currentMonth } from '../../utils/constants';
 import { extractUserTargets } from '../../utils/rbac';
 
 export async function getQuizQuestions(month) {
   return await dataProvider.getQuizQuestions(month);
+}
+
+export async function getAdminQuizQuestions(month, resolveLatest = false) {
+  return await dataProvider.getAdminQuizQuestions(month, resolveLatest);
+}
+
+export async function addQuizQuestion(payload) {
+  return await dataProvider.addQuizQuestion(payload);
+}
+
+export async function deleteQuizQuestion(id) {
+  return await dataProvider.deleteQuizQuestion(id);
 }
 
 export async function getLeaderboard(month) {
@@ -34,7 +47,7 @@ export async function getUserMonthlyQuizStatus(userOrIdentifiers, month) {
     hasAttempted: answers.length > 0,
     recordedScore: totalScore,
     answersCount: answers.length,
-    answeredQuestionIds
+    answeredQuestionIds,
   };
 }
 
@@ -43,14 +56,14 @@ export async function getAvailableQuizzesWithStatus(userOrIdentifiers) {
   try {
     rawAnswers = await getUserRecentAnswers(userOrIdentifiers);
   } catch (err) {
-    console.warn("Could not load user answers for quizzes:", err);
+    console.warn('Could not load user answers for quizzes:', err);
   }
 
   let questions = [];
   try {
     questions = (await dataProvider.getQuizSummary().catch(() => [])) || [];
   } catch (err) {
-    console.warn("Could not load quiz summary:", err);
+    console.warn('Could not load quiz summary:', err);
   }
 
   const monthMap = {};
@@ -74,29 +87,30 @@ export async function getAvailableQuizzesWithStatus(userOrIdentifiers) {
     if (qid) userMonthStats[m].questionIds.add(Number(qid));
   }
 
-  // Ensure any month the user answered is included in monthMap
   for (const m of Object.keys(userMonthStats)) {
     if (!monthMap[m]) {
       monthMap[m] = { month: m, questionCount: userMonthStats[m].count || 10 };
     }
   }
 
-  const currentM = new Date().toISOString().slice(0, 7);
-  if (!monthMap[currentM]) {
-    monthMap[currentM] = { month: currentM, questionCount: 0 };
+  if (!monthMap[currentMonth]) {
+    monthMap[currentMonth] = { month: currentMonth, questionCount: 0 };
   }
 
   return Object.values(monthMap)
     .sort((a, b) => b.month.localeCompare(a.month))
     .map(m => {
       const stats = userMonthStats[m.month];
+      const qCount = m.questionCount;
+      const answeredCount = stats ? stats.count : 0;
+      const isCompleted = qCount > 0 ? answeredCount >= qCount : answeredCount > 0;
       return {
         month: m.month,
-        questionCount: m.questionCount,
-        hasAttempted: Boolean(stats && stats.count > 0),
+        questionCount: qCount,
+        hasAttempted: isCompleted,
         score: stats ? stats.score : 0,
-        answeredCount: stats ? stats.count : 0,
-        answeredQuestionIds: stats ? Array.from(stats.questionIds) : []
+        answeredCount,
+        answeredQuestionIds: stats ? Array.from(stats.questionIds) : [],
       };
     });
 }
@@ -116,10 +130,12 @@ export async function getUserScoreAndRank(userOrIdentifiers, month) {
     return {
       score: entry.score,
       rank: userEntryIndex + 1,
-      totalParticipants: leaderboard.length
+      totalParticipants: leaderboard.length,
     };
   }
 
-  return { score: 0, rank: null, totalParticipants: leaderboard.length };
+  // Fallback for users ranked below top-10 so profile score still displays accurately
+  const recent = await getUserRecentAnswers(userOrIdentifiers, month);
+  const fallbackScore = recent.reduce((sum, a) => sum + Number(a.pointsAwarded || 0), 0);
+  return { score: fallbackScore, rank: null, totalParticipants: leaderboard.length };
 }
-

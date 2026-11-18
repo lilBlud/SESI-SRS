@@ -1,8 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getColor, getCatMeta } from '../../../utils/constants';
-import { CorporatePerformanceChart, PostImageSlider, saveImage } from '../../../components/ui';
+import { PostImageSlider, saveImage } from '../../../components/ui';
+import { ImageViewerModal } from '../../../components/modals';
 import { exportBookmarksToPdf, exportSingleTermToPdf } from '../../../utils/pdfExport';
+import { unpackPosterImages } from '../../../domain/glossaryModel';
+import { GlossaryTermDetailCard } from '../../glossary/components';
 
 export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab }) {
   const [activeBookmark, setActiveBookmark] = useState(null);
@@ -20,6 +23,8 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab 
       scrollRef.current.scrollBy({ left: 260, behavior: 'smooth' });
     }
   };
+
+  const viewerImages = activeBookmark?.type === 'poster' ? unpackPosterImages(activeBookmark) : [];
 
   return (
     <div className="space-y-3 pt-2">
@@ -126,22 +131,23 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab 
       ) : (
         <div
           ref={scrollRef}
-          className="flex gap-3.5 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0"
+          className="flex gap-3.5 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 scrollbar-hide mask-fade-x -mx-4 px-5 sm:mx-0 sm:px-3"
         >
           {bookmarks.map((bm, idx) => {
             if (bm.type === 'poster') {
-              const img = bm.imageUrl || (bm.additionalImages && bm.additionalImages.length > 0 ? bm.additionalImages[0] : null);
+              const img = unpackPosterImages(bm)[0] || null;
               return (
                 <div
-                  key={idx}
+                  key={bm.id || idx}
                   onClick={() => setActiveBookmark(bm)}
-                  className="w-[180px] h-[240px] shrink-0 snap-center rounded-3xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm ring-1 ring-black/5 flex flex-col cursor-pointer active:scale-95 transition-all"
+                  className="w-[180px] h-[240px] shrink-0 snap-center concentric-card surface-depth-1 border-alpha overflow-hidden bg-white dark:bg-slate-800 shadow-sm flex flex-col cursor-pointer active:scale-95 transition-all"
                 >
                   {img ? (
                     <div className="flex-1 bg-slate-100 dark:bg-slate-900 relative min-h-0">
                       <img src={img} alt={bm.title} className="absolute inset-0 w-full h-full object-cover" />
                       <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-md z-10">Poster</div>
                       <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); toggleBookmark(bm, 'poster'); }}
                         className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/40 flex items-center justify-center text-white active:scale-95 z-10 backdrop-blur-md"
                       >
@@ -156,20 +162,22 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab 
                   </div>
                 </div>
               );
-            } else if (bm.type === 'glossary') {
+            }
+            if (bm.type === 'glossary') {
               const clr = bm.cat ? getColor(bm.cat) : getColor('All');
               const catMeta = bm.cat ? getCatMeta(bm.cat) : getCatMeta('All');
               return (
                 <div
-                  key={idx}
+                  key={bm.id || bm.term || idx}
                   onClick={() => setActiveBookmark(bm)}
-                  className="w-[180px] h-[240px] shrink-0 snap-center rounded-3xl p-4 shadow-sm ring-1 flex flex-col cursor-pointer active:scale-95 transition-all relative overflow-hidden bg-white dark:bg-slate-800 ring-black/5 dark:ring-white/10"
+                  className="w-[180px] h-[240px] shrink-0 snap-center concentric-card surface-depth-1 border-alpha p-4 shadow-sm flex flex-col cursor-pointer active:scale-95 transition-all relative overflow-hidden bg-white dark:bg-slate-800"
                 >
                   <div className="flex items-start justify-between mb-2 shrink-0 gap-2">
                     <div className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap truncate ${clr.text}`}>
                       {catMeta.emoji} {bm.cat || 'Dictionary'}
                     </div>
                     <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); toggleBookmark(bm, 'glossary'); }}
                       className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center active:scale-95 ${clr.bg} ${clr.text}`}
                     >
@@ -179,7 +187,9 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab 
                   <div className="flex-1 flex flex-col min-h-0 mt-1">
                     <div className="font-black text-[15px] font-mono mb-1 shrink-0 line-clamp-2 text-slate-900 dark:text-white">
                       {bm.term}
-                      {bm.full && !bm.term.includes(' ') && <span className="ml-1 font-sans text-[11px] font-bold text-slate-500">({bm.full})</span>}
+                      {bm.full && !bm.term.includes(' ') && (
+                        <span className="ml-1 font-sans text-[11px] font-bold text-slate-500">({bm.full})</span>
+                      )}
                     </div>
                     <div className="text-[11px] line-clamp-5 leading-relaxed overflow-hidden text-slate-500 dark:text-slate-400">{bm.desc}</div>
                   </div>
@@ -191,124 +201,94 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab 
         </div>
       )}
 
-      {/* Active Bookmark Full Modal */}
+      {/* Active Bookmark Modal */}
       {activeBookmark && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={() => setActiveBookmark(null)}>
-          <div className="bg-slate-100 dark:bg-slate-900 w-full max-w-[400px] max-h-[85vh] rounded-3xl shadow-2xl flex flex-col transform transition-all animate-fadeIn" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center px-5 py-4 border-b border-slate-200/50 dark:border-slate-800/50">
-              <h2 className="font-black text-lg text-slate-900 dark:text-white">{activeBookmark.type === 'poster' ? 'Poster' : 'Dictionary Card'}</h2>
-              <button onClick={() => setActiveBookmark(null)} className="w-8 h-8 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold active:scale-95">✕</button>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setActiveBookmark(null)}
+        >
+          <div
+            className="bg-slate-100 dark:bg-slate-900 surface-depth-3 border-alpha w-full max-w-[400px] max-h-[85dvh] concentric-card shadow-2xl flex flex-col transform transition-all animate-fadeIn"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center px-5 py-4 border-b border-alpha">
+              <h2 className="font-black text-lg text-slate-900 dark:text-white">
+                {activeBookmark.type === 'poster' ? 'Poster' : 'Dictionary Card'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setActiveBookmark(null)}
+                className="w-8 h-8 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold active:scale-95"
+              >
+                ✕
+              </button>
             </div>
             <div className="overflow-y-auto p-4 flex-1">
-              {(() => {
-                const isPoster = activeBookmark.type === 'poster';
+              {activeBookmark.type === 'poster' ? (() => {
                 const clr = activeBookmark.cat ? getColor(activeBookmark.cat) : getColor('All');
                 const catMeta = activeBookmark.cat ? getCatMeta(activeBookmark.cat) : getCatMeta('All');
-
-                if (isPoster) {
-                  const allImages = [];
-                  if (activeBookmark.imageUrl) allImages.push(activeBookmark.imageUrl);
-                  if (activeBookmark.additionalImages) {
-                    try {
-                      const parsed = typeof activeBookmark.additionalImages === 'string' ? JSON.parse(activeBookmark.additionalImages) : activeBookmark.additionalImages;
-                      if (Array.isArray(parsed)) allImages.push(...parsed);
-                    } catch { }
-                  }
-
-                  return (
-                    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 relative overflow-hidden">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="pr-12">
-                          <span className={`text-[10px] font-bold uppercase tracking-widest ${clr.text} mb-1 flex items-center gap-1.5`}>
-                            <span className="text-sm">{catMeta.emoji}</span> {catMeta.label}
-                          </span>
-                          <h2 className="text-xl font-black text-slate-900 dark:text-white leading-tight">{activeBookmark.title}</h2>
-                        </div>
+                const allImages = unpackPosterImages(activeBookmark);
+                return (
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="pr-12">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${clr.text} mb-1 flex items-center gap-1.5`}>
+                          <span className="text-sm">{catMeta.emoji}</span> {catMeta.label}
+                        </span>
+                        <h2 className="text-xl font-black text-slate-900 dark:text-white leading-tight">{activeBookmark.title}</h2>
                       </div>
-                      {activeBookmark.description && <p className="mt-2 text-[13px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-4">{activeBookmark.description}</p>}
+                    </div>
+                    {activeBookmark.description && (
+                      <p className="mt-2 text-[13px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-4">
+                        {activeBookmark.description}
+                      </p>
+                    )}
+                    {allImages.length > 0 && (
+                      <div className="space-y-2">
+                        <PostImageSlider images={allImages} title={activeBookmark.title} onImageClick={(idx) => setImgViewerIdx(idx)} />
+                      </div>
+                    )}
+                    <div className="mt-4 flex items-center justify-between">
                       {allImages.length > 0 && (
-                        <div className="space-y-2">
-                          <PostImageSlider images={allImages} title={activeBookmark.title} onImageClick={(idx) => setImgViewerIdx(idx)} />
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => saveImage(allImages[0], `${(activeBookmark.title || 'poster').replace(/\s+/g, '_')}.png`)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-bold rounded-xl transition-all active:scale-95"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Save Image
+                        </button>
                       )}
-                      <div className="mt-4 flex items-center justify-between">
-                        {allImages.length > 0 && (
-                          <button
-                            onClick={() => saveImage(allImages[0], `${activeBookmark.title.replace(/\s+/g, '_')}.png`)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-bold rounded-xl transition-all active:scale-95"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            Save Image
-                          </button>
-                        )}
-                      </div>
                     </div>
-                  );
-                } else {
-                  return (
-                    <div className={`bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 ring-2 ${clr.border}`}>
-                      <div className="p-4 flex items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-black text-[15px] text-slate-900 dark:text-white">
-                              {activeBookmark.term}
-                              {activeBookmark.full && !activeBookmark.term.includes(' ') && <span className="ml-2 font-semibold text-[13px] text-slate-500 dark:text-slate-400">({activeBookmark.full})</span>}
-                            </h3>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="px-4 pb-4 pt-0 border-t border-slate-100 dark:border-slate-700 animate-fadeIn">
-                        <div className="mt-2">
-                          {(activeBookmark.cat === 'Corporate Performance' || (activeBookmark.chartData && activeBookmark.chartData.length > 5 && activeBookmark.chartData !== '[]')) ? (
-                            <div className="space-y-2 mt-3 mb-2">
-                              <p className="text-[13px] text-slate-600 dark:text-slate-300 mb-3 leading-relaxed whitespace-pre-wrap">{activeBookmark.desc}</p>
-                              <CorporatePerformanceChart chartData={activeBookmark.chartData} term={activeBookmark.term || activeBookmark.title || ""} description="" yAxisFormat={activeBookmark.formulaNotations || activeBookmark.yAxisFormat} formula={activeBookmark.formula} />
-                            </div>
-                          ) : (
-                            <p className="text-[13px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">{activeBookmark.desc}</p>
+                  </div>
+                );
+              })() : (() => {
+                const clr = activeBookmark.cat ? getColor(activeBookmark.cat) : getColor('All');
+                return (
+                  <div className={`bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 ring-2 ${clr.border}`}>
+                    <div className="p-4 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-black text-[15px] text-slate-900 dark:text-white">
+                          {activeBookmark.term}
+                          {activeBookmark.full && !activeBookmark.term.includes(' ') && (
+                            <span className="ml-2 font-semibold text-[13px] text-slate-500 dark:text-slate-400">
+                              ({activeBookmark.full})
+                            </span>
                           )}
-                        </div>
-
-                        {activeBookmark.formula && activeBookmark.formula !== 'area' && activeBookmark.formula !== 'bar' && (
-                          <div className={`mt-3 ${clr.bg} border ${clr.border} rounded-xl p-3`}>
-                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">📐 Formula</div>
-                            <div className={`text-[13px] font-black font-mono ${clr.text} leading-relaxed`}>
-                              {activeBookmark.formula}
-                            </div>
-                            {activeBookmark.formulaTermMeanings && (
-                              <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
-                                <ul className="text-[12px] text-slate-700 dark:text-slate-300 mt-0.5 space-y-1">
-                                  {activeBookmark.formulaTermMeanings.split('\n').map((line, i) => (
-                                    <li key={i}>- {line}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5">
-                          <div className="flex items-center gap-2 text-[11px] text-slate-400 shrink-0">
-                            <span className="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">✓ Read</span>
-                            <span>Counts toward your daily streak!</span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0 self-end">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                exportSingleTermToPdf(activeBookmark, catMeta);
-                              }}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 text-[11px] font-bold rounded-lg transition-all active:scale-95 shrink-0"
-                            >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                              Save PDF
-                            </button>
-                          </div>
-                        </div>
+                        </h3>
                       </div>
                     </div>
-                  );
-                }
+                    <div className="px-4 pb-4 pt-0 border-t border-slate-100 dark:border-slate-700 animate-fadeIn">
+                      <GlossaryTermDetailCard
+                        item={activeBookmark}
+                        variant="compact"
+                        onExportPdf={exportSingleTermToPdf}
+                      />
+                    </div>
+                  </div>
+                );
               })()}
             </div>
           </div>
@@ -316,37 +296,13 @@ export function BookmarksSection({ bookmarks = [], toggleBookmark, setActiveTab 
         document.body
       )}
 
-      {/* Image Viewer for Poster Modal */}
-      {imgViewerIdx !== null && activeBookmark?.type === 'poster' && createPortal((() => {
-        const allImages = [];
-        if (activeBookmark.imageUrl) allImages.push(activeBookmark.imageUrl);
-        if (activeBookmark.additionalImages) {
-          try {
-            const parsed = typeof activeBookmark.additionalImages === 'string' ? JSON.parse(activeBookmark.additionalImages) : activeBookmark.additionalImages;
-            if (Array.isArray(parsed)) allImages.push(...parsed);
-          } catch { }
-        }
-        return (
-          <div className="fixed inset-0 z-[110] flex flex-col bg-black animate-fadeIn" onClick={() => setImgViewerIdx(null)}>
-            <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),16px)] pb-2 z-10">
-              <button onClick={() => setImgViewerIdx(null)} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white active:scale-95 transition-transform">
-                <span className="text-xl leading-none font-bold">←</span>
-              </button>
-              <span className="text-white/70 text-[13px] font-bold">{imgViewerIdx + 1} / {allImages.length}</span>
-              <div className="w-8" />
-            </div>
-            <div className="flex-1 flex items-center justify-center px-4 relative" onClick={(e) => e.stopPropagation()}>
-              <img src={allImages[imgViewerIdx]} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
-              {imgViewerIdx > 0 && (
-                <button onClick={() => setImgViewerIdx(i => i - 1)} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-bold active:scale-95">←</button>
-              )}
-              {imgViewerIdx < allImages.length - 1 && (
-                <button onClick={() => setImgViewerIdx(i => i + 1)} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-bold active:scale-95">→</button>
-              )}
-            </div>
-          </div>
-        );
-      })(), document.body)}
+      <ImageViewerModal
+        isOpen={imgViewerIdx !== null && viewerImages.length > 0}
+        images={viewerImages}
+        currentIndex={imgViewerIdx ?? 0}
+        onClose={() => setImgViewerIdx(null)}
+        onChangeIndex={setImgViewerIdx}
+      />
     </div>
   );
 }

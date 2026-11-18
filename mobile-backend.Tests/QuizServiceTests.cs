@@ -122,5 +122,46 @@ namespace mobile_backend.Tests
             Assert.True(validAttempt.IsCorrect);
             Assert.Equal(900, validAttempt.PointsAwarded);
         }
+
+        [Fact]
+        public async Task GetLeaderboardAsync_ExcludesSoftDeletedUsers_AndMergesStaffAliases()
+        {
+            var month = "2026-10";
+
+            _db.StaffUsers.AddRange(
+                new StaffUser
+                {
+                    FullName = "[deleted user] Former Staff",
+                    PreferredName = "",
+                    Email = "deleted_12345_former@sesb.com.my",
+                    Division = "DELETED",
+                    StaffId = "9999"
+                },
+                new StaffUser
+                {
+                    FullName = "Active Engineer",
+                    PreferredName = "Eng",
+                    Email = "eng@sesb.com.my",
+                    Division = "Distribution",
+                    StaffId = "1001"
+                }
+            );
+
+            _db.UserAnswers.AddRange(
+                new UserAnswer { Username = "Former Staff", Month = month, PointsAwarded = 950 },
+                new UserAnswer { Username = "former@sesb.com.my", Month = month, PointsAwarded = 500 },
+                new UserAnswer { Username = "Active Engineer", Month = month, PointsAwarded = 300 },
+                new UserAnswer { Username = "eng@sesb.com.my", Month = month, PointsAwarded = 400 }
+            );
+            await _db.SaveChangesAsync();
+
+            var service = new QuizService(_db);
+            var leaderboard = await service.GetLeaderboardAsync(month);
+
+            Assert.Single(leaderboard);
+            Assert.Equal("Active Engineer", leaderboard[0].Username);
+            Assert.Equal(700, leaderboard[0].Score);
+            Assert.Equal("Eng", leaderboard[0].DisplayName);
+        }
     }
 }

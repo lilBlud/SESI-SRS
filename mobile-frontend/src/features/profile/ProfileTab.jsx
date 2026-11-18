@@ -28,6 +28,12 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
   const [showEditModal, setShowEditModal] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [errorToast, setErrorToast] = useState(null);
+
+  const showError = (msg) => {
+    setErrorToast(msg);
+    setTimeout(() => setErrorToast(null), 4000);
+  };
 
   const USERNAME = user?.fullName || user?.preferredName || user?.username || user?.email || "User";
 
@@ -40,7 +46,7 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
       setShowPhotoModal(false);
     } catch (err) {
       console.error("Profile picture upload error:", err);
-      alert("Unable to save photo: " + (err.message || "Network error. Please try again."));
+      showError("Unable to save photo: " + (err.message || "Network error. Please try again."));
     } finally {
       setUploadingPhoto(false);
     }
@@ -54,7 +60,7 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
       if (onUpdateUser) onUpdateUser({ profilePicture: '' });
       setShowPhotoModal(false);
     } catch (err) {
-      alert("Error: " + err.message);
+      showError("Error removing photo: " + err.message);
     } finally {
       setUploadingPhoto(false);
     }
@@ -117,6 +123,17 @@ export function ProfileTab({ user, bookmarkActions, onUpdateUser, setActiveTab }
 
   return (
     <div className="space-y-6 sm:space-y-7 animate-slideUp">
+      {errorToast && (
+        <div className="toast toast-top toast-center z-[100]" role="alert">
+          <button
+            type="button"
+            onClick={() => setErrorToast(null)}
+            className="alert alert-error shadow-xl rounded-2xl text-xs sm:text-sm font-bold cursor-pointer"
+          >
+            <span>{errorToast}</span>
+          </button>
+        </div>
+      )}
       {/* Page Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">

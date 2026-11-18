@@ -3,15 +3,19 @@ import { extractUserTargets } from '../utils/rbac';
 
 export async function getUserStreak(userOrIdentifiers) {
   const targets = extractUserTargets(userOrIdentifiers);
-  const primary = targets[0] || '';
-  if (!primary) return { streak: 0, dates: [] };
-  return await dataProvider.getUserStreak(primary);
+  if (targets.length === 0) return { streak: 0, dates: [] };
+  const input = typeof userOrIdentifiers === 'object' && userOrIdentifiers !== null
+    ? userOrIdentifiers
+    : targets[0];
+  return await dataProvider.getUserStreak(input);
 }
 
 export async function recordUserActivity(userOrUsername) {
   const targets = extractUserTargets(userOrUsername);
-  const primary = targets[0] || (typeof userOrUsername === 'string' ? userOrUsername : 'User');
-  return await dataProvider.recordUserActivity(primary);
+  if (targets.length === 0 && typeof userOrUsername !== 'string') {
+    return { streak: 0, recorded: false };
+  }
+  return await dataProvider.recordUserActivity(userOrUsername || targets[0] || 'User');
 }
 
 export async function getAllUsers() {
@@ -29,7 +33,7 @@ export async function updateProfilePicture(usernameOrEmail, profilePicture) {
 
 export async function updatePreferredName(userOrUsernameOrEmail, preferredName) {
   const username = typeof userOrUsernameOrEmail === 'object'
-    ? (userOrUsernameOrEmail?.email || userOrUsernameOrEmail?.fullName || userOrUsernameOrEmail?.username)
+    ? (userOrUsernameOrEmail?.fullName || userOrUsernameOrEmail?.preferredName || userOrUsernameOrEmail?.email || userOrUsernameOrEmail?.username)
     : String(userOrUsernameOrEmail || '');
   return await dataProvider.updatePreferredName(username, preferredName);
 }
@@ -48,9 +52,5 @@ export async function updateUserRole(targetUserOrId, newRole) {
 
 export async function deleteUser(targetUserOrId) {
   const id = typeof targetUserOrId === 'object' ? (targetUserOrId.id ?? targetUserOrId.Id) : targetUserOrId;
-  if (dataProvider.deleteUser) {
-    return await dataProvider.deleteUser(id);
-  }
-  return { success: true };
+  return await dataProvider.deleteUser(id);
 }
-

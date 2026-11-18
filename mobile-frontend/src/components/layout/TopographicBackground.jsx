@@ -52,25 +52,25 @@ function TopographicBackgroundComponent({ isDark }) {
       <div
         className={`absolute inset-0 transition-opacity duration-500 ${
           isDark
-            ? 'bg-[#090d16]'
+            ? 'bg-[var(--surface-dark-0,#090d16)]'
             : 'bg-gradient-to-br from-slate-50 via-[#f3f8f7] to-[#eef6f5]'
         }`}
       />
 
-      {/* ─── Soft Color Glow Orbs (Subtle Depth) ─── */}
+      {/* ─── Soft Color Glow Orbs (#10 Multiply light / Screen dark) ─── */}
       <div
-        className={`absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full blur-3xl transition-opacity duration-500 ${
-          isDark ? 'bg-emerald-500/10' : 'bg-emerald-400/12'
+        className={`absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full blur-3xl transition-opacity duration-500 blend-ink ${
+          isDark ? 'bg-emerald-500/12' : 'bg-emerald-400/15'
         }`}
       />
       <div
-        className={`absolute top-1/4 right-0 w-[550px] h-[550px] rounded-full blur-3xl transition-opacity duration-500 ${
-          isDark ? 'bg-sky-500/8' : 'bg-teal-400/10'
+        className={`absolute top-1/4 right-0 w-[550px] h-[550px] rounded-full blur-3xl transition-opacity duration-500 blend-ink ${
+          isDark ? 'bg-sky-500/10' : 'bg-teal-400/12'
         }`}
       />
       <div
-        className={`absolute -bottom-32 left-1/3 w-[650px] h-[650px] rounded-full blur-3xl transition-opacity duration-500 ${
-          isDark ? 'bg-teal-500/8' : 'bg-cyan-400/8'
+        className={`absolute -bottom-32 left-1/3 w-[650px] h-[650px] rounded-full blur-3xl transition-opacity duration-500 blend-ink ${
+          isDark ? 'bg-teal-500/10' : 'bg-cyan-400/10'
         }`}
       />
 
