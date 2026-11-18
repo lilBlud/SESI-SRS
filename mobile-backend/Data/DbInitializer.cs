@@ -313,10 +313,10 @@ namespace mobile_backend.Data
                     Console.WriteLine("Patch failed: " + e.Message);
                 }
 
-                // Seed test quiz questions for current month
-                var seedMonth = DateTime.UtcNow.ToString("yyyy-MM");
-                if (!db.QuizQuestions.Any(q => q.Month == seedMonth))
+                // Seed starter quiz questions only when the table is completely empty
+                if (!db.QuizQuestions.Any())
                 {
+                    var seedMonth = "2026-10";
                     db.QuizQuestions.AddRange(
                         new QuizQuestion { Month = seedMonth, QuestionText = "What does IBR stand for?", OptionA = "Incentive-Based Regulation", OptionB = "International Business Report", OptionC = "Internal Budget Review", OptionD = "Integrated Balance Ratio", CorrectOption = "A" },
                         new QuizQuestion { Month = seedMonth, QuestionText = "What is the Building Block Model (BBM) used for?", OptionA = "Managing employee schedules", OptionB = "Designing software architecture", OptionC = "Calculating total allowed revenue", OptionD = "Setting fuel prices", CorrectOption = "C" },
