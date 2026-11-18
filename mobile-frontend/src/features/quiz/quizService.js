@@ -14,8 +14,16 @@ export async function addQuizQuestion(payload) {
   return await dataProvider.addQuizQuestion(payload);
 }
 
+export async function updateQuizQuestion(id, payload) {
+  return await dataProvider.updateQuizQuestion(id, payload);
+}
+
 export async function deleteQuizQuestion(id) {
   return await dataProvider.deleteQuizQuestion(id);
+}
+
+export async function getQuizSummary() {
+  return await dataProvider.getQuizSummary();
 }
 
 export async function getLeaderboard(month) {

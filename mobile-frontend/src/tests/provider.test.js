@@ -27,6 +27,7 @@ describe('Dual-Database Provider Architecture', () => {
       'getQuizQuestions',
       'getAdminQuizQuestions',
       'addQuizQuestion',
+      'updateQuizQuestion',
       'deleteQuizQuestion',
       'getQuizSummary',
       'getLeaderboard',

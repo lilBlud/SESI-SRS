@@ -207,6 +207,23 @@ export const supabaseProvider = {
     return { success: true };
   },
 
+  async updateQuizQuestion(id, payload) {
+    const { error } = await supabase
+      .from('QuizQuestions')
+      .update({
+        Month: payload.month,
+        QuestionText: payload.questionText,
+        OptionA: payload.optionA,
+        OptionB: payload.optionB,
+        OptionC: payload.optionC,
+        OptionD: payload.optionD,
+        CorrectOption: payload.correctOption,
+      })
+      .eq('Id', id);
+    if (error) throw error;
+    return { success: true };
+  },
+
   async deleteQuizQuestion(id) {
     const { error } = await supabase.from('QuizQuestions').delete().eq('Id', id);
     if (error) throw error;

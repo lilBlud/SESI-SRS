@@ -50,6 +50,22 @@ namespace mobile_backend.Endpoints
                 return Results.Ok(q);
             }).WithName("AdminAddQuestion");
 
+            admin.MapPut("/questions/{id}", async (int id, QuizQuestion update, AppDbContext db) =>
+            {
+                var q = await db.QuizQuestions.FindAsync(id);
+                if (q == null) return Results.NotFound();
+
+                q.Month = string.IsNullOrWhiteSpace(update.Month) ? q.Month : update.Month;
+                q.QuestionText = update.QuestionText;
+                q.OptionA = update.OptionA;
+                q.OptionB = update.OptionB;
+                q.OptionC = update.OptionC;
+                q.OptionD = update.OptionD;
+                q.CorrectOption = update.CorrectOption;
+                await db.SaveChangesAsync();
+                return Results.Ok(q);
+            }).WithName("AdminUpdateQuestion");
+
             admin.MapDelete("/questions/{id}", async (int id, AppDbContext db) =>
             {
                 var q = await db.QuizQuestions.FindAsync(id);

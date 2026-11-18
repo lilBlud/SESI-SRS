@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { currentMonth } from '../../utils/constants';
 import { getInfographics, getGlossary } from '../glossary/glossaryService';
-import { getAdminQuizQuestions } from '../quiz/quizService';
+import { getAdminQuizQuestions, getQuizSummary } from '../quiz/quizService';
 import { getAllUsers, updateUserRole, deleteUser } from '../../services/userService';
 import { getVisitorStats } from '../../services/visitorService';
 import { matchesUser } from '../../utils/rbac';
@@ -24,6 +24,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
 
   const [questions, setQuestions] = useState([]);
   const [qCount, setQCount] = useState(0);
+  const [quizMonthCounts, setQuizMonthCounts] = useState({});
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const hasAutoResolvedMonth = useRef(false);
 
@@ -86,7 +87,18 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
     try {
       const shouldResolve = !hasAutoResolvedMonth.current;
       hasAutoResolvedMonth.current = true;
-      const result = await getAdminQuizQuestions(selectedMonth, shouldResolve);
+      const [result, summary] = await Promise.all([
+        getAdminQuizQuestions(selectedMonth, shouldResolve),
+        getQuizSummary().catch(() => [])
+      ]);
+
+      const counts = {};
+      for (const row of (summary || [])) {
+        const m = row.month || row.Month;
+        if (m) counts[m] = (counts[m] || 0) + 1;
+      }
+      setQuizMonthCounts(counts);
+
       if (result.month && result.month !== selectedMonth) {
         setSelectedMonth(result.month);
       }
@@ -219,6 +231,7 @@ export default function AdminTab({ currentUser, onClose, onGlossaryChange, visit
           setSelectedMonth={setSelectedMonth}
           questions={questions}
           qCount={qCount}
+          quizMonthCounts={quizMonthCounts}
           onRefreshQuestions={fetchQuestions}
         />
       )}

@@ -112,6 +112,13 @@ export const ssmsProvider = {
     });
   },
 
+  async updateQuizQuestion(id, payload) {
+    return await request(`/api/admin/questions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
   async deleteQuizQuestion(id) {
     return await request(`/api/admin/questions/${id}`, { method: 'DELETE' });
   },
