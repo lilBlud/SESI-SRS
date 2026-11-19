@@ -73,6 +73,16 @@ namespace mobile_backend.Endpoints
                 return Results.Ok();
             }).WithName("AdminDeleteQuestion");
 
+            admin.MapPost("/questions/generate", async (GenerateQuizRequest req, IQuizGeneratorService generator, System.Threading.CancellationToken ct) =>
+            {
+                var result = await generator.GenerateFromDocumentAsync(req, ct);
+                if (!result.Success)
+                {
+                    return Results.Json(new { error = result.Error }, statusCode: result.StatusCode);
+                }
+                return Results.Ok(new { model = result.Model, questions = result.Questions });
+            }).WithName("AdminGenerateQuestions");
+
             // ─── Infographics / Posters ───
             app.MapGet("/api/infographics", async (IGlossaryService svc) =>
                 Results.Ok(await svc.GetInfographicsAsync())).WithName("GetInfographics");

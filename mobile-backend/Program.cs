@@ -44,6 +44,7 @@ builder.Services.AddScoped<IGlossaryService, GlossaryService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IVisitorService, VisitorService>();
+builder.Services.AddHttpClient<IQuizGeneratorService, QuizGeneratorService>();
 
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
 {

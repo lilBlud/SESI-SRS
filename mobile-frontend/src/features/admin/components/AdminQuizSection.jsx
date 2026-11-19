@@ -6,6 +6,7 @@ import {
   deleteQuizQuestion as deleteQuizQuestionService,
 } from '../../quiz/quizService';
 import CopyQuizQuestionsModal from './CopyQuizQuestionsModal';
+import GenerateQuizQuestionsModal from './GenerateQuizQuestionsModal';
 
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 
@@ -32,6 +33,7 @@ export default function AdminQuizSection({
   const [statusFeedback, setStatusFeedback] = useState(null); // { ok: boolean, text: string }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   const archiveMonths = useMemo(() => {
     const map = { ...quizMonthCounts };
@@ -165,6 +167,17 @@ export default function AdminQuizSection({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowGenerateModal(true)}
+              className="min-h-[40px] px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs shadow-emerald-600/20 transition-all active:scale-95 inline-flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Generate from Document</span>
+            </button>
+
             <button
               type="button"
               disabled={!hasPreviousCopySource}
@@ -482,20 +495,32 @@ export default function AdminQuizSection({
                   No questions saved for {monthLabel} yet.
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Use the composer on the left to add new questions, or reuse from a previous month.
+                  Use the manual composer on the left, generate from a document, or reuse from a previous month.
                 </p>
-                {hasPreviousCopySource && (
+                <div className="flex flex-wrap items-center justify-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowCopyModal(true)}
+                    onClick={() => setShowGenerateModal(true)}
                     className="min-h-[40px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition active:scale-95 inline-flex items-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span>Copy from a Previous Month</span>
+                    <span>Generate from Document</span>
                   </button>
-                )}
+                  {hasPreviousCopySource && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCopyModal(true)}
+                      className="min-h-[40px] px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition active:scale-95 inline-flex items-center gap-1.5"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <span>Copy from a Previous Month</span>
+                    </button>
+                  )}
+                </div>
               </div>
             ) : filteredQuestions.length === 0 ? (
               <div className="text-center py-8 text-slate-400 text-sm bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -515,6 +540,18 @@ export default function AdminQuizSection({
         existingQuestions={questions}
         onCopied={async (count) => {
           notify(true, `Copied ${count} question${count === 1 ? '' : 's'} into ${monthLabel}.`);
+          await onRefreshQuestions();
+        }}
+      />
+
+      {/* ─── Generate from Document Modal (Gemini AI) ─── */}
+      <GenerateQuizQuestionsModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        targetMonth={selectedMonth}
+        existingQuestions={questions}
+        onGenerated={async (count) => {
+          notify(true, `Imported ${count} generated question${count === 1 ? '' : 's'} into ${monthLabel}.`);
           await onRefreshQuestions();
         }}
       />
