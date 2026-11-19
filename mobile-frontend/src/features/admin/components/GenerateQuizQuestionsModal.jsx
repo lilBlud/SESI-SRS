@@ -52,7 +52,6 @@ export default function GenerateQuizQuestionsModal({
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState({ done: 0, total: 0 });
   const [errorMsg, setErrorMsg] = useState('');
-  const [usedModel, setUsedModel] = useState('');
 
   const [drafts, setDrafts] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -135,7 +134,6 @@ export default function GenerateQuizQuestionsModal({
         signal: controller.signal,
       });
 
-      setUsedModel(result.model || 'gemini-2.5-flash');
       setDrafts(result.questions);
       setSelectedIds(
         new Set(result.questions.filter(q => !q.isDuplicate).map(q => q.draftId))
@@ -272,13 +270,9 @@ export default function GenerateQuizQuestionsModal({
                   <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate">
                     Generate Questions from Document
                   </h2>
-                  <span className="text-[10.5px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shrink-0">
-                    Gemini AI
-                  </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Target archive: <span className="font-bold text-emerald-700 dark:text-emerald-400">{monthLabel}</span>
-                  {step === 'review' && usedModel ? ` · Generated with ${usedModel}` : ''}
                 </p>
               </div>
 
@@ -338,7 +332,7 @@ export default function GenerateQuizQuestionsModal({
                                 {fileMeta.name}
                               </div>
                               <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">
-                                {formatBytes(fileMeta.size)} · Ready for Gemini
+                                {formatBytes(fileMeta.size)} · Ready to generate
                               </div>
                             </div>
                           </div>
