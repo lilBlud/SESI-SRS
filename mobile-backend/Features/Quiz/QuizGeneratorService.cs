@@ -61,14 +61,22 @@ namespace mobile_backend.Services
             "image/webp"
         };
 
+        private static readonly string[] DefaultFallbackModels =
+        {
+            "gemini-3.1-flash-lite",
+            "gemini-flash-lite-latest",
+            "gemini-3.5-flash-lite",
+            "gemini-3.8-flash",
+            "gemini-3.5-flash"
+        };
+
+        private static readonly HashSet<int> RetryableStatusCodes = new()
+        {
+            404, 408, 429, 500, 502, 503, 504
+        };
+
         private const int MaxBase64Length = 16 * 1024 * 1024;
         private const int MaxTextLength = 120_000;
-
-        private static readonly JsonSerializerOptions JsonOpts = new()
-        {
-            PropertyNameCaseInsensitive = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
 
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
@@ -76,15 +84,30 @@ namespace mobile_backend.Services
         public QuizGeneratorService(HttpClient httpClient, IConfiguration config)
         {
             _httpClient = httpClient;
-            _httpClient.Timeout = TimeSpan.FromSeconds(90);
+            _httpClient.Timeout = TimeSpan.FromSeconds(120);
             _config = config;
+        }
+
+        private static List<string> BuildModelCandidates(string configuredModel)
+        {
+            var list = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var candidate in new[] { configuredModel }.Concat(DefaultFallbackModels))
+            {
+                var clean = (candidate ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(clean) || !seen.Add(clean)) continue;
+                list.Add(clean);
+            }
+
+            return list;
         }
 
         public async Task<GenerateQuizResult> GenerateFromDocumentAsync(GenerateQuizRequest request, CancellationToken ct = default)
         {
             var apiKey = (_config["Gemini:ApiKey"] ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? string.Empty).Trim();
-            var model = (_config["Gemini:Model"] ?? Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-3.8-flash").Trim();
-            if (string.IsNullOrWhiteSpace(model)) model = "gemini-3.8-flash";
+            var configuredModel = (_config["Gemini:Model"] ?? Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-3.1-flash-lite").Trim();
+            if (string.IsNullOrWhiteSpace(configuredModel)) configuredModel = "gemini-3.1-flash-lite";
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -205,49 +228,82 @@ namespace mobile_backend.Services
                 }
             };
 
-            var endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(model)}:generateContent?key={Uri.EscapeDataString(apiKey)}";
+            var serializedPayload = JsonSerializer.Serialize(payload);
+            var candidates = BuildModelCandidates(configuredModel);
+            var lastError = "All configured Gemini models are temporarily unavailable. Please retry in a few seconds.";
+            var lastStatus = 503;
 
-            HttpResponseMessage geminiRes;
-            try
+            foreach (var model in candidates)
             {
-                using var httpReq = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                var endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(model)}:generateContent?key={Uri.EscapeDataString(apiKey)}";
+
+                HttpResponseMessage geminiRes;
+                try
                 {
-                    Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
-                };
-                geminiRes = await _httpClient.SendAsync(httpReq, ct);
-            }
-            catch (Exception ex)
-            {
-                return new GenerateQuizResult(false, 502, $"Failed to reach Gemini API: {ex.Message}", null, new List<GeneratedQuizDraft>());
+                    using var attemptCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    attemptCts.CancelAfter(TimeSpan.FromSeconds(28));
+                    using var httpReq = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                    {
+                        Content = new StringContent(serializedPayload, Encoding.UTF8, "application/json")
+                    };
+                    geminiRes = await _httpClient.SendAsync(httpReq, attemptCts.Token);
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    lastError = $"Timed out waiting for Gemini ({model}). Trying fallback...";
+                    lastStatus = 504;
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    lastError = $"Failed to reach Gemini API ({model}): {ex.Message}";
+                    lastStatus = 502;
+                    continue;
+                }
+
+                var rawBody = await geminiRes.Content.ReadAsStringAsync(ct);
+
+                if (!geminiRes.IsSuccessStatusCode)
+                {
+                    var statusInt = (int)geminiRes.StatusCode;
+                    var upstreamMsg = ExtractGeminiError(rawBody) ?? $"Gemini API returned HTTP {statusInt}.";
+                    lastError = upstreamMsg;
+                    lastStatus = geminiRes.StatusCode == HttpStatusCode.TooManyRequests ? 429 : 502;
+
+                    if (RetryableStatusCodes.Contains(statusInt))
+                    {
+                        continue;
+                    }
+                    return new GenerateQuizResult(false, lastStatus, upstreamMsg, null, new List<GeneratedQuizDraft>());
+                }
+
+                var candidateText = ExtractCandidateText(rawBody);
+                if (string.IsNullOrWhiteSpace(candidateText))
+                {
+                    lastError = "Gemini returned an empty response. Try again or shorten the document.";
+                    lastStatus = 502;
+                    continue;
+                }
+
+                try
+                {
+                    using var doc = JsonDocument.Parse(candidateText);
+                    var sanitized = SanitizeQuestions(doc.RootElement, count);
+                    if (sanitized.Count > 0)
+                    {
+                        return new GenerateQuizResult(true, 200, null, model, sanitized);
+                    }
+                    lastError = "No valid quiz questions were parsed from the document.";
+                    lastStatus = 502;
+                }
+                catch
+                {
+                    lastError = "Gemini returned malformed JSON. Please retry.";
+                    lastStatus = 502;
+                }
             }
 
-            var rawBody = await geminiRes.Content.ReadAsStringAsync(ct);
-
-            if (!geminiRes.IsSuccessStatusCode)
-            {
-                var upstreamMsg = ExtractGeminiError(rawBody) ?? $"Gemini API returned HTTP {(int)geminiRes.StatusCode}.";
-                var mappedStatus = geminiRes.StatusCode == HttpStatusCode.TooManyRequests ? 429 : 502;
-                return new GenerateQuizResult(false, mappedStatus, upstreamMsg, null, new List<GeneratedQuizDraft>());
-            }
-
-            var candidateText = ExtractCandidateText(rawBody);
-            if (string.IsNullOrWhiteSpace(candidateText))
-            {
-                return new GenerateQuizResult(false, 502, "Gemini returned an empty response. Try again or shorten the document.", null, new List<GeneratedQuizDraft>());
-            }
-
-            List<GeneratedQuizDraft> sanitized;
-            try
-            {
-                using var doc = JsonDocument.Parse(candidateText);
-                sanitized = SanitizeQuestions(doc.RootElement, count);
-            }
-            catch
-            {
-                return new GenerateQuizResult(false, 502, "Gemini returned malformed JSON. Please retry.", null, new List<GeneratedQuizDraft>());
-            }
-
-            return new GenerateQuizResult(true, 200, null, model, sanitized);
+            return new GenerateQuizResult(false, lastStatus, lastError, null, new List<GeneratedQuizDraft>());
         }
 
         private static string BuildPrompt(int count, string difficulty, string focus, List<string>? existingQuestions)

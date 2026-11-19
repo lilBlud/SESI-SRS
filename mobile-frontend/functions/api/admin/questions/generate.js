@@ -111,10 +111,32 @@ function sanitizeQuestions(rawQuestions, maxCount) {
   return cleaned;
 }
 
+const DEFAULT_FALLBACK_MODELS = [
+  'gemini-3.1-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+];
+
+const RETRYABLE_STATUSES = new Set([404, 408, 429, 500, 502, 503, 504]);
+
+function buildModelCandidates(configuredModel) {
+  const seen = new Set();
+  const list = [];
+  for (const m of [configuredModel, ...DEFAULT_FALLBACK_MODELS]) {
+    const clean = String(m || '').trim();
+    if (!clean || seen.has(clean)) continue;
+    seen.add(clean);
+    list.push(clean);
+  }
+  return list;
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   const apiKey = (env?.GEMINI_API_KEY || '').trim();
-  const model = (env?.GEMINI_MODEL || 'gemini-3.8-flash').trim();
+  const configuredModel = (env?.GEMINI_MODEL || 'gemini-3.1-flash-lite').trim();
 
   if (!apiKey) {
     return jsonResponse(
@@ -178,59 +200,80 @@ export async function onRequestPost(context) {
     text: buildPrompt({ count, difficulty, focus, existingQuestions }),
   });
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const requestBody = JSON.stringify({
+    contents: [{ role: 'user', parts }],
+    generationConfig: {
+      temperature: 0.4,
+      responseMimeType: 'application/json',
+      responseSchema: RESPONSE_SCHEMA,
+    },
+  });
 
-  let geminiRes;
-  try {
-    geminiRes = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts }],
-        generationConfig: {
-          temperature: 0.4,
-          responseMimeType: 'application/json',
-          responseSchema: RESPONSE_SCHEMA,
-        },
-      }),
-    });
-  } catch (err) {
-    return jsonResponse(
-      { error: `Failed to reach Gemini API: ${err?.message || 'network error'}` },
-      502
-    );
+  const candidates = buildModelCandidates(configuredModel);
+  let lastError = 'All configured Gemini models are temporarily unavailable. Please retry in a few seconds.';
+  let lastStatus = 503;
+
+  for (const model of candidates) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    let geminiRes;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 25000);
+      try {
+        geminiRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+    } catch (err) {
+      lastError = `Timed out or failed to reach Gemini (${model}): ${err?.message || 'network error'}`;
+      lastStatus = 502;
+      continue;
+    }
+
+    const geminiBody = await geminiRes.json().catch(() => null);
+    if (!geminiRes.ok) {
+      const apiErr =
+        geminiBody?.error?.message || `Gemini API returned HTTP ${geminiRes.status}.`;
+      lastError = apiErr;
+      lastStatus = geminiRes.status === 429 ? 429 : 502;
+
+      if (RETRYABLE_STATUSES.has(geminiRes.status)) {
+        continue;
+      }
+      return jsonResponse({ error: apiErr }, lastStatus);
+    }
+
+    const candidateText =
+      geminiBody?.candidates?.[0]?.content?.parts
+        ?.map(p => p?.text || '')
+        .join('')
+        .trim() || '';
+
+    if (!candidateText) {
+      lastError = 'Gemini returned an empty response. Try again or shorten the document.';
+      lastStatus = 502;
+      continue;
+    }
+
+    try {
+      const parsedOutput = JSON.parse(candidateText);
+      const questions = sanitizeQuestions(parsedOutput?.questions, count);
+      if (questions.length > 0) {
+        return jsonResponse({ model, questions }, 200);
+      }
+      lastError = 'No valid quiz questions were parsed from the document.';
+      lastStatus = 502;
+    } catch {
+      lastError = 'Gemini returned malformed JSON. Please retry.';
+      lastStatus = 502;
+    }
   }
 
-  const geminiBody = await geminiRes.json().catch(() => null);
-  if (!geminiRes.ok) {
-    const apiErr =
-      geminiBody?.error?.message || `Gemini API returned HTTP ${geminiRes.status}.`;
-    return jsonResponse({ error: apiErr }, geminiRes.status === 429 ? 429 : 502);
-  }
-
-  const candidateText =
-    geminiBody?.candidates?.[0]?.content?.parts
-      ?.map(p => p?.text || '')
-      .join('')
-      .trim() || '';
-
-  if (!candidateText) {
-    return jsonResponse(
-      { error: 'Gemini returned an empty response. Try again or shorten the document.' },
-      502
-    );
-  }
-
-  let parsedOutput;
-  try {
-    parsedOutput = JSON.parse(candidateText);
-  } catch {
-    return jsonResponse(
-      { error: 'Gemini returned malformed JSON. Please retry.' },
-      502
-    );
-  }
-
-  const questions = sanitizeQuestions(parsedOutput?.questions, count);
-  return jsonResponse({ model, questions }, 200);
+  return jsonResponse({ error: lastError }, lastStatus);
 }
