@@ -63,8 +63,8 @@ export default {
         'scanline': 'scanline 4s linear infinite',
         'arrow-hit': 'arrow-hit 3s cubic-bezier(0.4, 0, 0.2, 1) infinite',
         'target-shake': 'target-shake 3s cubic-bezier(0.4, 0, 0.2, 1) infinite',
-        'trophy-bounce': 'trophy-bounce 3s cubic-bezier(0.34, 1.56, 0.64, 1) infinite',
-        'confetti-pop': 'confetti-pop 3s ease-out infinite',
+        'trophy-bounce': 'trophy-bounce 0.75s cubic-bezier(0.16, 1, 0.3, 1) 1 both',
+        'confetti-pop': 'confetti-pop 0.85s cubic-bezier(0.16, 1, 0.3, 1) 1 both',
       },
       keyframes: {
         fadeIn: {
@@ -101,16 +101,16 @@ export default {
           '22%': { transform: 'rotate(0) scale(1) translate(0, 0)' },
         },
         'trophy-bounce': {
-          '0%, 100%': { transform: 'translateY(0) scale(1)' },
-          '5%': { transform: 'translateY(-12px) scale(1.15)' },
-          '10%': { transform: 'translateY(0) scale(0.9)' },
-          '15%': { transform: 'translateY(-4px) scale(1.05)' },
-          '22%': { transform: 'translateY(0) scale(1)' },
+          '0%': { transform: 'translateY(0) scale(1)' },
+          '30%': { transform: 'translateY(-8px) scale(1.12)' },
+          '62%': { transform: 'translateY(0) scale(0.95)' },
+          '82%': { transform: 'translateY(-2px) scale(1.03)' },
+          '100%': { transform: 'translateY(0) scale(1)' },
         },
         'confetti-pop': {
-          '0%, 100%': { transform: 'translate(0, 0) scale(0)', opacity: '0' },
-          '6%': { transform: 'translate(var(--tx), calc(var(--ty) - 5px)) scale(1) rotate(var(--rot))', opacity: '1' },
-          '25%': { transform: 'translate(calc(var(--tx) * 1.5), calc(var(--ty) * 1.5 + 20px)) scale(0) rotate(calc(var(--rot) * 3))', opacity: '0' },
+          '0%': { transform: 'translate(0, 0) scale(0)', opacity: '0' },
+          '25%': { transform: 'translate(var(--tx), calc(var(--ty) - 4px)) scale(1) rotate(var(--rot))', opacity: '1' },
+          '100%': { transform: 'translate(calc(var(--tx) * 1.45), calc(var(--ty) * 1.45 + 18px)) scale(0) rotate(calc(var(--rot) * 2.5))', opacity: '0' },
         }
       }
     },

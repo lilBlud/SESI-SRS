@@ -1,4 +1,6 @@
 import React from 'react';
+import { AnimatePresence, m } from 'motion/react';
+import { EASE_OUT_EXPO } from '../../../utils/motionConfig';
 
 const WATCH_TONE_CLASSES = {
   rose: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-800/70 text-rose-900 dark:text-rose-200',
@@ -73,7 +75,15 @@ export function ProjectBreakdownCard({
       </div>
 
       {/* Project Title Header (No duplicate right-side COD/MW) */}
-      <div className="pt-3 flex items-center justify-between gap-3 flex-wrap">
+      <AnimatePresence mode="wait" initial={false}>
+        <m.div
+          key={selectedProject.id}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.18, ease: EASE_OUT_EXPO }}
+        >
+          <div className="pt-3 flex items-center justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -145,6 +155,8 @@ export function ProjectBreakdownCard({
           </span>
         </div>
       )}
+        </m.div>
+      </AnimatePresence>
     </div>
   );
 }

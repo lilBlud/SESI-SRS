@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LeaderboardAvatar } from '../../../components/ui';
 import { currentMonthLabel } from '../../../utils/constants';
 
@@ -10,13 +10,27 @@ export function HomeLeaderboardPodium({
   onViewAll,
   onTakeQuiz
 }) {
+  const [celebrateKey, setCelebrateKey] = useState(0);
+
   return (
     <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
       <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Leaderboard Rich 3D Trophy SVG */}
-          <div className="relative w-9 h-9 flex items-center justify-center overflow-visible">
-            <svg className="w-8 h-8 animate-trophy-bounce z-10 overflow-visible" viewBox="0 0 32 32" fill="none" style={{ filter: 'drop-shadow(0px 4px 3px rgba(0,0,0,0.3))' }}>
+          {/* Leaderboard Rich 3D Trophy SVG — one-shot celebration on mount, replayable on hover/tap */}
+          <button
+            type="button"
+            onClick={() => setCelebrateKey(k => k + 1)}
+            onMouseEnter={() => setCelebrateKey(k => k + 1)}
+            aria-label="Replay leaderboard celebration"
+            className="relative w-9 h-9 flex items-center justify-center overflow-visible cursor-pointer focus:outline-none"
+          >
+            <svg
+              key={`trophy-${celebrateKey}`}
+              className="w-8 h-8 animate-trophy-bounce z-10 overflow-visible"
+              viewBox="0 0 32 32"
+              fill="none"
+              style={{ filter: 'drop-shadow(0px 4px 3px rgba(0,0,0,0.3))' }}
+            >
               <defs>
                 <linearGradient id="goldGleamLb" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#ca8a04" />
@@ -44,13 +58,13 @@ export function HomeLeaderboardPodium({
               <ellipse cx="16" cy="7" rx="7.5" ry="1.5" fill="#a16207" opacity="0.8" />
               <polygon points="16 11 16.5 12.5 18 12.5 16.8 13.5 17.2 15 16 14 14.8 15 15.2 13.5 14 12.5 15.5 12.5" fill="#fef9c3" opacity="0.9" />
             </svg>
-            <div className="absolute inset-0 pointer-events-none">
+            <div key={`confetti-${celebrateKey}`} className="absolute inset-0 pointer-events-none" aria-hidden="true">
               <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-sm animate-confetti-pop" style={{ '--tx': '-15px', '--ty': '-18px', '--rot': '-45deg' }} />
-              <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-pink-400 rounded-sm animate-confetti-pop" style={{ '--tx': '15px', '--ty': '-15px', '--rot': '45deg', animationDelay: '0.1s' }} />
-              <div className="absolute top-1/2 left-1/2 w-1 h-2 bg-indigo-400 rounded-sm animate-confetti-pop" style={{ '--tx': '-12px', '--ty': '14px', '--rot': '90deg', animationDelay: '0.2s' }} />
-              <div className="absolute top-1/2 left-1/2 w-2 h-1 bg-emerald-400 rounded-sm animate-confetti-pop" style={{ '--tx': '12px', '--ty': '10px', '--rot': '135deg', animationDelay: '0.05s' }} />
+              <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-pink-400 rounded-sm animate-confetti-pop" style={{ '--tx': '15px', '--ty': '-15px', '--rot': '45deg', animationDelay: '0.08s' }} />
+              <div className="absolute top-1/2 left-1/2 w-1 h-2 bg-indigo-400 rounded-sm animate-confetti-pop" style={{ '--tx': '-12px', '--ty': '14px', '--rot': '90deg', animationDelay: '0.14s' }} />
+              <div className="absolute top-1/2 left-1/2 w-2 h-1 bg-emerald-400 rounded-sm animate-confetti-pop" style={{ '--tx': '12px', '--ty': '10px', '--rot': '135deg', animationDelay: '0.04s' }} />
             </div>
-          </div>
+          </button>
           <div className="min-w-0">
             <h2 className="text-[15px] sm:text-base lg:text-[17px] font-extrabold text-white tracking-tight leading-tight">Monthly Leaderboard</h2>
             <p className="text-white/85 text-xs font-medium tracking-normal mt-0.5">{currentMonthLabel}</p>

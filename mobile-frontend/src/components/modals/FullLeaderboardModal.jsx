@@ -1,8 +1,10 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, m } from 'motion/react';
 import { LeaderboardAvatar } from '../ui';
 import { extractUserTargets } from '../../utils/supabaseClient';
 import { currentMonthLabel } from '../../utils/constants';
+import { MODAL_BACKDROP, MODAL_SHEET } from '../../utils/motionConfig';
 
 const DEFAULT_MEDALS = ['🥇', '🥈', '🥉'];
 
@@ -15,21 +17,25 @@ export function FullLeaderboardModal({
   isDark = false,
   onEditNameClick
 }) {
-  if (!isOpen) return null;
-
   const userTargets = extractUserTargets(user);
   const currentDisplayName = user?.preferredName || user?.fullName || user?.username || user?.email || "User";
   const realFullName = user?.fullName || user?.username || user?.email || "User";
 
   return createPortal(
-    <div 
-      className="fixed inset-0 z-[100] flex justify-center bg-slate-950/70 backdrop-blur-sm animate-fadeIn"
-      onClick={onClose}
-    >
-      <div 
-        className="app-shell-frame h-[100dvh] flex flex-col bg-slate-100 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/50 dark:border-slate-800 animate-slideUp text-slate-900 dark:text-slate-100"
-        onClick={e => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <m.div
+          key="full-leaderboard-backdrop"
+          {...MODAL_BACKDROP}
+          className="fixed inset-0 z-[100] flex justify-center bg-slate-950/70 backdrop-blur-sm"
+          onClick={onClose}
+        >
+          <m.div
+            key="full-leaderboard-sheet"
+            {...MODAL_SHEET}
+            className="app-shell-frame h-[100dvh] flex flex-col bg-slate-100 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/50 dark:border-slate-800 text-slate-900 dark:text-slate-100"
+            onClick={e => e.stopPropagation()}
+          >
         {/* Background Pattern with smooth cross-fade */}
         <img
           src="/assets/hd_light_topo.jpg"
@@ -166,8 +172,10 @@ export function FullLeaderboardModal({
             );
           })}
         </div>
-      </div>
-    </div>,
+          </m.div>
+        </m.div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 }

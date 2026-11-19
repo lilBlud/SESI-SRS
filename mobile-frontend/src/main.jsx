@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { LazyMotion, domMax, MotionConfig } from 'motion/react';
 import App from './App.jsx';
 import { ErrorBoundary } from './components/ui/ErrorBoundary.jsx';
 import { ThemeProvider, BackendProvider, AuthProvider } from './context';
@@ -27,7 +28,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <BackendProvider>
           <AuthProvider>
-            <App />
+            <LazyMotion features={domMax} strict>
+              <MotionConfig reducedMotion="user">
+                <App />
+              </MotionConfig>
+            </LazyMotion>
           </AuthProvider>
         </BackendProvider>
       </ThemeProvider>

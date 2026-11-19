@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { AnimatePresence, m } from 'motion/react';
 import { getColor } from '../../utils/constants';
+import { EASE_OUT_EXPO, SPRING_PILL } from '../../utils/motionConfig';
 import { recordUserActivity } from '../../services/userService';
 import { normalizeGlossaryTerm } from '../../domain/glossaryModel';
 import { FutureGenMapModal } from '../../components/modals';
@@ -122,13 +124,21 @@ export function GlossaryTab({
               role="tab"
               aria-selected={viewMode === mode}
               onClick={() => setViewMode(mode)}
-              className={`px-3.5 py-1.5 concentric-pill-item text-xs font-bold transition-all ${
+              className={`relative px-3.5 py-1.5 concentric-pill-item text-xs font-bold transition-colors ${
                 viewMode === mode
-                  ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600 dark:text-emerald-400'
+                  ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
-              {label}
+              {viewMode === mode && (
+                <m.span
+                  layoutId="glossary-view-pill"
+                  transition={SPRING_PILL}
+                  className="absolute inset-0 concentric-pill-item bg-white dark:bg-slate-700 shadow-sm"
+                  aria-hidden="true"
+                />
+              )}
+              <span className="relative z-10">{label}</span>
             </button>
           ))}
         </div>
@@ -368,16 +378,27 @@ export function GlossaryTab({
                     </svg>
                   </div>
 
-                  {isExpanded && (
-                    <div className="px-4 pb-4 pt-0 border-t border-slate-100 dark:border-slate-700 animate-fadeIn">
-                      <GlossaryTermDetailCard
-                        item={item}
-                        variant="compact"
-                        bookmarked={isBookmarked(key, 'glossary')}
-                        onToggleBookmark={toggleBookmark}
-                      />
-                    </div>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <m.div
+                        key={`expand-${key}`}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: EASE_OUT_EXPO }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4 pt-0 border-t border-slate-100 dark:border-slate-700">
+                          <GlossaryTermDetailCard
+                            item={item}
+                            variant="compact"
+                            bookmarked={isBookmarked(key, 'glossary')}
+                            onToggleBookmark={toggleBookmark}
+                          />
+                        </div>
+                      </m.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}

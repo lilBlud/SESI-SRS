@@ -1,5 +1,7 @@
 import React from 'react';
+import { m } from 'motion/react';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from '../ui';
+import { SPRING_PILL } from '../../utils/motionConfig';
 
 export default function DesktopSidebar({
   activeTab,
@@ -53,18 +55,32 @@ export default function DesktopSidebar({
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm lg:text-[14px] font-bold transition-all duration-150 active:scale-[0.98] text-left group ${
+                aria-current={isActive ? 'page' : undefined}
+                className={`relative w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm lg:text-[14px] font-bold transition-colors duration-150 active:scale-[0.98] text-left group ${
                   isActive
-                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
+                    ? 'text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <div className={`shrink-0 transition-transform duration-150 group-hover:scale-105 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-emerald-500'}`}>
+                {isActive && (
+                  <m.span
+                    layoutId="desktop-sidebar-pill"
+                    transition={SPRING_PILL}
+                    className="absolute inset-0 rounded-2xl bg-emerald-500 shadow-md shadow-emerald-500/25"
+                    aria-hidden="true"
+                  />
+                )}
+                <div className={`relative z-10 shrink-0 transition-transform duration-150 group-hover:scale-105 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-emerald-500'}`}>
                   <Icon active={isActive} />
                 </div>
-                <span className="whitespace-nowrap">{label}</span>
+                <span className="relative z-10 whitespace-nowrap">{label}</span>
                 {isActive && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-white/90 shadow-xs" />
+                  <m.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={SPRING_PILL}
+                    className="relative z-10 ml-auto w-2 h-2 rounded-full bg-white/90 shadow-xs"
+                  />
                 )}
               </button>
             );
@@ -78,13 +94,22 @@ export default function DesktopSidebar({
               </div>
               <button
                 onClick={() => setActiveTab('admin')}
-                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm lg:text-[14px] font-bold transition-all duration-150 active:scale-[0.98] text-left group ${
+                aria-current={activeTab === 'admin' ? 'page' : undefined}
+                className={`relative w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm lg:text-[14px] font-bold transition-colors duration-150 active:scale-[0.98] text-left group ${
                   activeTab === 'admin'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                    ? 'text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <div className={`shrink-0 transition-transform duration-150 group-hover:scale-105 ${activeTab === 'admin' ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-emerald-500'}`}>
+                {activeTab === 'admin' && (
+                  <m.span
+                    layoutId="desktop-sidebar-pill"
+                    transition={SPRING_PILL}
+                    className="absolute inset-0 rounded-2xl bg-emerald-600 shadow-md shadow-emerald-600/30"
+                    aria-hidden="true"
+                  />
+                )}
+                <div className={`relative z-10 shrink-0 transition-transform duration-150 group-hover:scale-105 ${activeTab === 'admin' ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-emerald-500'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <rect width="7" height="9" x="3" y="3" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                     <rect width="7" height="5" x="14" y="3" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -92,7 +117,7 @@ export default function DesktopSidebar({
                     <rect width="7" height="5" x="3" y="16" rx="1.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <span className="whitespace-nowrap font-bold">Admin Control Panel</span>
+                <span className="relative z-10 whitespace-nowrap font-bold">Admin Control Panel</span>
               </button>
             </div>
           )}

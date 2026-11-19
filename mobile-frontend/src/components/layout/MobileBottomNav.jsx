@@ -1,5 +1,7 @@
 import React from 'react';
+import { m } from 'motion/react';
 import { HomeIcon, BookIcon, QuizIcon, ProfileIcon } from '../ui';
+import { SPRING_PILL } from '../../utils/motionConfig';
 
 const MOBILE_TABS = [
   { id: 'home', label: 'Home', Icon: HomeIcon },
@@ -22,11 +24,20 @@ export default function MobileBottomNav({ activeTab, setActiveTab }) {
               key={id}
               type="button"
               onClick={() => setActiveTab(id)}
-              className={`flex flex-col items-center justify-center w-[68px] h-[60px] mx-1 rounded-2xl transition-all duration-150 active:scale-95 ${
-                isActive ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'opacity-65 hover:opacity-90'
+              aria-current={isActive ? 'page' : undefined}
+              className={`relative flex flex-col items-center justify-center w-[68px] h-[60px] mx-1 rounded-2xl transition-colors duration-150 active:scale-95 ${
+                isActive ? '' : 'opacity-65 hover:opacity-90'
               }`}
             >
-              <div className={`flex flex-col items-center justify-center gap-1.5 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`}>
+              {isActive && (
+                <m.span
+                  layoutId="mobile-nav-pill"
+                  transition={SPRING_PILL}
+                  className="absolute inset-0 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500/15"
+                  aria-hidden="true"
+                />
+              )}
+              <div className={`relative z-10 flex flex-col items-center justify-center gap-1.5 transition-colors duration-150 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
                 <Icon active={isActive} />
                 <span className="text-[11px] font-semibold leading-none tracking-tight">{label}</span>
               </div>

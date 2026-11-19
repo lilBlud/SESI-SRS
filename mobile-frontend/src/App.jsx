@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import { AnimatePresence, m } from 'motion/react';
 import LoginPage from './features/auth/LoginPage';
+import { EASE_OUT_EXPO } from './utils/motionConfig';
 import PasscodeGate from './features/auth/PasscodeGate';
 import { getGlossary } from './features/glossary/glossaryService';
 import { getUserStreak } from './services/userService';
@@ -171,13 +173,24 @@ function App() {
       />
 
       <div className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden relative">
-        {streakToast && (
-          <div className="toast toast-top toast-center z-[100] pointer-events-none" role="status" aria-live="polite">
-            <div className="alert alert-warning bg-orange-500 text-white border-none shadow-xl shadow-orange-500/30 rounded-2xl px-5 py-3 text-[13px] font-bold animate-scaleIn whitespace-nowrap">
-              <span>{streakToast}</span>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {streakToast && (
+            <m.div
+              key="streak-toast"
+              initial={{ opacity: 0, y: -18, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.96 }}
+              transition={{ duration: 0.22, ease: EASE_OUT_EXPO }}
+              className="toast toast-top toast-center z-[100] pointer-events-none"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="alert alert-warning bg-orange-500 text-white border-none shadow-xl shadow-orange-500/30 rounded-2xl px-5 py-3 text-[13px] font-bold whitespace-nowrap">
+                <span>{streakToast}</span>
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
 
         <DesktopHeader
           activeTab={activeTab}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, m } from 'motion/react';
 import {
   FUTURE_GEN_STATS,
   FUTURE_GEN_PROJECTS,
@@ -7,6 +8,12 @@ import {
   PIPELINE_STAGES,
   FUEL_TYPE_CONFIG
 } from '../../utils/futureGenData';
+import {
+  EASE_OUT_EXPO,
+  MODAL_BACKDROP,
+  MODAL_SHEET,
+  SPRING_PILL
+} from '../../utils/motionConfig';
 import {
   SabahInteractiveMap,
   ProjectBreakdownCard,
@@ -26,8 +33,6 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const selectedProject = FUTURE_GEN_PROJECTS.find(p => p.id === selectedProjectId) || FUTURE_GEN_PROJECTS[0];
   const selectedFuel = FUEL_TYPE_CONFIG[selectedProject.fuelType] || FUEL_TYPE_CONFIG.gas;
@@ -50,14 +55,20 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
   };
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-[120] flex justify-center bg-slate-950/70 animate-fadeIn"
-      onClick={onClose}
-    >
-      <div
-        className="app-shell-frame h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 text-slate-900 dark:text-slate-100 antialiased"
-        onClick={e => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <m.div
+          key="future-gen-backdrop"
+          {...MODAL_BACKDROP}
+          className="fixed inset-0 z-[120] flex justify-center bg-slate-950/70"
+          onClick={onClose}
+        >
+          <m.div
+            key="future-gen-sheet"
+            {...MODAL_SHEET}
+            className="app-shell-frame h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-900 shadow-2xl relative overflow-hidden border-x border-slate-200/60 dark:border-slate-800 text-slate-900 dark:text-slate-100 antialiased"
+            onClick={e => e.stopPropagation()}
+          >
         {/* Hardware Accelerated HD Background Image - Matches App Theme with Smooth Cross-Fade */}
         <img
           src="/assets/hd_light_topo.jpg"
@@ -117,44 +128,68 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
               <button
                 type="button"
                 onClick={() => setActiveTab('map')}
-                className={`flex-1 min-h-[36px] py-1.5 px-2 rounded-lg text-xs sm:text-[13px] font-bold transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-1.5 ${
+                className={`relative flex-1 min-h-[36px] py-1.5 px-2 rounded-lg text-xs sm:text-[13px] font-bold transition-colors duration-150 active:scale-[0.98] flex items-center justify-center gap-1.5 ${
                   activeTab === 'map'
-                    ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
+                    ? 'text-rose-600 dark:text-rose-400'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
                 }`}
               >
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {activeTab === 'map' && (
+                  <m.span
+                    layoutId="future-gen-tab-pill"
+                    transition={SPRING_PILL}
+                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs"
+                    aria-hidden="true"
+                  />
+                )}
+                <svg className="relative z-10 w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
-                <span>Sabah Map</span>
+                <span className="relative z-10">Sabah Map</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('pipeline')}
-                className={`flex-1 min-h-[36px] py-1.5 px-2 rounded-lg text-xs sm:text-[13px] font-bold transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-1.5 ${
+                className={`relative flex-1 min-h-[36px] py-1.5 px-2 rounded-lg text-xs sm:text-[13px] font-bold transition-colors duration-150 active:scale-[0.98] flex items-center justify-center gap-1.5 ${
                   activeTab === 'pipeline'
-                    ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
+                    ? 'text-rose-600 dark:text-rose-400'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
                 }`}
               >
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {activeTab === 'pipeline' && (
+                  <m.span
+                    layoutId="future-gen-tab-pill"
+                    transition={SPRING_PILL}
+                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs"
+                    aria-hidden="true"
+                  />
+                )}
+                <svg className="relative z-10 w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <span className="tabular-nums">Pipeline (6)</span>
+                <span className="relative z-10 tabular-nums">Pipeline (6)</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('bridging')}
-                className={`flex-1 min-h-[36px] py-1.5 px-2 rounded-lg text-xs sm:text-[13px] font-bold transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-1.5 ${
+                className={`relative flex-1 min-h-[36px] py-1.5 px-2 rounded-lg text-xs sm:text-[13px] font-bold transition-colors duration-150 active:scale-[0.98] flex items-center justify-center gap-1.5 ${
                   activeTab === 'bridging'
-                    ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
+                    ? 'text-rose-600 dark:text-rose-400'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
                 }`}
               >
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {activeTab === 'bridging' && (
+                  <m.span
+                    layoutId="future-gen-tab-pill"
+                    transition={SPRING_PILL}
+                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs"
+                    aria-hidden="true"
+                  />
+                )}
+                <svg className="relative z-10 w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span>East Coast</span>
+                <span className="relative z-10">East Coast</span>
               </button>
             </div>
           </div>
@@ -199,8 +234,16 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
         </div>
 
         {/* Content Body */}
-        {activeTab === 'map' && (
-          <div className="flex-1 flex flex-col lg:flex-row min-h-0 relative overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          {activeTab === 'map' && (
+            <m.div
+              key="future-tab-map"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: EASE_OUT_EXPO }}
+              className="flex-1 flex flex-col lg:flex-row min-h-0 relative overflow-hidden"
+            >
             {/* Regional Status Pill Strip (Mobile Only) */}
             <div className="lg:hidden px-3 pt-2.5 pb-1 flex items-center justify-between gap-2 shrink-0">
               <div className="flex-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 rounded-xl px-2.5 py-1.5 flex items-center justify-between">
@@ -318,28 +361,49 @@ export function FutureGenMapModal({ isOpen, onClose, isDark = false }) {
                 />
               </div>
             </div>
-          </div>
-        )}
+            </m.div>
+          )}
 
-        {/* Pipeline Table View */}
-        {activeTab === 'pipeline' && (
-          <PipelineStagesView
-            pipelineStages={PIPELINE_STAGES}
-            projects={FUTURE_GEN_PROJECTS}
-            fuelConfig={FUEL_TYPE_CONFIG}
-            onSelectProject={handleSelectProjectAndViewMap}
-          />
-        )}
+          {/* Pipeline Table View */}
+          {activeTab === 'pipeline' && (
+            <m.div
+              key="future-tab-pipeline"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: EASE_OUT_EXPO }}
+              className="flex-1 flex flex-col min-h-0 overflow-hidden"
+            >
+              <PipelineStagesView
+                pipelineStages={PIPELINE_STAGES}
+                projects={FUTURE_GEN_PROJECTS}
+                fuelConfig={FUEL_TYPE_CONFIG}
+                onSelectProject={handleSelectProjectAndViewMap}
+              />
+            </m.div>
+          )}
 
-        {/* East Coast Bridging Capacity View */}
-        {activeTab === 'bridging' && (
-          <BridgingCapacityView
-            bridgingCapacity={BRIDGING_CAPACITY}
-            eastCoastStats={FUTURE_GEN_STATS.eastCoast}
-          />
-        )}
-      </div>
-    </div>,
+          {/* East Coast Bridging Capacity View */}
+          {activeTab === 'bridging' && (
+            <m.div
+              key="future-tab-bridging"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: EASE_OUT_EXPO }}
+              className="flex-1 flex flex-col min-h-0 overflow-hidden"
+            >
+              <BridgingCapacityView
+                bridgingCapacity={BRIDGING_CAPACITY}
+                eastCoastStats={FUTURE_GEN_STATS.eastCoast}
+              />
+            </m.div>
+          )}
+        </AnimatePresence>
+          </m.div>
+        </m.div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 }
