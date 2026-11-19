@@ -114,7 +114,7 @@ function sanitizeQuestions(rawQuestions, maxCount) {
 export async function onRequestPost(context) {
   const { request, env } = context;
   const apiKey = (env?.GEMINI_API_KEY || '').trim();
-  const model = (env?.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  const model = (env?.GEMINI_MODEL || 'gemini-3.8-flash').trim();
 
   if (!apiKey) {
     return jsonResponse(

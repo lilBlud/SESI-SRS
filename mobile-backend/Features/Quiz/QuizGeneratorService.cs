@@ -83,8 +83,8 @@ namespace mobile_backend.Services
         public async Task<GenerateQuizResult> GenerateFromDocumentAsync(GenerateQuizRequest request, CancellationToken ct = default)
         {
             var apiKey = (_config["Gemini:ApiKey"] ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? string.Empty).Trim();
-            var model = (_config["Gemini:Model"] ?? Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-2.5-flash").Trim();
-            if (string.IsNullOrWhiteSpace(model)) model = "gemini-2.5-flash";
+            var model = (_config["Gemini:Model"] ?? Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-3.8-flash").Trim();
+            if (string.IsNullOrWhiteSpace(model)) model = "gemini-3.8-flash";
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {

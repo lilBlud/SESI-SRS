@@ -224,7 +224,7 @@ export async function generateQuizQuestionsFromDocument({
   }
 
   return {
-    model: resolvedModel || 'gemini-2.5-flash',
+    model: resolvedModel || 'gemini-3.8-flash',
     questions: accumulated,
   };
 }
